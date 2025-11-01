@@ -3,6 +3,13 @@
 
 #include <iostream>
 #include <string>
+#include <cassert>
+
+#ifdef _WIN32
+    #include <crtdbg.h>
+    #include <windows.h>
+#endif
+
 
 class Test
 {
@@ -10,7 +17,8 @@ class Test
         Test(std::string text);
 
         void print();
-        void set();
+        void set_text(std::string text);
+        std::string get_text();
 
     private:
         std::string text;

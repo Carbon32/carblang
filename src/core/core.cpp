@@ -4,11 +4,15 @@ Test::Test(std::string text) : text(text) {}
 
 void Test::print()
 {
-    std::cout << text << std::endl;
+    std::cout << this->text << std::endl;
 }
 
-void Test::set()
+void Test::set_text(std::string text)
 {
-    std::cout << "> ";
-    getline(std::cin, text);
+    this->text = text;
+}
+
+std::string Test::get_text()
+{
+    return this->text;
 }
