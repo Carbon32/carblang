@@ -1,10 +1,9 @@
 #include "core/core.hpp"
 
-int main()
+int main(int argc, char **argv)
 {
-    Test test_stuff("Default Text");
-    test_stuff.print();
-    test_stuff.set_text("Hello World");
-    test_stuff.print();
+    Carblang* carblang = new Carblang();
+    carblang->start(argc, argv);
+    delete carblang;
     return 0;
 }

@@ -1,17 +1,11 @@
 #include "core/core.hpp"
 
-void test_set()
-{
-    Test test("");
-    test.set_text("Carblang");
-    assert(!test.get_text().empty());
-}
-
-void test_get()
-{
-    Test test("Testing");
-    assert(test.get_text() == "Testing");
-}
+// Moved here because some macros defined in these includes cause issues with TokenType
+// I will probably do some cleaning later and organize things better
+#ifdef _WIN32
+    #include <crtdbg.h>
+    #include <windows.h>
+#endif
 
 int main()
 {
@@ -21,8 +15,6 @@ int main()
         SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
     #endif
 
-    test_set();
-    test_get();
-    std::cout << "All core tests passed\n";
+    std::cout << "Tests are not ready yet\n";
     return 0;
 }
