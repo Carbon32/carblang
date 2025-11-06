@@ -1,7 +1,5 @@
 #include "core/core.hpp"
 
-bool error_trigger = false;
-
 Carblang::Carblang()
 {
 
@@ -28,6 +26,8 @@ void Carblang::run(std::string code)
 {
     Scanner scanner = Scanner(code);
     std::vector<Token> tokens = scanner.scan_tokens();
+    Parser parser = Parser(tokens);
+    std::shared_ptr<Expression> expr = parser.parse();
 
     for(const Token& token : tokens)
     {

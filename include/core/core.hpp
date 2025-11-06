@@ -2,16 +2,20 @@
 #define CORE_HPP
 
 #include <iostream>
+#include <sstream>
 #include <fstream>
 #include <cstdlib>
+#include <stdexcept>
+#include <memory>
 #include <string>
-#include <cassert>
 #include <cstring>
+#include <cassert>
 #include <vector>
 #include <utility>
 #include <map>
 #include <any>
 #include <cerrno>
+#include <type_traits>
 
 // This macro is defined in one of the includes above, it took me a few hours to find it
 #undef NULL
@@ -34,10 +38,18 @@ enum TokenType
     END_OF_FILE
 };
 
-extern bool error_trigger;
+inline bool error_trigger = false;
+
+struct Binary;
+struct Grouping;
+struct Literal;
+struct Unary;
+
+class Token;
 
 void report(int line, std::string where, std::string message);
 void error(int line, std::string message);
+void error(const Token& token, std::string message);
 std::string to_string(TokenType type);
 
 class Carblang
@@ -93,5 +105,126 @@ class Scanner
       void add_token(TokenType type);
       void add_token(TokenType type, std::any literal);
 };
+
+struct ExpressionVisitor
+{
+    virtual std::any visit_binary_expression(std::shared_ptr<Binary> expr) = 0;
+    virtual std::any visit_grouping_expression(std::shared_ptr<Grouping> expr) = 0;
+    virtual std::any visit_literal_expression(std::shared_ptr<Literal> expr) = 0;
+    virtual std::any visit_unary_expression(std::shared_ptr<Unary> expr) = 0;
+    virtual ~ExpressionVisitor() = default;
+};
+
+struct Expression
+{
+    virtual std::any accept(ExpressionVisitor& visitor) = 0;
+};
+
+class AST : public ExpressionVisitor
+{
+    public:
+        std::string print(std::shared_ptr <Expression> expression);
+        std::any visit_binary_expression(std::shared_ptr<Binary> expression) override;
+        std::any visit_grouping_expression(std::shared_ptr<Grouping> expression) override; 
+        std::any visit_literal_expression(std::shared_ptr<Literal> expression) override;
+        std::any visit_unary_expression(std::shared_ptr<Unary> expression) override;
+        
+    private:
+        template<class...E>
+        std::string parenthesize(std::string_view name, E...expression);
+};
+
+struct Binary : Expression, public std::enable_shared_from_this<Binary>
+{
+    Binary(std::shared_ptr<Expression> left, Token operator_token, std::shared_ptr<Expression> right) : left{std::move(left)}, operator_token{std::move(operator_token)}, right{std::move(right)}
+    {}
+
+    std::any accept(ExpressionVisitor& visitor) override
+    {
+        return visitor.visit_binary_expression(shared_from_this());
+    }
+
+    const std::shared_ptr<Expression> left;
+    const Token operator_token;
+    const std::shared_ptr<Expression> right;
+};
+
+struct Grouping : Expression, public std::enable_shared_from_this<Grouping>
+{
+    Grouping(std::shared_ptr<Expression> expression) : expression{std::move(expression)}
+    {}
+
+    std::any accept(ExpressionVisitor& visitor) override
+    {
+        return visitor.visit_grouping_expression(shared_from_this());
+    }
+
+    const std::shared_ptr<Expression> expression;
+};
+
+struct Literal : Expression, public std::enable_shared_from_this<Literal>
+{
+    Literal(std::any value) : value{std::move(value)}
+    {}
+
+    std::any accept(ExpressionVisitor& visitor) override
+    {
+        return visitor.visit_literal_expression(shared_from_this());
+    }
+
+  const std::any value;
+};
+
+struct Unary : Expression, public std::enable_shared_from_this<Unary>
+{
+    Unary(Token operator_token, std::shared_ptr<Expression> right) : operator_token{std::move(operator_token)}, right{std::move(right)}
+    {}
+
+    std::any accept(ExpressionVisitor& visitor) override
+    {
+        return visitor.visit_unary_expression(shared_from_this());
+    }
+
+    const Token operator_token;
+    const std::shared_ptr<Expression> right;
+};
+
+class Parser
+{
+    struct ParseError : public std::runtime_error
+    {
+        using std::runtime_error::runtime_error;
+    };
+
+    const std::vector<Token> &tokens;
+    int current = 0;
+
+    public:
+        Parser(const std::vector<Token> &tokens);
+
+        std::shared_ptr<Expression> parse();
+
+    private:
+        std::shared_ptr<Expression> expression();
+        std::shared_ptr<Expression> equality();
+        std::shared_ptr<Expression> comparison();
+        std::shared_ptr<Expression> term();
+        std::shared_ptr<Expression> factor();
+        std::shared_ptr<Expression> unary();
+        std::shared_ptr<Expression> primary();
+
+        template<class...T>
+        bool match(T...type);
+
+        Token consume(TokenType type, std::string message);
+        bool check(TokenType type);
+        Token advance();
+        bool at_end();
+        Token peek();
+        Token previous();
+        ParseError error(const Token &token, std::string message);
+        void synchronize();
+};
+
 
 #endif
