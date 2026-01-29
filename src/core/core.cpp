@@ -2,7 +2,7 @@
 
 Carblang::Carblang()
 {
-    interpreter = new Interpreter();
+
 }
 
 void Carblang::start(int argc, char **argv)
@@ -31,12 +31,11 @@ void Carblang::run(std::string code)
 
     if(error_trigger) return;
 
-    interpreter->interpret(statements);
+    Compiler compiler;
+    Chunk chunk = compiler.compile(statements);
 
-    /* for(const Token& token : tokens)
-    {
-        std::cout << token.stringify() << std::endl;
-    } */
+    VM vm;
+    vm.interpret(chunk);
 }
 
 void Carblang::handle_file(const char *file)

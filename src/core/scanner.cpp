@@ -210,10 +210,10 @@ char Scanner::advance() {
 
 void Scanner::add_token(TokenType type)
 {
-	this->add_token(type, std::any());
+	this->add_token(type, Value());
 }
 
-void Scanner::add_token(TokenType type, std::any literal)
+void Scanner::add_token(TokenType type, Value literal)
 {
 	std::string text = this->src.substr(this->start, this->current - this->start);
 	this->tokens.emplace_back(type, std::move(text), std::move(literal), this->line);

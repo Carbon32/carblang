@@ -11,7 +11,9 @@ set(CORE_SOURCES
     src/core/error.cpp
     src/core/scanner.cpp
     src/core/token.cpp
+    src/core/vm.cpp
     src/core/parser.cpp
+    src/core/compiler.cpp
 )
 
 add_library(core STATIC ${CORE_SOURCES})

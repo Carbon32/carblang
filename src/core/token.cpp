@@ -17,7 +17,7 @@ std::string to_string(TokenType type)
     return strings[static_cast<int>(type)];
 }
 
-Token::Token(TokenType type, std::string lexeme, std::any literal, int line)
+Token::Token(TokenType type, std::string lexeme, Value literal, int line)
 : type(type), lexeme(std::move(lexeme)), literal(std::move(literal)), line(line) {}
 
 std::string Token::stringify() const
@@ -29,10 +29,10 @@ std::string Token::stringify() const
             literal_text = this->lexeme;
             break;
         case STRING:
-            literal_text = std::any_cast<std::string>(this->literal);
+            literal_text = std::get<std::string>(this->literal);
             break;
         case NUMBER:
-            literal_text = std::to_string(std::any_cast<double>(this->literal));
+            literal_text = std::to_string(std::get<double>(this->literal));
             break;
         case TRUE:
             literal_text = "true";

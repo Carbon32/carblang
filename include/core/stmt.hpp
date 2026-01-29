@@ -1,0 +1,112 @@
+struct StmtVisitor
+{
+    virtual Value visit_block_stmt(std::shared_ptr<BlockStmt> stmt) = 0;
+    virtual Value visit_expression_stmt(std::shared_ptr<ExprStmt> stmt) = 0;
+    virtual Value visit_print_stmt(std::shared_ptr<PrintStmt> stmt) = 0;
+    virtual Value visit_println_stmt(std::shared_ptr<PrintLnStmt> stmt) = 0;
+    virtual Value visit_if_stmt(std::shared_ptr<IfStmt> stmt) = 0;
+    virtual Value visit_while_stmt(std::shared_ptr<WhileStmt> stmt) = 0;
+    virtual Value visit_var_stmt(std::shared_ptr<VarStmt> stmt) = 0;
+    virtual ~StmtVisitor() = default;
+};
+
+struct Stmt
+{
+    virtual Value accept(StmtVisitor& visitor) = 0;
+};
+
+struct BlockStmt : Stmt, public std::enable_shared_from_this<BlockStmt>
+{
+    BlockStmt(std::vector<std::shared_ptr<Stmt>> statements) : statements{std::move(statements)}
+    {}
+
+    Value accept(StmtVisitor& visitor) override
+    {
+        return visitor.visit_block_stmt(shared_from_this());
+    }
+
+    const std::vector<std::shared_ptr<Stmt>> statements;
+};
+
+struct ExprStmt : Stmt, public std::enable_shared_from_this<ExprStmt>
+{
+    ExprStmt(std::shared_ptr<Expression> expression) : expression{std::move(expression)}
+    {}
+
+    Value accept(StmtVisitor& visitor) override
+    {
+        return visitor.visit_expression_stmt(shared_from_this());
+    }
+    const std::shared_ptr<Expression> expression;
+};
+
+struct PrintStmt : Stmt, public std::enable_shared_from_this<PrintStmt>
+{
+    PrintStmt(std::shared_ptr<Expression> expression) : expression{std::move(expression)}
+    {}
+
+    Value accept(StmtVisitor& visitor) override
+    {
+        return visitor.visit_print_stmt(shared_from_this());
+    }
+
+    const std::shared_ptr<Expression> expression;
+};
+
+struct PrintLnStmt : Stmt, public std::enable_shared_from_this<PrintLnStmt>
+{
+    PrintLnStmt(std::shared_ptr<Expression> expression) : expression{std::move(expression)}
+    {}
+
+    Value accept(StmtVisitor& visitor) override
+    {
+        return visitor.visit_println_stmt(shared_from_this());
+    }
+
+    const std::shared_ptr<Expression> expression;
+};
+
+struct IfStmt : Stmt, public std::enable_shared_from_this<IfStmt>
+{
+    IfStmt(std::shared_ptr<Expression> condition, std::shared_ptr<Stmt> then_branch, std::shared_ptr<Stmt> else_branch)
+    : condition{std::move(condition)}, then_branch{std::move(then_branch)}, else_branch{std::move(else_branch)}
+    {}
+
+    Value accept(StmtVisitor& visitor) override
+    {
+        return visitor.visit_if_stmt(shared_from_this());
+    }
+
+    const std::shared_ptr<Expression> condition;
+    const std::shared_ptr<Stmt> then_branch;
+    const std::shared_ptr<Stmt> else_branch;
+};
+
+struct WhileStmt: Stmt, public std::enable_shared_from_this<WhileStmt>
+{
+    WhileStmt(std::shared_ptr<Expression> condition, std::shared_ptr<Stmt> body)
+    : condition{std::move(condition)}, body{std::move(body)}
+    {}
+
+    Value accept(StmtVisitor& visitor) override
+    {
+        return visitor.visit_while_stmt(shared_from_this());
+    }
+
+    const std::shared_ptr<Expression> condition;
+    const std::shared_ptr<Stmt> body;
+};
+
+struct VarStmt : Stmt, public std::enable_shared_from_this<VarStmt>
+{
+    VarStmt(Token name, std::shared_ptr<Expression> initializer) : name{std::move(name)}, initializer{std::move(initializer)}
+    {}
+
+    Value accept(StmtVisitor& visitor) override
+    {
+        return visitor.visit_var_stmt(shared_from_this());
+    }
+
+    const Token name;
+    const std::shared_ptr<Expression> initializer;
+};
