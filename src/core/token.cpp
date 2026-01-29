@@ -11,7 +11,7 @@ std::string to_string(TokenType type)
         "LESS", "LESS_EQUAL",
         "IDENTIFIER", "STRING", "NUMBER",
         "AND", "CLASS", "ELSE", "FALSE", "FUNCTION", "FOR", "IF", "NULL", "OR",
-        "PRINT", "RETURN", "SUPER", "THIS", "TRUE", "VAR", "WHILE",
+        "PRINT", "PRINTLN", "RETURN", "SUPER", "THIS", "TRUE", "VAR", "WHILE",
         "END_OF_FILE"
     };
     return strings[static_cast<int>(type)];

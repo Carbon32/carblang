@@ -22,3 +22,9 @@ void error(const Token& token, std::string message)
         report(token.line, " at \"" + token.lexeme + "\"", message);
     }
 }
+
+void runtime_error(const RuntimeError& error)
+{
+    std::cerr << error.what() << "\n[line " << error.token.line << "]\n";
+    runtime_error_trigger = true;
+}

@@ -2,7 +2,7 @@
 
 Carblang::Carblang()
 {
-
+    interpreter = new Interpreter();
 }
 
 void Carblang::start(int argc, char **argv)
@@ -27,12 +27,16 @@ void Carblang::run(std::string code)
     Scanner scanner = Scanner(code);
     std::vector<Token> tokens = scanner.scan_tokens();
     Parser parser = Parser(tokens);
-    std::shared_ptr<Expression> expr = parser.parse();
+    std::vector<std::shared_ptr<Stmt>> statements = parser.parse();;
 
-    for(const Token& token : tokens)
+    if(error_trigger) return;
+
+    interpreter->interpret(statements);
+
+    /* for(const Token& token : tokens)
     {
         std::cout << token.stringify() << std::endl;
-    }
+    } */
 }
 
 void Carblang::handle_file(const char *file)
@@ -41,6 +45,11 @@ void Carblang::handle_file(const char *file)
     if(error_trigger)
     {
         std::exit(65);
+    }
+
+    if(runtime_error_trigger)
+    {
+        std::exit(70);
     }
 }
 

@@ -11,7 +11,6 @@ set(CORE_SOURCES
     src/core/error.cpp
     src/core/scanner.cpp
     src/core/token.cpp
-    src/core/ast.cpp
     src/core/parser.cpp
 )
 
