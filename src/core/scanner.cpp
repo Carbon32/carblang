@@ -45,6 +45,8 @@ void Scanner::scan_single_token()
 	{
 		case '(': this->add_token(LEFT_PAREN); break;
 		case ')': this->add_token(RIGHT_PAREN); break;
+		case '[': add_token(LEFT_BRACKET); break;
+		case ']': add_token(RIGHT_BRACKET); break;
 		case '{': this->add_token(LEFT_BRACE); break;
 		case '}': this->add_token(RIGHT_BRACE); break;
 		case ',': this->add_token(COMMA); break;

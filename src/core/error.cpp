@@ -23,7 +23,7 @@ void error(const Token& token, std::string message)
     }
 }
 
-void runtime_error(const RuntimeError& error)
+void runtime_error(const RuntimeError& error) // I believe this is broken, doesn't even print the line
 {
     std::cerr << error.what() << "\n[line " << error.token.line << "]\n";
     runtime_error_trigger = true;

@@ -7,6 +7,7 @@ Chunk Compiler::compile(const std::vector<std::shared_ptr<Stmt>> &statements)
         stmt->accept(*this);
     }
 
+    emit(OpCode::NULL);
     emit(OpCode::RETURN);
     return chunk;
 }
@@ -31,8 +32,7 @@ int Compiler::resolve_local(const std::string &name)
 {
     for(int i = locals.size() - 1; i >= 0; i--)
     {
-        if (locals[i].name == name)
-            return i;
+        if(locals[i].name == name) return i;
     }
     return -1;
 }
@@ -65,8 +65,7 @@ int Compiler::emit_jump(OpCode op)
 void Compiler::patch_jump(int offset)
 {
     int jump = chunk.code.size() - offset - 2;
-    if(jump > UINT16_MAX)
-        throw std::runtime_error("Jump too large");
+    if(jump > UINT16_MAX) throw std::runtime_error("Jump too large");
 
     chunk.code[offset] = (jump >> 8) & 0xff;
     chunk.code[offset + 1] = jump & 0xff;
@@ -76,8 +75,7 @@ void Compiler::emit_loop(int loop_start)
 {
     int offset = chunk.code.size() - loop_start + 3;
     emit(OpCode::LOOP);
-    if(offset > UINT16_MAX)
-        throw std::runtime_error("Loop too large");
+    if(offset > UINT16_MAX) throw std::runtime_error("Loop too large");
     emit_byte((offset >> 8) & 0xff);
     emit_byte(offset & 0xff);
 }
@@ -100,15 +98,11 @@ Value Compiler::visit_grouping_expression(std::shared_ptr<Grouping> expr)
 Value Compiler::visit_unary_expression(std::shared_ptr<Unary> expr)
 {
     expr->right->accept(*this);
-
     switch(expr->operator_token.type)
     {
-        case MINUS:
-            emit(OpCode::NEGATE);
-            break;
-        case BANG:
-            emit(OpCode::NOT);
-            break;
+        case MINUS: emit(OpCode::NEGATE); break;
+        case BANG: emit(OpCode::NOT); break;
+
         default:
             throw std::runtime_error("Invalid unary operator");
     }
@@ -181,7 +175,6 @@ Value Compiler::visit_var_stmt(std::shared_ptr<VarStmt> stmt)
     return {};
 }
 
-
 Value Compiler::visit_if_stmt(std::shared_ptr<IfStmt> stmt)
 {
     stmt->condition->accept(*this);
@@ -205,7 +198,6 @@ Value Compiler::visit_if_stmt(std::shared_ptr<IfStmt> stmt)
     return {};
 }
 
-
 Value Compiler::visit_while_stmt(std::shared_ptr<WhileStmt> stmt)
 {
     int loop_start = chunk.code.size();
@@ -220,7 +212,6 @@ Value Compiler::visit_while_stmt(std::shared_ptr<WhileStmt> stmt)
     return {};
 }
 
-
 Value Compiler::visit_logical_expression(std::shared_ptr<Logical> expr)
 {
     expr->left->accept(*this);
@@ -231,12 +222,11 @@ Value Compiler::visit_logical_expression(std::shared_ptr<Logical> expr)
     return {};
 }
 
-
 Value Compiler::visit_assign_expression(std::shared_ptr<Assign> expr)
 {
     expr->value->accept(*this);
     int slot = resolve_local(expr->name.lexeme);
-    if (slot != -1)
+    if(slot != -1)
     {
         emit(OpCode::SET_LOCAL);
         emit_byte(slot);
@@ -250,11 +240,10 @@ Value Compiler::visit_assign_expression(std::shared_ptr<Assign> expr)
     return {};
 }
 
-
 Value Compiler::visit_variable_expression(std::shared_ptr<Variable> expr)
 {
     int slot = resolve_local(expr->name.lexeme);
-    if (slot != -1)
+    if(slot != -1)
     {
         emit(OpCode::GET_LOCAL);
         emit_byte(slot);
@@ -268,7 +257,6 @@ Value Compiler::visit_variable_expression(std::shared_ptr<Variable> expr)
     return {};
 }
 
-
 Value Compiler::visit_block_stmt(std::shared_ptr<BlockStmt> stmt)
 {
     begin_scope();
@@ -276,3 +264,100 @@ Value Compiler::visit_block_stmt(std::shared_ptr<BlockStmt> stmt)
     end_scope();
     return {};
 }
+
+Value Compiler::visit_function_stmt(std::shared_ptr<FunctionStmt> stmt)
+{
+    Compiler function_compiler;
+    function_compiler.begin_scope();
+
+    for(int i = 0; i < stmt->params.size(); ++i)
+    {
+        function_compiler.locals.push_back({ stmt->params[i].lexeme, 1 });
+    }
+
+    bool has_return = !stmt->body.empty() && dynamic_cast<ReturnStmt*>(stmt->body.back().get()) != nullptr;
+    for(auto& s : stmt->body) s->accept(function_compiler);
+
+    if(!has_return)
+    {
+        function_compiler.emit(OpCode::NULL);
+        function_compiler.emit(OpCode::RETURN);
+    }
+
+    auto fn = std::make_shared<Function>(
+        stmt->name.lexeme,
+        stmt->params.size(),
+        function_compiler.chunk
+    );
+
+    uint8_t fn_index = chunk.add_constant(fn);
+    emit(OpCode::CLOSURE);
+    emit_byte(fn_index);
+
+    uint8_t name_index = chunk.add_constant(stmt->name.lexeme);
+    emit(OpCode::DEFINE_GLOBAL);
+    emit_byte(name_index);
+
+    return {};
+}
+
+Value Compiler::visit_call_expression(std::shared_ptr<Call> expr)
+{
+    expr->callee->accept(*this);
+
+    for(auto& arg : expr->arguments) arg->accept(*this);
+
+    emit(OpCode::CALL);
+    emit_byte(static_cast<uint8_t>(expr->arguments.size()));
+
+    return {};
+}
+
+Value Compiler::visit_return_stmt(std::shared_ptr<ReturnStmt> stmt)
+{
+    if(stmt->value) stmt->value->accept(*this);
+    else emit(OpCode::NULL);
+
+    emit(OpCode::RETURN);
+    return {};
+}
+
+Value Compiler::visit_array_expression(std::shared_ptr<ArrayExpr> expr)
+{
+    for(auto& element : expr->elements) element->accept(*this);
+
+    emit(OpCode::ARRAY);
+    emit_byte(static_cast<uint8_t>(expr->elements.size()));
+
+    return {};
+}
+
+Value Compiler::visit_index_expression(std::shared_ptr<IndexExpr> expr)
+{
+    expr->array->accept(*this);
+    expr->index->accept(*this);
+
+    emit(OpCode::GET_INDEX);
+    return {};
+}
+
+Value Compiler::visit_index_assign_expression(std::shared_ptr<IndexAssign> expr)
+{
+    expr->array->accept(*this);
+    expr->index->accept(*this);
+    expr->value->accept(*this);
+
+    emit(OpCode::SET_INDEX);
+    return {};
+}
+
+Value Compiler::visit_get_expression(std::shared_ptr<Get> expr)
+{
+    expr->object->accept(*this);
+    uint8_t name = chunk.add_constant(expr->name.lexeme);
+    emit(OpCode::GET_PROPERTY);
+    emit_byte(name);
+    return {};
+}
+
+

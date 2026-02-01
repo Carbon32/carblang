@@ -7,6 +7,11 @@ struct ExpressionVisitor
     virtual Value visit_logical_expression(std::shared_ptr<Logical> expr) = 0;
     virtual Value visit_assign_expression(std::shared_ptr<Assign> expr) = 0;
     virtual Value visit_variable_expression(std::shared_ptr<Variable> expr) = 0;
+    virtual Value visit_call_expression(std::shared_ptr<Call> expr) = 0;
+    virtual Value visit_array_expression(std::shared_ptr<ArrayExpr> expr) = 0;
+    virtual Value visit_index_expression(std::shared_ptr<IndexExpr> expr) = 0;
+    virtual Value visit_index_assign_expression(std::shared_ptr<IndexAssign> expr) = 0;
+    virtual Value visit_get_expression(std::shared_ptr<Get> expr) = 0;
     virtual ~ExpressionVisitor() = default;
 };
 
@@ -14,6 +19,88 @@ struct Expression
 {
     virtual Value accept(ExpressionVisitor& visitor) = 0;
 };
+
+struct ArrayExpr : Expression, public std::enable_shared_from_this<ArrayExpr>
+{
+    std::vector<std::shared_ptr<Expression>> elements;
+
+    ArrayExpr(std::vector<std::shared_ptr<Expression>> elements)
+        : elements(std::move(elements)) {}
+
+    Value accept(ExpressionVisitor& visitor) override
+    {
+        return visitor.visit_array_expression(shared_from_this());
+    }
+};
+
+struct IndexExpr : Expression, public std::enable_shared_from_this<IndexExpr>
+{
+    std::shared_ptr<Expression> array;
+    std::shared_ptr<Expression> index;
+
+    IndexExpr(std::shared_ptr<Expression> array,
+              std::shared_ptr<Expression> index)
+        : array(std::move(array)),
+          index(std::move(index)) {}
+
+    Value accept(ExpressionVisitor& visitor) override
+    {
+        return visitor.visit_index_expression(shared_from_this());
+    }
+};
+
+struct IndexAssign : Expression, public std::enable_shared_from_this<IndexAssign>
+{
+    std::shared_ptr<Expression> array;
+    std::shared_ptr<Expression> index;
+    std::shared_ptr<Expression> value;
+
+    IndexAssign(std::shared_ptr<Expression> array,
+                std::shared_ptr<Expression> index,
+                std::shared_ptr<Expression> value)
+        : array(std::move(array)),
+          index(std::move(index)),
+          value(std::move(value)) {}
+
+    Value accept(ExpressionVisitor& visitor) override
+    {
+        return visitor.visit_index_assign_expression(shared_from_this());
+    }
+};
+
+struct Get : Expression, public std::enable_shared_from_this<Get>
+{
+    std::shared_ptr<Expression> object;
+    Token name;
+
+    Get(std::shared_ptr<Expression> object, Token name)
+        : object(object), name(name) {}
+
+    Value accept(ExpressionVisitor& visitor) override
+    {
+        return visitor.visit_get_expression(shared_from_this());
+    }
+};
+
+struct Call : Expression, public std::enable_shared_from_this<Call>
+{
+    std::shared_ptr<Expression> callee;
+    Token paren;
+    std::vector<std::shared_ptr<Expression>> arguments;
+
+    Call(std::shared_ptr<Expression> callee,
+         Token paren,
+         std::vector<std::shared_ptr<Expression>> arguments)
+        : callee(std::move(callee)),
+          paren(std::move(paren)),
+          arguments(std::move(arguments)) {}
+
+    Value accept(ExpressionVisitor& visitor) override
+    {
+        return visitor.visit_call_expression(shared_from_this());
+    }
+};
+
 
 struct Binary : Expression, public std::enable_shared_from_this<Binary>
 {

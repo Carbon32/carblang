@@ -7,6 +7,8 @@ struct StmtVisitor
     virtual Value visit_if_stmt(std::shared_ptr<IfStmt> stmt) = 0;
     virtual Value visit_while_stmt(std::shared_ptr<WhileStmt> stmt) = 0;
     virtual Value visit_var_stmt(std::shared_ptr<VarStmt> stmt) = 0;
+    virtual Value visit_function_stmt(std::shared_ptr<FunctionStmt> stmt) = 0;
+    virtual Value visit_return_stmt(std::shared_ptr<ReturnStmt> stmt) = 0;
     virtual ~StmtVisitor() = default;
 };
 
@@ -109,4 +111,33 @@ struct VarStmt : Stmt, public std::enable_shared_from_this<VarStmt>
 
     const Token name;
     const std::shared_ptr<Expression> initializer;
+};
+
+struct FunctionStmt : Stmt, public std::enable_shared_from_this<FunctionStmt>
+{
+    Token name;
+    std::vector<Token> params;
+    std::vector<std::shared_ptr<Stmt>> body;
+
+    FunctionStmt(Token name, std::vector<Token> params, std::vector<std::shared_ptr<Stmt>> body)
+        : name(std::move(name)), params(std::move(params)), body(std::move(body)) {}
+
+    Value accept(StmtVisitor& visitor) override
+    {
+        return visitor.visit_function_stmt(shared_from_this());
+    }
+};
+
+struct ReturnStmt : Stmt, public std::enable_shared_from_this<ReturnStmt>
+{
+    Token keyword;
+    std::shared_ptr<Expression> value;
+
+    ReturnStmt(Token keyword, std::shared_ptr<Expression> value)
+        : keyword(std::move(keyword)), value(std::move(value)) {}
+
+    Value accept(StmtVisitor& visitor) override
+    {
+        return visitor.visit_return_stmt(shared_from_this());
+    }
 };

@@ -1,0 +1,24 @@
+enum class NativeMethod
+{
+    PUSH,
+    POP,
+    LENGTH,
+    IS_EMPTY,
+    CLEAR,
+    CONTAINS,
+    INDEX_OF,
+    JOIN,
+    INSERT,
+    REMOVE_AT,
+    LAST_INDEX_OF,
+    EQUALS,
+    COUNT,
+    SWAP,
+    CONCAT,
+    COPY,
+    SLICE,
+    LAST,
+    FIRST,
+    REVERSE,
+    TRIM
+};

@@ -3,6 +3,7 @@ class Scanner
     public:
         Scanner(std::string src);
         std::vector<Token> scan_tokens();
+        
     private:
       static const std::map<std::string, TokenType> keywords;
       std::string src;

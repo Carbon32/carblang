@@ -35,5 +35,13 @@ enum class OpCode : uint8_t
     JUMP_IF_FALSE,
     LOOP,
 
+    CALL,
+    CLOSURE,
+
+    ARRAY,
+    GET_INDEX,
+    SET_INDEX,
+    GET_PROPERTY,
+
     RETURN
 };

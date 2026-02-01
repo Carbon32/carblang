@@ -8,48 +8,11 @@
 inline bool error_trigger = false;
 inline bool runtime_error_trigger = false;
 
-struct Binary;
-struct Grouping;
-struct Literal;
-struct Unary;
-struct Assign;
-struct Variable;
-struct Logical;
+#include "forward.hpp"
+#include "native.hpp"
+#include "define.hpp"
 
-struct Expression;
-struct ExpressionVisitor;
-
-struct Stmt;
-struct StmtVisitor;
-
-struct BlockStmt;
-struct ExprStmt;
-struct PrintStmt;
-struct PrintLnStmt;
-struct IfStmt;
-struct WhileStmt;
-struct VarStmt;
-
-class Token;
-class RuntimeError;
-
-using Value = std::variant<std::nullptr_t, double, bool, std::string>;
-
-struct Chunk
-{
-    std::vector<uint8_t> code;
-    std::vector<Value> constants;
-    uint8_t add_constant(Value value)
-    {
-        constants.push_back(std::move(value));
-        return static_cast<uint8_t>(constants.size() - 1);
-    }
-
-    void write(uint8_t byte)
-    {
-        code.push_back(byte);
-    }
-};
+std::shared_ptr<BoundMethod> make_native_method(std::shared_ptr<Array> array, NativeMethod method);
 
 #include "vm.hpp"
 #include "error.hpp"
@@ -62,7 +25,6 @@ struct Chunk
 class Carblang
 {
     public:
-
         Carblang();
         void start(int argc, char **argv);
         void run(std::string code);
@@ -99,6 +61,11 @@ class Compiler : public ExpressionVisitor, public StmtVisitor
         Value visit_logical_expression(std::shared_ptr<Logical> expr) override;
         Value visit_assign_expression(std::shared_ptr<Assign> expr) override;
         Value visit_variable_expression(std::shared_ptr<Variable> expr) override;
+        Value visit_call_expression(std::shared_ptr<Call> expr) override;
+        Value visit_array_expression(std::shared_ptr<ArrayExpr> expr) override;
+        Value visit_index_expression(std::shared_ptr<IndexExpr> expr) override;
+        Value visit_index_assign_expression(std::shared_ptr<IndexAssign> expr) override;
+        Value visit_get_expression(std::shared_ptr<Get> expr) override;
 
         Value visit_expression_stmt(std::shared_ptr<ExprStmt> stmt) override;
         Value visit_print_stmt(std::shared_ptr<PrintStmt> stmt) override;
@@ -107,6 +74,8 @@ class Compiler : public ExpressionVisitor, public StmtVisitor
         Value visit_if_stmt(std::shared_ptr<IfStmt> stmt) override;
         Value visit_while_stmt(std::shared_ptr<WhileStmt> stmt) override;
         Value visit_block_stmt(std::shared_ptr<BlockStmt> stmt) override;
+        Value visit_function_stmt(std::shared_ptr<FunctionStmt> stmt) override;
+        Value visit_return_stmt(std::shared_ptr<ReturnStmt> stmt) override;
 
     private:
         void emit(OpCode op);

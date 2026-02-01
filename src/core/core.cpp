@@ -7,18 +7,26 @@ Carblang::Carblang()
 
 void Carblang::start(int argc, char **argv)
 {
-    if(argc > 2)
+    try
     {
-        std::cout << "Usage: carblang <script>" << std::endl;
-        std::exit(64);
+        if(argc > 2)
+        {
+            std::cout << "Usage: carblang <script>" << std::endl;
+            std::exit(64);
+        }
+        else if(argc == 2)
+        {
+            this->handle_file(argv[1]);
+        }
+        else
+        {
+            this->run_instructions();
+        }
     }
-    else if(argc == 2)
+    catch(const std::runtime_error& exception)
     {
-        this->handle_file(argv[1]);
-    }
-    else
-    {
-        this->run_instructions();
+        std::cout << exception.what() << std::endl;
+        exit(6);
     }
 }
 
@@ -84,4 +92,9 @@ std::string Carblang::read_file(char const *file)
     c_file.read(content.data(), content.size());
 
     return content;
+}
+
+std::shared_ptr<BoundMethod> make_native_method(std::shared_ptr<Array> array, NativeMethod method)
+{
+    return std::make_shared<BoundMethod>(array, method);
 }
