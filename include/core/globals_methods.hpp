@@ -94,17 +94,17 @@
     case NativeMethod::ARRAY_INPUT: \
     { \
         if(args.size() != 2) \
-            throw std::runtime_error("input() takes exactly 2 arguments"); \
+            throw std::runtime_error("array_input() takes exactly 2 arguments"); \
     \
         if(!std::holds_alternative<double>(args[0])) \
-            throw std::runtime_error("input() count must be a number"); \
+            throw std::runtime_error("array_input() count must be a number"); \
     \
         if(!std::holds_alternative<std::string>(args[1])) \
-            throw std::runtime_error("input() prompt must be a string"); \
+            throw std::runtime_error("array_input() prompt must be a string"); \
     \
         int count = static_cast<int>(std::get<double>(args[0])); \
         if(count < 0) \
-            throw std::runtime_error("input() count must be >= 0"); \
+            throw std::runtime_error("array_input() count must be >= 0"); \
     \
         const std::string& prompt = std::get<std::string>(args[1]); \
     \

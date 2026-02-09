@@ -215,9 +215,31 @@ Value Compiler::visit_while_stmt(std::shared_ptr<WhileStmt> stmt)
 Value Compiler::visit_logical_expression(std::shared_ptr<Logical> expr)
 {
     expr->left->accept(*this);
-    int short_circuit_jump = emit_jump(expr->operator_token.type == OR ? OpCode::JUMP_IF_TRUE : OpCode::JUMP_IF_FALSE);
-    expr->right->accept(*this);
-    patch_jump(short_circuit_jump);
+
+    if(expr->operator_token.type == OR)
+    {
+        int jump = emit_jump(OpCode::JUMP_IF_TRUE);
+        expr->right->accept(*this);
+
+        int end_jump = emit_jump(OpCode::JUMP);
+
+        patch_jump(jump);
+        emit(OpCode::TRUE);
+
+        patch_jump(end_jump);
+    }
+    else
+    {
+        int jump = emit_jump(OpCode::JUMP_IF_FALSE);
+        expr->right->accept(*this);
+
+        int end_jump = emit_jump(OpCode::JUMP);
+
+        patch_jump(jump);
+        emit(OpCode::FALSE);
+
+        patch_jump(end_jump);
+    }
 
     return {};
 }
@@ -357,6 +379,29 @@ Value Compiler::visit_get_expression(std::shared_ptr<Get> expr)
     uint8_t name = chunk.add_constant(expr->name.lexeme);
     emit(OpCode::GET_PROPERTY);
     emit_byte(name);
+    return {};
+}
+
+Value Compiler::visit_include_stmt(std::shared_ptr<IncludeStmt> stmt)
+{
+    std::ifstream file(stmt->file_name);
+    if(!file.is_open())
+        throw std::runtime_error("Failed to open include file: " + stmt->file_name);
+
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    std::string source = buffer.str();
+
+    Scanner scanner(source);
+    std::vector<Token> tokens = scanner.scan_tokens();
+    Parser parser(tokens);
+    std::vector<std::shared_ptr<Stmt>> stmts = parser.parse();
+
+    for(auto &s : stmts)
+    {
+        s->accept(*this);
+    }
+
     return {};
 }
 

@@ -317,7 +317,7 @@ void VM::run()
             case OpCode::JUMP_IF_FALSE:
             {
                 uint16_t offset = read_short();
-                Value condition = stack.back();
+                Value condition = pop();
                 if(!is_truthy(condition)) ip += offset;
                 break;
             }

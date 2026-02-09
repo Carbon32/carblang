@@ -12,6 +12,7 @@ class Scanner
       int current = 0;
       int line = 1;
 
+      bool match_alpha_string(const std::string& str);
       void scan_single_token();
       void identifier();
       void number();

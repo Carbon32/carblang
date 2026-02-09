@@ -79,6 +79,7 @@ class Compiler : public ExpressionVisitor, public StmtVisitor
         Value visit_block_stmt(std::shared_ptr<BlockStmt> stmt) override;
         Value visit_function_stmt(std::shared_ptr<FunctionStmt> stmt) override;
         Value visit_return_stmt(std::shared_ptr<ReturnStmt> stmt) override;
+        Value visit_include_stmt(std::shared_ptr<IncludeStmt> stmt) override;
 
     private:
         void emit(OpCode op);

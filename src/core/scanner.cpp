@@ -24,6 +24,7 @@ const std::map<std::string, TokenType> Scanner::keywords =
 	{"true",   	  	TokenType::TRUE},
 	{"var",    	  	TokenType::VAR},
 	{"while",  	  	TokenType::WHILE},
+	{"include",		TokenType::INCLUDE}
 };
 
 std::vector<Token> Scanner::scan_tokens()
@@ -89,6 +90,17 @@ void Scanner::scan_single_token()
 			break;
 
 		case '"': this->string(); break;
+		case '#':
+		    if(match_alpha_string("include"))
+		    {
+		        add_token(INCLUDE);
+		    }
+		    else
+		    {
+		        error(line, "Unexpected \"#\" character");
+		    }
+		    break;
+
 
 		default:
 			if(this->is_digit(c))
@@ -105,6 +117,14 @@ void Scanner::scan_single_token()
 			}
 			break;
 	};
+}
+
+bool Scanner::match_alpha_string(const std::string& str) {
+    for(size_t i = 0; i < str.length(); ++i) {
+        if(peek() != str[i]) return false;
+        advance();
+    }
+    return true;
 }
 
 void Scanner::identifier()

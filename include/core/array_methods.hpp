@@ -5,12 +5,15 @@
 #define NATIVE_ARRAY_PUSH \
     case NativeMethod::PUSH: \
     { \
+        if(args.empty()) \
+            throw std::runtime_error("push() needs at least one argument"); \
+    \
         auto& array = std::get<std::shared_ptr<Array>>(method->receiver); \
         for(auto& v : args) \
         { \
             array->elements.push_back(v); \
         } \
-        push(nullptr); \
+        push(true); \
         break; \
     }
 
@@ -63,7 +66,7 @@
     \
         auto& array = std::get<std::shared_ptr<Array>>(method->receiver); \
         array->elements.clear(); \
-        push(nullptr); \
+        push(true); \
         break; \
     }
 
@@ -87,7 +90,7 @@
     { \
         auto& array = std::get<std::shared_ptr<Array>>(method->receiver); \
         if(args.size() != 1) \
-            throw std::runtime_error("index_of() expects 1 argument"); \
+            throw std::runtime_error("first_index() expects 1 argument"); \
     \
         int idx = -1; \
         for(size_t i = 0; i < array->elements.size(); ++i) \
@@ -143,7 +146,7 @@
             args[1] \
         ); \
     \
-        push(nullptr); \
+        push(true); \
         break; \
     }
 
@@ -174,11 +177,11 @@
     case NativeMethod::REVERSE: \
     { \
         if(!args.empty()) \
-            throw std::runtime_error("clear() takes no arguments"); \
+            throw std::runtime_error("reverse() takes no arguments"); \
     \
         auto& array = std::get<std::shared_ptr<Array>>(method->receiver); \
         std::reverse(array->elements.begin(), array->elements.end()); \
-        push(nullptr); \
+        push(true); \
         break; \
     }
 
@@ -186,7 +189,7 @@
     case NativeMethod::FIRST: \
     { \
         if(!args.empty()) \
-            throw std::runtime_error("clear() takes no arguments"); \
+            throw std::runtime_error("first() takes no arguments"); \
     \
         auto& array = std::get<std::shared_ptr<Array>>(method->receiver); \
         if(array->elements.empty()) push(nullptr); \
@@ -198,7 +201,7 @@
     case NativeMethod::LAST: \
     { \
         if(!args.empty()) \
-            throw std::runtime_error("clear() takes no arguments"); \
+            throw std::runtime_error("last() takes no arguments"); \
     \
         auto& array = std::get<std::shared_ptr<Array>>(method->receiver); \
         if(array->elements.empty()) push(nullptr); \
@@ -235,7 +238,7 @@
     case NativeMethod::COPY: \
     { \
         if(!args.empty()) \
-            throw std::runtime_error("clear() takes no arguments"); \
+            throw std::runtime_error("copy() takes no arguments"); \
     \
         auto& array = std::get<std::shared_ptr<Array>>(method->receiver); \
         auto new_array = std::make_shared<Array>(); \
@@ -281,7 +284,7 @@
         std::swap(array->elements[i], \
                   array->elements[j]); \
     \
-        push(nullptr); \
+        push(true); \
         break; \
     }
 
@@ -450,6 +453,6 @@
         if((size_t) n < array->elements.size()) \
             array->elements.resize(n); \
     \
-        push(nullptr); \
+        push(true); \
         break; \
     }

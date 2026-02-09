@@ -24,6 +24,7 @@ std::shared_ptr<Stmt> Parser::declaration()
     {
         if(this->match(FUNCTION)) return function_declaration();
         if(this->match(VAR)) return this->var_declaration();
+        if(this->match(INCLUDE)) return include_statement();
         return this->statement();
     }
     catch(ParseError error)
@@ -45,6 +46,13 @@ std::shared_ptr<Stmt> Parser::statement()
     return this->expression_statement();
 }
 
+std::shared_ptr<Stmt> Parser::include_statement()
+{
+    Token file_token = consume(STRING, "Expected a file name after #include");
+    if(match(SEMICOLON)) {}
+    return std::make_shared<IncludeStmt>(std::get<std::string>(file_token.literal));
+}
+
 std::shared_ptr<Stmt> Parser::return_statement()
 {
     Token keyword = previous();
@@ -55,7 +63,6 @@ std::shared_ptr<Stmt> Parser::return_statement()
     consume(SEMICOLON, "Expected \";\" after return value");
     return std::make_shared<ReturnStmt>(keyword, value);
 }
-
 
 std::shared_ptr<Stmt> Parser::print_statement()
 {

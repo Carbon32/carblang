@@ -9,6 +9,7 @@ struct StmtVisitor
     virtual Value visit_var_stmt(std::shared_ptr<VarStmt> stmt) = 0;
     virtual Value visit_function_stmt(std::shared_ptr<FunctionStmt> stmt) = 0;
     virtual Value visit_return_stmt(std::shared_ptr<ReturnStmt> stmt) = 0;
+    virtual Value visit_include_stmt(std::shared_ptr<IncludeStmt> stmt) = 0;
     virtual ~StmtVisitor() = default;
 };
 
@@ -16,6 +17,19 @@ struct Stmt
 {
     virtual Value accept(StmtVisitor& visitor) = 0;
 };
+
+struct IncludeStmt : Stmt, public std::enable_shared_from_this<IncludeStmt>
+{
+    IncludeStmt(std::string file_name) : file_name(std::move(file_name)) {}
+
+    Value accept(StmtVisitor& visitor) override
+    {
+        return visitor.visit_include_stmt(shared_from_this());
+    }
+
+    const std::string file_name;
+};
+
 
 struct BlockStmt : Stmt, public std::enable_shared_from_this<BlockStmt>
 {

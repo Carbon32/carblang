@@ -17,6 +17,7 @@ struct ExpressionVisitor;
 struct Stmt;
 struct StmtVisitor;
 
+struct IncludeStmt;
 struct BlockStmt;
 struct ExprStmt;
 struct PrintStmt;
