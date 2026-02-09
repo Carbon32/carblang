@@ -43,6 +43,7 @@ void Carblang::run(std::string code)
     Chunk chunk = compiler.compile(statements);
 
     VM vm;
+    vm.init_globals();
     vm.interpret(chunk);
 }
 
@@ -94,7 +95,8 @@ std::string Carblang::read_file(char const *file)
     return content;
 }
 
-std::shared_ptr<BoundMethod> make_native_method(std::shared_ptr<Array> array, NativeMethod method)
+std::shared_ptr<BoundMethod> make_native_method(Value value, NativeMethod method)
 {
-    return std::make_shared<BoundMethod>(array, method);
+    return std::make_shared<BoundMethod>(std::move(value), method);
 }
+

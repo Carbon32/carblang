@@ -1,24 +1,38 @@
-enum class NativeMethod
-{
-    PUSH,
-    POP,
-    LENGTH,
-    IS_EMPTY,
-    CLEAR,
-    CONTAINS,
-    INDEX_OF,
-    JOIN,
-    INSERT,
-    REMOVE_AT,
-    LAST_INDEX_OF,
-    EQUALS,
-    COUNT,
-    SWAP,
-    CONCAT,
-    COPY,
-    SLICE,
-    LAST,
-    FIRST,
-    REVERSE,
-    TRIM
+enum class NativeMethod {
+    PUSH, POP, LENGTH, IS_EMPTY, CLEAR, CONTAINS, INDEX_OF,
+    INSERT, REMOVE_AT, JOIN, REVERSE, FIRST, LAST, SLICE,
+    COPY, CONCAT, SWAP, COUNT, EQUALS, LAST_INDEX_OF, TRIM,
+    MIN, MAX, SUM, AVERAGE, FILL, INIT,
+
+    TO_STRING, POW, SQRT, FACT,
+
+    TO_INT, FLOOR, CEIL,
+
+    BOOL_TO_INT,
+
+    TO_NUMBER,
+    UPPER,
+    LOWER,
+    CAPITALIZE,
+    SWAPCASE,
+    FIND,
+    FIND_LAST,
+    STR_FIRST,
+    STR_LAST,
+    STR_IS_EMPTY,
+    STR_LENGTH,
+    STARTS_WITH,
+    ENDS_WITH,
+    IS_NUMBER,
+    IS_SPACE,
+    IS_ALL_SPACES,
+    REPLACE,
+    STR_TRIM,
+    TO_ARRAY,
+    STR_COUNT,
+    STR_SLICE,
+    
+    INPUT, RAND, RANDINT, ARRAY_INPUT,
+
+    TYPE
 };

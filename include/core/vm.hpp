@@ -8,6 +8,7 @@ class VM
 
 public:
     void interpret(Chunk& new_chunk);
+    void init_globals();
 
 private:
     void run();

@@ -34,18 +34,19 @@ struct CallFrame
 struct Function
 {
     std::string name;
-    int arity;
+    size_t arity;
     Chunk chunk;
 
-    Function(std::string name, int arity, Chunk chunk) : name(std::move(name)), arity(arity), chunk(std::move(chunk)) {}
+    Function(std::string name, size_t arity, Chunk chunk) : name(std::move(name)), arity(arity), chunk(std::move(chunk)) {}
 };
 
 struct BoundMethod
 {
-    std::shared_ptr<Array> receiver;
+    Value receiver;
     NativeMethod method;
 
-    BoundMethod(std::shared_ptr<Array> receiver, NativeMethod method) : receiver(std::move(receiver)), method(method) {}
+    BoundMethod(Value receiver, NativeMethod method)
+        : receiver(std::move(receiver)), method(method) {}
 };
 
 struct Array

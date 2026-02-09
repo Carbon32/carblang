@@ -1,5 +1,15 @@
 #include "core/core.hpp"
 
+void VM::init_globals()
+{
+    globals["input"] = make_native_method(nullptr, NativeMethod::INPUT);
+    globals["fill"] = make_native_method(nullptr, NativeMethod::FILL);
+    globals["init"] = make_native_method(nullptr, NativeMethod::INIT);
+    globals["array_input"] = make_native_method(nullptr, NativeMethod::ARRAY_INPUT);
+    globals["random"] = make_native_method(nullptr, NativeMethod::RAND);
+    globals["random_integer"] = make_native_method(nullptr, NativeMethod::RANDINT);
+}
+
 void VM::interpret(Chunk& new_chunk)
 {
     chunk = &new_chunk;
@@ -30,23 +40,154 @@ void VM::run()
                 Value b = pop();
                 Value a = pop();
 
-                if(!std::holds_alternative<double>(a) || !std::holds_alternative<double>(b))
-                        throw std::runtime_error("Operands must be numbers");
+                if(opcode == OpCode::ADD &&
+                    (std::holds_alternative<std::string>(a) ||
+                     std::holds_alternative<std::string>(b)))
+                {
+                    stack.push_back(stringify(a) + stringify(b));
+                    break;
+                }
+
+                if(opcode == OpCode::ADD &&
+                    std::holds_alternative<std::shared_ptr<Array>>(a) &&
+                    std::holds_alternative<std::shared_ptr<Array>>(b))
+                {
+                    auto left  = std::get<std::shared_ptr<Array>>(a);
+                    auto right = std::get<std::shared_ptr<Array>>(b);
+
+                    auto result = std::make_shared<Array>();
+                    result->elements.reserve(
+                        left->elements.size() + right->elements.size()
+                    );
+
+                    result->elements.insert(
+                        result->elements.end(),
+                        left->elements.begin(),
+                        left->elements.end()
+                    );
+
+                    result->elements.insert(
+                        result->elements.end(),
+                        right->elements.begin(),
+                        right->elements.end()
+                    );
+
+                    stack.push_back(result);
+                    break;
+                }
+
+                if(std::holds_alternative<std::string>(a) && std::holds_alternative<double>(b))
+                {
+                    if(opcode == OpCode::MULTIPLY)
+                    {
+                        auto s = std::get<std::string>(a);
+                        double n = std::get<double>(b);
+
+                        if(std::floor(n) != n)
+                            throw std::runtime_error("Cannot multiply string by non-integer number");
+
+                        if(n < 0) n = 0;
+                        std::string result;
+                        result.reserve(s.size() * static_cast<size_t>(n));
+                        for(int i = 0; i < (int)n; ++i)
+                            result += s;
+
+                        stack.push_back(result);
+                        break;
+                    }
+                }
+
+                if(std::holds_alternative<double>(a) && std::holds_alternative<std::string>(b))
+                {
+                    if(opcode == OpCode::MULTIPLY)
+                    {
+                        double n = std::get<double>(a);
+                        auto s = std::get<std::string>(b);
+
+                        if(std::floor(n) != n)
+                            throw std::runtime_error("Cannot multiply string by non-integer number");
+
+                        if(n < 0) n = 0;
+                        std::string result;
+                        result.reserve(s.size() * static_cast<size_t>(n));
+                        for(int i = 0; i < (int) n; ++i)
+                            result += s;
+
+                        stack.push_back(result);
+                        break;
+                    }
+                }
+
+                if(std::holds_alternative<std::shared_ptr<Array>>(a) &&
+                   std::holds_alternative<double>(b))
+                {
+                    auto arr = std::get<std::shared_ptr<Array>>(a);
+                    double scalar = std::get<double>(b);
+
+                    auto result = std::make_shared<Array>();
+                    result->elements.reserve(arr->elements.size());
+
+                    for(const auto& v : arr->elements)
+                    {
+                        if(!std::holds_alternative<double>(v))
+                            throw std::runtime_error("Array must contain only numbers");
+
+                        double x = std::get<double>(v);
+                        double r;
+
+                        switch(opcode)
+                        {
+                            case OpCode::ADD: r = x + scalar; break;
+                            case OpCode::SUBTRACT: r = x - scalar; break;
+                            case OpCode::MULTIPLY: r = x * scalar; break;
+                            case OpCode::DIVIDE:
+                                if(scalar == 0)
+                                    throw std::runtime_error("Division by zero");
+                                r = x / scalar;
+                                break;
+                            default: r = 0;
+                        }
+
+                        result->elements.push_back(r);
+                    }
+
+                    stack.push_back(result);
+                    break;
+                }
+
+                if(!std::holds_alternative<double>(a) ||
+                    !std::holds_alternative<double>(b))
+                {
+                    throw std::runtime_error("Operands must be numbers");
+                }
 
                 double x = std::get<double>(a);
                 double y = std::get<double>(b);
 
-                switch(opcode)
+                switch (opcode)
                 {
-                    case OpCode::ADD: stack.push_back(x + y); break;
-                    case OpCode::SUBTRACT: stack.push_back(x - y); break;
-                    case OpCode::MULTIPLY: stack.push_back(x * y); break;
+                    case OpCode::ADD:
+                        stack.push_back(x + y);
+                        break;
+
+                    case OpCode::SUBTRACT:
+                        stack.push_back(x - y);
+                        break;
+
+                    case OpCode::MULTIPLY:
+                        stack.push_back(x * y);
+                        break;
+
                     case OpCode::DIVIDE:
-                        if(y == 0) throw std::runtime_error("Division by zero");
+                        if (y == 0)
+                            throw std::runtime_error("Division by zero");
                         stack.push_back(x / y);
                         break;
-                    default: break;
+
+                    default:
+                        break;
                 }
+
                 break;
             }
 
@@ -158,7 +299,6 @@ void VM::run()
                 break;
             }
 
-
             case OpCode::JUMP:
             {
                 uint16_t offset = read_short();
@@ -201,7 +341,6 @@ void VM::run()
                 break;
             }
 
-
             case OpCode::CALL:
             {
                 uint8_t arg_count = *ip++;
@@ -218,317 +357,74 @@ void VM::run()
                     std::vector<Value> args(stack.begin() + local_index + 1, stack.begin() + local_index + 1 + arg_count);
                     stack.erase(stack.begin() + local_index, stack.begin() + local_index + 1 + arg_count);
 
-
                     switch(method->method)
                     {
-                            case NativeMethod::PUSH:
-                                for(auto& v : args)
-                                {
-                                    method->receiver->elements.push_back(v);
-                                }
-                                push(nullptr);
-                                break;
+                        NATIVE_GLOBALS_INPUT
+                        NATIVE_GLOBALS_RAND
+                        NATIVE_GLOBALS_RANDINT
+                        NATIVE_GLOBALS_FILL
+                        NATIVE_GLOBALS_INIT
+                        NATIVE_GLOBALS_ARRAY_INPUT
 
-                            case NativeMethod::POP:
-                                if(method->receiver->elements.empty())
-                                {
-                                    push(nullptr);
-                                }
-                                else
-                                {
-                                    push(method->receiver->elements.back());
-                                    method->receiver->elements.pop_back();
-                                }
-                                break;
+                        NATIVE_ARRAY_PUSH
+                        NATIVE_ARRAY_POP
+                        NATIVE_ARRAY_LENGTH
+                        NATIVE_ARRAY_IS_EMPTY
+                        NATIVE_ARRAY_CLEAR
+                        NATIVE_ARRAY_CONTAINS
+                        NATIVE_ARRAY_INDEX_OF
+                        NATIVE_ARRAY_JOIN
+                        NATIVE_ARRAY_INSERT
+                        NATIVE_ARRAY_REMOVE_AT
+                        NATIVE_ARRAY_REVERSE
+                        NATIVE_ARRAY_FIRST
+                        NATIVE_ARRAY_LAST
+                        NATIVE_ARRAY_SLICE
+                        NATIVE_ARRAY_COPY
+                        NATIVE_ARRAY_CONCAT
+                        NATIVE_ARRAY_SWAP
+                        NATIVE_ARRAY_COUNT
+                        NATIVE_ARRAY_EQUALS
+                        NATIVE_ARRAY_LAST_INDEX_OF
+                        NATIVE_ARRAY_SUM
+                        NATIVE_ARRAY_MIN
+                        NATIVE_ARRAY_MAX
+                        NATIVE_ARRAY_AVERAGE
+                        NATIVE_ARRAY_TRIM
 
-                            case NativeMethod::LENGTH:
-                                if(!args.empty())
-                                    throw std::runtime_error("length() takes no arguments");
-                                push((double)method->receiver->elements.size());
-                                break;
+                        NATIVE_PRIMITIVE_TYPE
+                        NATIVE_PRIMITIVE_TO_STRING
+                        NATIVE_PRIMITIVE_POW
+                        NATIVE_PRIMITIVE_SQRT
+                        NATIVE_PRIMITIVE_FACT
+                        NATIVE_PRIMITIVE_TO_INT
+                        NATIVE_PRIMITIVE_BOOL_TO_INT
+                        NATIVE_PRIMITIVE_FLOOR
+                        NATIVE_PRIMITIVE_CEIL
+                        NATIVE_PRIMITIVE_UPPER
+                        NATIVE_PRIMITIVE_LOWER
+                        NATIVE_PRIMITIVE_CAPITALIZE
+                        NATIVE_PRIMITIVE_SWAPCASE
+                        NATIVE_PRIMITIVE_FIND
+                        NATIVE_PRIMITIVE_FIND_LAST
+                        NATIVE_PRIMITIVE_STR_FIRST
+                        NATIVE_PRIMITIVE_STR_LAST
+                        NATIVE_PRIMITIVE_STARTS_WITH
+                        NATIVE_PRIMITIVE_ENDS_WITH
+                        NATIVE_PRIMITIVE_IS_NUMBER
+                        NATIVE_PRIMITIVE_STR_TRIM
+                        NATIVE_PRIMITIVE_TO_ARRAY
+                        NATIVE_PRIMITIVE_REPLACE
+                        NATIVE_PRIMITIVE_IS_SPACE
+                        NATIVE_PRIMITIVE_IS_ALL_SPACES
+                        NATIVE_PRIMITIVE_STR_IS_EMPTY
+                        NATIVE_PRIMITIVE_STR_LENGTH
+                        NATIVE_PRIMITIVE_STR_SLICE
+                        NATIVE_PRIMITIVE_STR_COUNT
+                        NATIVE_PRIMITIVE_TO_NUMBER
 
-                            case NativeMethod::IS_EMPTY:
-                                push(method->receiver->elements.empty());
-                                break;
-
-                            case NativeMethod::CLEAR:
-                                method->receiver->elements.clear();
-                                push(nullptr);
-                                break;
-
-                            case NativeMethod::CONTAINS:
-                            {
-                                if(args.size() != 1)
-                                    throw std::runtime_error("contains() expects 1 argument");
-
-                                bool found = false;
-                                for(auto& v : method->receiver->elements)
-                                    if (v == args[0]) { found = true; break; }
-
-                                push(found);
-                                break;
-                            }
-
-                            case NativeMethod::INDEX_OF:
-                            {
-                                if(args.size() != 1)
-                                    throw std::runtime_error("index_of() expects 1 argument");
-
-                                int idx = -1;
-                                for(size_t i = 0; i < method->receiver->elements.size(); ++i)
-                                {
-                                    if(method->receiver->elements[i] == args[0]) {
-                                        idx = (int)i;
-                                        break;
-                                    }
-                                }
-
-                                push((double)idx);
-                                break;
-                            }
-
-                            case NativeMethod::JOIN:
-                            {
-                                std::string sep = args.empty()
-                                    ? ","
-                                    : std::get<std::string>(args[0]);
-
-                                std::ostringstream out;
-                                const auto& elems = method->receiver->elements;
-
-                                for(size_t i = 0; i < elems.size(); ++i)
-                                {
-                                    out << stringify(elems[i]);
-                                    if(i + 1 < elems.size())
-                                        out << sep;
-                                }
-
-                                push(out.str());
-                                break;
-                            }
-
-                            case NativeMethod::INSERT:
-                            {
-                                if(args.size() != 2)
-                                    throw std::runtime_error("insert() expects 2 arguments");
-
-                                int idx = (int)std::get<double>(args[0]);
-                                if(idx < 0 || idx > method->receiver->elements.size())
-                                    throw std::runtime_error("Index out of bounds");
-
-                                method->receiver->elements.insert(
-                                    method->receiver->elements.begin() + idx,
-                                    args[1]
-                                );
-
-                                push(nullptr);
-                                break;
-                            }
-
-                            case NativeMethod::REMOVE_AT:
-                            {
-                                if(args.size() != 1)
-                                    throw std::runtime_error("remove() expects 1 argument");
-
-                                int idx = (int)std::get<double>(args[0]);
-                                if(idx < 0 || idx >= method->receiver->elements.size())
-                                {
-                                    push(nullptr);
-                                    break;
-                                }
-
-                                Value v = method->receiver->elements[idx];
-                                method->receiver->elements.erase(
-                                    method->receiver->elements.begin() + idx
-                                );
-
-                                push(v);
-                                break;
-                            }
-
-                            case NativeMethod::REVERSE:
-                            {
-                                if(!args.empty())
-                                    throw std::runtime_error("reverse() takes no arguments");
-
-                                std::reverse(method->receiver->elements.begin(), method->receiver->elements.end());
-                                push(nullptr);
-                                break;
-                            }
-
-                            case NativeMethod::FIRST:
-                            {
-                                if(!args.empty())
-                                    throw std::runtime_error("first() takes no arguments");
-
-                                if(method->receiver->elements.empty()) push(nullptr);
-                                else push(method->receiver->elements.front());
-                                break;
-                            }
-
-                            case NativeMethod::LAST:
-                            {
-                                if(!args.empty())
-                                    throw std::runtime_error("last() takes no arguments");
-
-                                if(method->receiver->elements.empty()) push(nullptr);
-                                else push(method->receiver->elements.back());
-                                break;
-                            }
-
-                            case NativeMethod::SLICE:
-                            {
-                                if(args.size() < 1 || args.size() > 2)
-                                    throw std::runtime_error("slice() expects 1 or 2 arguments");
-
-                                int start = (int)std::get<double>(args[0]);
-                                int end = args.size() == 2 ? (int)std::get<double>(args[1]) : (int)method->receiver->elements.size();
-
-                                if(start < 0) start = 0;
-                                if(end > (int)method->receiver->elements.size()) end = (int)method->receiver->elements.size();
-                                if(end < start) end = start;
-
-                                auto new_array = std::make_shared<Array>();
-                                new_array->elements.insert(
-                                    new_array->elements.begin(),
-                                    method->receiver->elements.begin() + start,
-                                    method->receiver->elements.begin() + end
-                                );
-
-                                push(new_array);
-                                break;
-                            }
-
-                            case NativeMethod::COPY:
-                            {
-                                if(!args.empty())
-                                    throw std::runtime_error("copy() takes no arguments");
-
-                                auto new_array = std::make_shared<Array>();
-                                new_array->elements = method->receiver->elements;
-                                push(new_array);
-                                break;
-                            }
-
-                            case NativeMethod::CONCAT:
-                            {
-                                if(args.size() != 1)
-                                    throw std::runtime_error("concat() expects 1 argument");
-
-                                if(!std::holds_alternative<std::shared_ptr<Array>>(args[0]))
-                                    throw std::runtime_error("concat() argument must be an array");
-
-                                auto other = std::get<std::shared_ptr<Array>>(args[0]);
-                                auto new_array = std::make_shared<Array>();
-                                new_array->elements = method->receiver->elements;
-                                new_array->elements.insert(new_array->elements.end(), other->elements.begin(), other->elements.end());
-
-                                push(new_array);
-                                break;
-                            }
-
-                            case NativeMethod::SWAP:
-                            {
-                                if(args.size() != 2)
-                                    throw std::runtime_error("swap() expects 2 arguments");
-
-                                int i = (int)std::get<double>(args[0]);
-                                int j = (int)std::get<double>(args[1]);
-
-                                if(i < 0 || j < 0 ||
-                                    i >= method->receiver->elements.size() ||
-                                    j >= method->receiver->elements.size())
-                                    throw std::runtime_error("Index out of bounds");
-
-                                std::swap(method->receiver->elements[i],
-                                          method->receiver->elements[j]);
-
-                                push(nullptr);
-                                break;
-                            }
-
-                            case NativeMethod::COUNT:
-                            {
-                                if(args.size() != 1)
-                                    throw std::runtime_error("count() expects 1 argument");
-
-                                int c = 0;
-                                for(auto& v : method->receiver->elements)
-                                    if(v == args[0]) c++;
-
-                                push((double)c);
-                                break;
-                            }
-
-                            case NativeMethod::EQUALS:
-                            {
-                                if(args.size() != 1 ||
-                                    !std::holds_alternative<std::shared_ptr<Array>>(args[0]))
-                                {
-                                    push(false);
-                                    break;
-                                }
-
-                                auto other = std::get<std::shared_ptr<Array>>(args[0]);
-                                auto& a = method->receiver->elements;
-                                auto& b = other->elements;
-                                bool res = true;
-
-                                if(a.size() != b.size()) {
-                                    res = false;
-                                    break;
-                                }
-
-                                for(size_t i = 0; i < a.size(); ++i) {
-                                    if(res != false)
-                                    {
-                                        if(!value_shallow_equal(a[i], b[i])) {
-                                            res = false;
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                push(res);
-                                break;
-                            }
-
-
-                           case NativeMethod::LAST_INDEX_OF:
-                            {
-                                if(args.size() != 1)
-                                    throw std::runtime_error("last_index() expects 1 argument");
-
-                
-                                int idx = -1;
-                                for(size_t i = method->receiver->elements.size() - 1; i >= 0; --i) {
-                                    if(method->receiver->elements[i] == args[0]) {
-                                        idx = (int) i;
-                                        break;
-                                    }
-                                }
-
-                                push((double)idx);
-                                break;
-                            }
-
-
-                            case NativeMethod::TRIM:
-                            {
-                                if(args.size() != 1)
-                                    throw std::runtime_error("trim() expects 1 argument");
-
-                                int n = (int)std::get<double>(args[0]);
-                                if (n < 0) n = 0;
-                                if (n < method->receiver->elements.size())
-                                    method->receiver->elements.resize(n);
-
-                                push(nullptr);
-                                break;
-                            }
-
-                            default:
-                                throw std::runtime_error("Unrecognized method");
+                        default:
+                            throw std::runtime_error("Unrecognized method");
                     }
 
                     continue;
@@ -588,21 +484,35 @@ void VM::run()
             case OpCode::GET_INDEX:
             {
                 Value index_val = pop();
-                Value array_val = pop();
-
-                if(!std::holds_alternative<std::shared_ptr<Array>>(array_val))
-                    throw std::runtime_error("Can only index arrays");
+                Value container_val = pop();
 
                 if(!std::holds_alternative<double>(index_val))
-                    throw std::runtime_error("Array index must be a number");
+                    throw std::runtime_error("Index must be a number");
 
-                auto array = std::get<std::shared_ptr<Array>>(array_val);
                 int index = static_cast<int>(std::get<double>(index_val));
 
-                if(index < 0 || index >= (int)array->elements.size())
-                    throw std::runtime_error("Array index out of bounds");
+                if(std::holds_alternative<std::shared_ptr<Array>>(container_val)) {
+                    auto array = std::get<std::shared_ptr<Array>>(container_val);
 
-                push(array->elements[index]);
+                    if(index < 0 || index >= (int)array->elements.size())
+                        throw std::runtime_error("Array index out of bounds");
+
+                    push(array->elements[index]);
+                }
+                else if(std::holds_alternative<std::string>(container_val)) {
+                    const auto& str = std::get<std::string>(container_val);
+
+                    if(index < 0 || index >= (int)str.size())
+                        throw std::runtime_error("String index out of bounds");
+
+                    std::string ch(1, str[index]);
+                    push(ch);
+                }
+                else
+                {
+                    throw std::runtime_error("Can only index arrays or strings");
+                }
+
                 break;
             }
 
@@ -634,7 +544,56 @@ void VM::run()
                 std::string name = std::get<std::string>(read_constant());
                 Value object = pop();
 
+                if(name == "type")
+                {
+                    push(make_native_method(object, NativeMethod::TYPE));
+                    break;
+                }
+
+                if(std::holds_alternative<bool>(object))
+                {
+                    if(name == "to_int") { push(make_native_method(object, NativeMethod::BOOL_TO_INT)); break; }
+                    if(name == "to_string") { push(make_native_method(object, NativeMethod::TO_STRING)); break; }
+                }
+
+                if(std::holds_alternative<double>(object))
+                {
+                    if(name == "to_string") { push(make_native_method(object, NativeMethod::TO_STRING)); break; }
+                    if(name == "pow") { push(make_native_method(object, NativeMethod::POW)); break; }
+                    if(name == "sqrt") { push(make_native_method(object, NativeMethod::SQRT)); break; }
+                    if(name == "fact") { push(make_native_method(object, NativeMethod::FACT)); break;}
+                    if(name == "to_int") { push(make_native_method(object, NativeMethod::TO_INT)); break; }
+                    if(name == "floor") { push(make_native_method(object, NativeMethod::FLOOR)); break; }
+                    if(name == "ceil") { push(make_native_method(object, NativeMethod::CEIL)); break; }
+                }
+
+                if(std::holds_alternative<std::string>(object))
+                {
+                    if(name == "to_number") { push(make_native_method(object, NativeMethod::TO_NUMBER)); break; }
+                    if(name == "upper") { push(make_native_method(object, NativeMethod::UPPER)); break; }
+                    if(name == "lower") { push(make_native_method(object, NativeMethod::LOWER)); break; }
+                    if(name == "capitalize") { push(make_native_method(object, NativeMethod::CAPITALIZE)); break; }
+                    if(name == "swap") { push(make_native_method(object, NativeMethod::SWAPCASE)); break; }
+                    if(name == "find") { push(make_native_method(object, NativeMethod::FIND)); break; }
+                    if(name == "find_last") { push(make_native_method(object, NativeMethod::FIND_LAST)); break; }
+                    if(name == "first") { push(make_native_method(object, NativeMethod::STR_FIRST)); break; }
+                    if(name == "last") { push(make_native_method(object, NativeMethod::STR_LAST)); break; }
+                    if(name == "starts_with") { push(make_native_method(object, NativeMethod::STARTS_WITH)); break; }
+                    if(name == "ends_with") { push(make_native_method(object, NativeMethod::ENDS_WITH)); break; }
+                    if(name == "is_number") { push(make_native_method(object, NativeMethod::IS_NUMBER)); break; }
+                    if(name == "is_space") { push(make_native_method(object, NativeMethod::IS_SPACE)); break; }
+                    if(name == "is_all_spaces") { push(make_native_method(object, NativeMethod::IS_ALL_SPACES)); break; }
+                    if(name == "replace") { push(make_native_method(object, NativeMethod::REPLACE)); break; }
+                    if(name == "trim") { push(make_native_method(object, NativeMethod::STR_TRIM)); break; }
+                    if(name == "to_array") { push(make_native_method(object, NativeMethod::TO_ARRAY)); break; }
+                    if(name == "is_empty") { push(make_native_method(object, NativeMethod::STR_IS_EMPTY)); break; }
+                    if(name == "length") { push(make_native_method(object, NativeMethod::STR_LENGTH)); break; }
+                    if(name == "count") { push(make_native_method(object, NativeMethod::STR_COUNT)); break; }
+                    if(name == "slice") { push(make_native_method(object, NativeMethod::STR_SLICE)); break; }
+                }
+
                 // Eh, make this a little better later on
+                // I will make this one-liners later
                 if(std::holds_alternative<std::shared_ptr<Array>>(object))
                 {
                     auto array = std::get<std::shared_ptr<Array>>(object);
@@ -764,6 +723,11 @@ void VM::run()
                         push(make_native_method(array, NativeMethod::TRIM));
                         break;
                     }
+
+                    if(name == "sum") { push(make_native_method(array, NativeMethod::SUM)); break; }
+                    if(name == "min") { push(make_native_method(array, NativeMethod::MIN)); break; }
+                    if(name == "max") { push(make_native_method(array, NativeMethod::MAX)); break; }
+                    if(name == "average") { push(make_native_method(array, NativeMethod::AVERAGE)); break; }
                 }
 
                 throw std::runtime_error("Undefined method \"" + name + "\"");
@@ -780,7 +744,6 @@ void VM::run()
             case OpCode::FALSE:
                 stack.push_back(false);
                 break;
-
 
             default:
                 throw std::runtime_error("Unknown opcode");
@@ -833,7 +796,6 @@ bool VM::value_shallow_equal(const Value& x, const Value& y)
 
     return x == y;
 }
-
 
 void VM::print_value(const Value& value)
 {

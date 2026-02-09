@@ -11,8 +11,11 @@ inline bool runtime_error_trigger = false;
 #include "forward.hpp"
 #include "native.hpp"
 #include "define.hpp"
+#include "array_methods.hpp"
+#include "primitive_methods.hpp"
+#include "globals_methods.hpp"
 
-std::shared_ptr<BoundMethod> make_native_method(std::shared_ptr<Array> array, NativeMethod method);
+std::shared_ptr<BoundMethod> make_native_method(Value value, NativeMethod method);
 
 #include "vm.hpp"
 #include "error.hpp"
