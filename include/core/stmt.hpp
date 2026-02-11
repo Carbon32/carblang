@@ -10,12 +10,31 @@ struct StmtVisitor
     virtual Value visit_function_stmt(std::shared_ptr<FunctionStmt> stmt) = 0;
     virtual Value visit_return_stmt(std::shared_ptr<ReturnStmt> stmt) = 0;
     virtual Value visit_include_stmt(std::shared_ptr<IncludeStmt> stmt) = 0;
+    virtual Value visit_class_stmt(std::shared_ptr<ClassStmt> stmt) = 0;
     virtual ~StmtVisitor() = default;
 };
 
 struct Stmt
 {
     virtual Value accept(StmtVisitor& visitor) = 0;
+};
+
+struct ClassStmt : Stmt, public std::enable_shared_from_this<ClassStmt> {
+    Token name;
+    std::shared_ptr<Variable> super_class;
+    std::vector<std::shared_ptr<FunctionStmt>> methods;
+
+    ClassStmt(Token name,
+              std::shared_ptr<Variable> super_class,
+              std::vector<std::shared_ptr<FunctionStmt>> methods)
+        : name(std::move(name)),
+          super_class(std::move(super_class)),
+          methods(std::move(methods)) {}
+
+    Value accept(StmtVisitor& visitor) override
+    {
+        return visitor.visit_class_stmt(shared_from_this());
+    }
 };
 
 struct IncludeStmt : Stmt, public std::enable_shared_from_this<IncludeStmt>
@@ -29,7 +48,6 @@ struct IncludeStmt : Stmt, public std::enable_shared_from_this<IncludeStmt>
 
     const std::string file_name;
 };
-
 
 struct BlockStmt : Stmt, public std::enable_shared_from_this<BlockStmt>
 {
@@ -132,15 +150,18 @@ struct FunctionStmt : Stmt, public std::enable_shared_from_this<FunctionStmt>
     Token name;
     std::vector<Token> params;
     std::vector<std::shared_ptr<Stmt>> body;
+    bool is_method = false;
 
     FunctionStmt(Token name, std::vector<Token> params, std::vector<std::shared_ptr<Stmt>> body)
         : name(std::move(name)), params(std::move(params)), body(std::move(body)) {}
 
     Value accept(StmtVisitor& visitor) override
     {
+        if(is_method) return {};
         return visitor.visit_function_stmt(shared_from_this());
     }
 };
+
 
 struct ReturnStmt : Stmt, public std::enable_shared_from_this<ReturnStmt>
 {

@@ -69,6 +69,9 @@ class Compiler : public ExpressionVisitor, public StmtVisitor
         Value visit_index_expression(std::shared_ptr<IndexExpr> expr) override;
         Value visit_index_assign_expression(std::shared_ptr<IndexAssign> expr) override;
         Value visit_get_expression(std::shared_ptr<Get> expr) override;
+        Value visit_set_expression(std::shared_ptr<Set> expr) override;
+        Value visit_super_expression(std::shared_ptr<Super> expr) override;
+        Value visit_this_expression(std::shared_ptr<This> expr) override;
 
         Value visit_expression_stmt(std::shared_ptr<ExprStmt> stmt) override;
         Value visit_print_stmt(std::shared_ptr<PrintStmt> stmt) override;
@@ -80,11 +83,13 @@ class Compiler : public ExpressionVisitor, public StmtVisitor
         Value visit_function_stmt(std::shared_ptr<FunctionStmt> stmt) override;
         Value visit_return_stmt(std::shared_ptr<ReturnStmt> stmt) override;
         Value visit_include_stmt(std::shared_ptr<IncludeStmt> stmt) override;
+        Value visit_class_stmt(std::shared_ptr<ClassStmt> stmt) override;
 
     private:
         void emit(OpCode op);
         void emit_byte(uint8_t byte);
         void emit_constant(Value value);
+        std::shared_ptr<Function> compile_function(FunctionStmt& stmt, bool is_constructor);
         int emit_jump(OpCode op);
         void patch_jump(int offset);
         void emit_loop(int loop_start);

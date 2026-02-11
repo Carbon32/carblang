@@ -25,6 +25,7 @@ std::shared_ptr<Stmt> Parser::declaration()
         if(this->match(FUNCTION)) return function_declaration();
         if(this->match(VAR)) return this->var_declaration();
         if(this->match(INCLUDE)) return include_statement();
+        if(this->match(CLASS)) return class_declaration();
         return this->statement();
     }
     catch(ParseError error)
@@ -44,6 +45,34 @@ std::shared_ptr<Stmt> Parser::statement()
     if(this->match(RETURN)) return this->return_statement();
     if(this->match(LEFT_BRACE)) return std::make_shared<BlockStmt>(this->block());
     return this->expression_statement();
+}
+
+std::shared_ptr<Stmt> Parser::class_declaration()
+{
+    Token name = consume(IDENTIFIER, "Expected a class name");
+
+    std::shared_ptr<Variable> super_class = nullptr;
+    if(match(COLON))
+    {
+        consume(IDENTIFIER, "Expected a super class name");
+        super_class = std::make_shared<Variable>(previous());
+    }
+
+    consume(LEFT_BRACE, "Expected \"{\" before class body");
+
+    std::vector<std::shared_ptr<FunctionStmt>> methods;
+    while(!check(RIGHT_BRACE) && !at_end())
+    {
+        consume(FUNCTION, "Expected \"function\" before method");
+        auto method = std::dynamic_pointer_cast<FunctionStmt>(function_declaration());
+        method->is_method = true;
+        methods.push_back(method);
+    }
+
+
+    consume(RIGHT_BRACE, "Expected \"}\" after class body");
+
+    return std::make_shared<ClassStmt>(name, super_class, methods);
 }
 
 std::shared_ptr<Stmt> Parser::include_statement()
@@ -247,8 +276,16 @@ std::shared_ptr<Expression> Parser::assignment()
             );
         }
 
-        error(std::move(equals), "Invalid assignment target");
+        if(auto get = dynamic_cast<Get*>(expr.get()))
+        {
+            return std::make_shared<Set>(
+                get->object,
+                get->name,
+                value
+            );
+        }
 
+        error(std::move(equals), "Invalid assignment target");
     }
     return expr;
 }
@@ -445,6 +482,11 @@ std::shared_ptr<Expression> Parser::primary()
         std::shared_ptr<Expression> expr = expression();
         consume(RIGHT_PAREN, "Expected a \")\" after expression");
         return std::make_shared < Grouping > (expr);
+    }
+
+    if(this->match(TokenType::THIS))
+    {
+        return std::make_shared<This>(previous());
     }
 
     throw this->error(this->peek(), "Expected expression");

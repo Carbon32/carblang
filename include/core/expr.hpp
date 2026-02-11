@@ -12,12 +12,53 @@ struct ExpressionVisitor
     virtual Value visit_index_expression(std::shared_ptr<IndexExpr> expr) = 0;
     virtual Value visit_index_assign_expression(std::shared_ptr<IndexAssign> expr) = 0;
     virtual Value visit_get_expression(std::shared_ptr<Get> expr) = 0;
+    virtual Value visit_set_expression(std::shared_ptr<Set> expr) = 0;
+    virtual Value visit_super_expression(std::shared_ptr<Super> expr) = 0;
+    virtual Value visit_this_expression(std::shared_ptr<This> expr) = 0;
     virtual ~ExpressionVisitor() = default;
 };
 
 struct Expression
 {
     virtual Value accept(ExpressionVisitor& visitor) = 0;
+};
+
+struct This : Expression, public std::enable_shared_from_this<This>
+{
+    Token keyword;
+
+    This(Token keyword) : keyword(std::move(keyword)) {}
+
+    Value accept(ExpressionVisitor& visitor) override
+    {
+        return visitor.visit_this_expression(shared_from_this());
+    }
+};
+
+
+struct Super : Expression, public std::enable_shared_from_this<Super> {
+
+    Token method;
+    
+    Super(Token method) : method(std::move(method)) {}
+
+    Value accept(ExpressionVisitor& visitor) override
+    {
+        return visitor.visit_super_expression(shared_from_this());
+    }
+};
+
+struct Set : Expression, public std::enable_shared_from_this<Set> {
+    std::shared_ptr<Expression> object;
+    Token name;
+    std::shared_ptr<Expression> value;
+
+    Set(std::shared_ptr<Expression> object, Token name, std::shared_ptr<Expression> value)
+        : object(std::move(object)), name(std::move(name)), value(std::move(value)) {}
+
+    Value accept(ExpressionVisitor& visitor) override {
+        return visitor.visit_set_expression(shared_from_this());
+    }
 };
 
 struct ArrayExpr : Expression, public std::enable_shared_from_this<ArrayExpr>

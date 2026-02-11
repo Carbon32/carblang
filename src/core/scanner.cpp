@@ -100,6 +100,7 @@ void Scanner::scan_single_token()
 		        error(line, "Unexpected \"#\" character");
 		    }
 		    break;
+		case ':': add_token(COLON); break;
 
 
 		default:

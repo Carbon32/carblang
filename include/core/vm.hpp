@@ -13,6 +13,11 @@ public:
 private:
     void run();
     Value pop();
+    Value pop_constant();
+    std::shared_ptr<Function> pop_function();
+    std::shared_ptr<Class> pop_class();
+    std::shared_ptr<Instance> pop_instance();
+    std::shared_ptr<Instance> current_instance();
     void push(Value value);
     uint16_t read_short();
     bool is_truthy(const Value& value);

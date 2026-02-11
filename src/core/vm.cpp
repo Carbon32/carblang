@@ -23,6 +23,16 @@ void VM::run()
     for(;;)
     {
         OpCode opcode = static_cast<OpCode>(*ip++);
+
+        // I use this to track opcode executions, I will leave it here for now
+        /* std::cout << "[DEBUG] Executing opcode: " << static_cast<int>(opcode) << ", stack: [";
+        for (size_t i = 0; i < stack.size(); ++i)
+        {
+            std::cout << stringify(stack[i]);
+            if(i + 1 < stack.size()) std::cout << ", ";
+        }
+        std::cout << "]" << std::endl; */
+
         switch(opcode)
         {
             case OpCode::CONSTANT:
@@ -118,8 +128,7 @@ void VM::run()
                     }
                 }
 
-                if(std::holds_alternative<std::shared_ptr<Array>>(a) &&
-                   std::holds_alternative<double>(b))
+                if(std::holds_alternative<std::shared_ptr<Array>>(a) && std::holds_alternative<double>(b))
                 {
                     auto arr = std::get<std::shared_ptr<Array>>(a);
                     double scalar = std::get<double>(b);
@@ -164,7 +173,7 @@ void VM::run()
                 double x = std::get<double>(a);
                 double y = std::get<double>(b);
 
-                switch (opcode)
+                switch(opcode)
                 {
                     case OpCode::ADD:
                         stack.push_back(x + y);
@@ -240,8 +249,13 @@ void VM::run()
             }
 
             case OpCode::POP:
-                pop();
+            {
+                Value v = pop();
+
+                // I use this to track how pop works, leave it here for now
+                // std::cout << "[DEBUG] POP -> " << stringify(v) << std::endl;
                 break;
+            }
 
             case OpCode::DEFINE_GLOBAL:
             {
@@ -274,12 +288,26 @@ void VM::run()
             case OpCode::GET_LOCAL:
             {
                 uint8_t slot = *ip++;
+                
+                // Another debugging line, keep it here
+                /* std::cout << "[DEBUG] GET_LOCAL slot=" << int(slot)
+                          << ", stack.size=" << stack.size();
+                
+                if(!frames.empty())
+                    std::cout << ", frame.stack_start=" << frames.back().stack_start;
+                
+                std::cout << std::endl; */
+
                 if(frames.empty())
                     throw std::runtime_error("GET_LOCAL called with no active frame");
 
                 size_t idx = frames.back().stack_start + slot;
                 if(idx >= stack.size())
+                {
+                    std::cerr << "[ERROR] GET_LOCAL out of bounds, idx=" << idx 
+                              << ", stack.size=" << stack.size() << std::endl;
                     throw std::runtime_error("GET_LOCAL out of bounds");
+                }
 
                 stack.push_back(stack[idx]);
                 break;
@@ -288,12 +316,26 @@ void VM::run()
             case OpCode::SET_LOCAL:
             {
                 uint8_t slot = *ip++;
+                
+                // Debugging line
+                /* std::cout << "[DEBUG] SET_LOCAL slot=" << int(slot)
+                          << ", stack.size=" << stack.size();
+                
+                if(!frames.empty())
+                    std::cout << ", frame.stack_start=" << frames.back().stack_start;
+                
+                std::cout << std::endl; */
+
                 if(frames.empty())
                     throw std::runtime_error("SET_LOCAL called with no active frame");
 
                 size_t idx = frames.back().stack_start + slot;
                 if(idx >= stack.size())
+                {
+                    std::cerr << "[ERROR] SET_LOCAL out of bounds, idx=" << idx 
+                              << ", stack.size=" << stack.size() << std::endl;
                     throw std::runtime_error("SET_LOCAL out of bounds");
+                }
 
                 stack[idx] = stack.back();
                 break;
@@ -345,11 +387,81 @@ void VM::run()
             {
                 uint8_t arg_count = *ip++;
 
+                // Debugging line
+                // std::cout << "[DEBUG] CALL with " << int(arg_count) << " args" << std::endl;
+
                 if(stack.size() < arg_count + 1)
                     throw std::runtime_error("Not enough values on the stack for CALL");
 
                 Value callee = stack[stack.size() - 1 - arg_count];
                 size_t callee_index = stack.size() - 1 - arg_count;
+
+                if(std::holds_alternative<std::shared_ptr<Class>>(callee))
+                {
+                    auto klass = std::get<std::shared_ptr<Class>>(callee);
+                    size_t callee_index = stack.size() - 1 - arg_count;
+                    auto instance = std::make_shared<Instance>(klass);
+
+                    stack[callee_index] = instance;
+
+                    auto init = klass->find_method("init");
+
+                    if(init)
+                    {
+                        if(arg_count != init->arity)
+                        {
+                            throw std::runtime_error(
+                                "Constructor expected " +
+                                std::to_string(init->arity) +
+                                " arguments but got " +
+                                std::to_string(arg_count)
+                            );
+                        }
+
+                        frames.push_back({
+                            chunk,
+                            ip,
+                            callee_index,
+                            true
+                        });
+
+                        chunk = &init->chunk;
+                        ip = chunk->code.data();
+
+                        continue;
+                    }
+
+                    stack.erase(stack.begin() + callee_index + 1, stack.begin() + callee_index + 1 + arg_count);
+                    break;
+                }
+                
+                else if(std::holds_alternative<std::shared_ptr<UserBoundMethod>>(callee))
+                {
+                    auto bound = std::get<std::shared_ptr<UserBoundMethod>>(callee);
+                    auto func = bound->method;
+                    auto receiver = bound->receiver;
+
+                    if(arg_count != func->arity)
+                        throw std::runtime_error(
+                            "Expected " + std::to_string(func->arity) +
+                            " arguments but got " + std::to_string(arg_count)
+                        );
+
+                    size_t callee_index = stack.size() - 1 - arg_count;
+
+                    stack[callee_index] = receiver;
+
+                    frames.push_back({
+                        chunk,
+                        ip,
+                        callee_index
+                    });
+
+                    chunk = &func->chunk;
+                    ip = chunk->code.data();
+                    continue;
+                }
+
                 if(std::holds_alternative<std::shared_ptr<BoundMethod>>(callee))
                 {
                     size_t local_index = stack.size() - 1 - arg_count;
@@ -435,6 +547,15 @@ void VM::run()
 
                 auto function = std::get<std::shared_ptr<Function>>(callee);
 
+                if(arg_count != function->arity)
+                {
+                    throw std::runtime_error(
+                        "Expected " + std::to_string(function->arity) +
+                        " arguments but got " + std::to_string(arg_count)
+                    );
+                }
+
+
                 frames.push_back({
                     chunk,
                     ip,
@@ -449,22 +570,33 @@ void VM::run()
 
             case OpCode::RETURN:
             {
-                Value result = pop();
-
-                if(frames.empty()) {
-                    stack.push_back(result);
-                    return;
-                }
+                if(frames.empty()) return;
 
                 CallFrame frame = frames.back();
                 frames.pop_back();
 
-                stack.resize(frame.stack_start);
-                stack.push_back(result);
+                Value return_value;
 
+                if(frame.is_constructor)
+                {
+                    if(stack.size() > frame.stack_start + 1)
+                    {
+                        pop();
+                    }
+
+                    return_value = stack[frame.stack_start];
+                    stack.resize(frame.stack_start + 1);
+                }
+
+                else
+                {
+                    return_value = pop();
+                    stack.resize(frame.stack_start);
+                }
+
+                stack.push_back(return_value);
                 chunk = frame.chunk;
                 ip = frame.ip;
-
                 break;
             }
 
@@ -544,6 +676,10 @@ void VM::run()
                 std::string name = std::get<std::string>(read_constant());
                 Value object = pop();
 
+                // Debugging line
+                // std::cout << "[DEBUG] GET_PROPERTY name=" << name 
+                //    << ", object=" << stringify(object) << std::endl;
+
                 if(name == "type")
                 {
                     push(make_native_method(object, NativeMethod::TYPE));
@@ -554,6 +690,7 @@ void VM::run()
                 {
                     if(name == "to_int") { push(make_native_method(object, NativeMethod::BOOL_TO_INT)); break; }
                     if(name == "to_string") { push(make_native_method(object, NativeMethod::TO_STRING)); break; }
+                    throw std::runtime_error("Undefined property \"" + name + "\""); break;
                 }
 
                 if(std::holds_alternative<double>(object))
@@ -561,10 +698,12 @@ void VM::run()
                     if(name == "to_string") { push(make_native_method(object, NativeMethod::TO_STRING)); break; }
                     if(name == "pow") { push(make_native_method(object, NativeMethod::POW)); break; }
                     if(name == "sqrt") { push(make_native_method(object, NativeMethod::SQRT)); break; }
-                    if(name == "fact") { push(make_native_method(object, NativeMethod::FACT)); break;}
+                    if(name == "fact") { push(make_native_method(object, NativeMethod::FACT)); break; }
                     if(name == "to_int") { push(make_native_method(object, NativeMethod::TO_INT)); break; }
                     if(name == "floor") { push(make_native_method(object, NativeMethod::FLOOR)); break; }
                     if(name == "ceil") { push(make_native_method(object, NativeMethod::CEIL)); break; }
+                    throw std::runtime_error("Undefined property \"" + name + "\"");
+                    break;
                 }
 
                 if(std::holds_alternative<std::string>(object))
@@ -590,147 +729,154 @@ void VM::run()
                     if(name == "length") { push(make_native_method(object, NativeMethod::STR_LENGTH)); break; }
                     if(name == "count") { push(make_native_method(object, NativeMethod::STR_COUNT)); break; }
                     if(name == "slice") { push(make_native_method(object, NativeMethod::STR_SLICE)); break; }
+                    throw std::runtime_error("Undefined property \"" + name + "\"");
+                    break;
                 }
 
-                // Eh, make this a little better later on
-                // I will make this one-liners later
                 if(std::holds_alternative<std::shared_ptr<Array>>(object))
                 {
                     auto array = std::get<std::shared_ptr<Array>>(object);
 
-                    if(name == "length")
-                    {
-                        push(make_native_method(array, NativeMethod::LENGTH));
-                        break;
-                    }
-
-                    else if(name == "push")
-                    {
-                        push(make_native_method(array, NativeMethod::PUSH));
-                        break;
-                    }
-
-                    else if(name == "pop")
-                    {
-                        push(make_native_method(array, NativeMethod::POP));
-                        break;
-                    }
-
-                    else if(name == "is_empty")
-                    {
-                        push(make_native_method(array, NativeMethod::IS_EMPTY));
-                        break;
-                    }
-
-                    else if(name == "clear")
-                    {
-                        push(make_native_method(array, NativeMethod::CLEAR));
-                        break;
-                    }
-
-                    else if(name == "contains")
-                    {
-                        push(make_native_method(array, NativeMethod::CONTAINS));
-                        break;
-                    }
-
-                    else if(name == "first_index")
-                    {
-                        push(make_native_method(array, NativeMethod::INDEX_OF));
-                        break;
-                    }
-
-                    else if(name == "insert")
-                    {
-                        push(make_native_method(array, NativeMethod::INSERT));
-                        break;
-                    }
-
-                    else if(name == "remove")
-                    {
-                        push(make_native_method(array, NativeMethod::REMOVE_AT));
-                        break;
-                    }
-
-                    else if(name == "join")
-                    {
-                        push(make_native_method(array, NativeMethod::JOIN));
-                        break;
-                    }
-
-                    else if (name == "last_index")
-                    {
-                        push(make_native_method(array, NativeMethod::LAST_INDEX_OF));
-                        break;
-                    }
-
-                    else if (name == "equals")
-                    {
-                        push(make_native_method(array, NativeMethod::EQUALS));
-                        break;
-                    }
-
-                    else if (name == "count")
-                    {
-                        push(make_native_method(array, NativeMethod::COUNT));
-                        break;
-                    }
-
-                    else if (name == "swap")
-                    {
-                        push(make_native_method(array, NativeMethod::SWAP));
-                        break;
-                    }
-
-                    else if (name == "concat")
-                    {
-                        push(make_native_method(array, NativeMethod::CONCAT));
-                        break;
-                    }
-
-                    else if (name == "copy")
-                    {
-                        push(make_native_method(array, NativeMethod::COPY));
-                        break;
-                    }
-
-                    else if (name == "slice")
-                    {
-                        push(make_native_method(array, NativeMethod::SLICE));
-                        break;
-                    }
-
-                    else if (name == "last")
-                    {
-                        push(make_native_method(array, NativeMethod::LAST));
-                        break;
-                    }
-
-                    else if (name == "first")
-                    {
-                        push(make_native_method(array, NativeMethod::FIRST));
-                        break;
-                    }
-
-                    else if (name == "reverse")
-                    {
-                        push(make_native_method(array, NativeMethod::REVERSE));
-                        break;
-                    }
-
-                    else if (name == "trim")
-                    {
-                        push(make_native_method(array, NativeMethod::TRIM));
-                        break;
-                    }
-
+                    if(name == "length") { push(make_native_method(array, NativeMethod::LENGTH)); break; }
+                    if(name == "push") { push(make_native_method(array, NativeMethod::PUSH)); break; }
+                    if(name == "pop") { push(make_native_method(array, NativeMethod::POP)); break; }
+                    if(name == "is_empty") { push(make_native_method(array, NativeMethod::IS_EMPTY)); break; }
+                    if(name == "clear") { push(make_native_method(array, NativeMethod::CLEAR)); break; }
+                    if(name == "contains") { push(make_native_method(array, NativeMethod::CONTAINS)); break; }
+                    if(name == "first_index") { push(make_native_method(array, NativeMethod::INDEX_OF)); break; }
+                    if(name == "insert") { push(make_native_method(array, NativeMethod::INSERT)); break; }
+                    if(name == "remove") { push(make_native_method(array, NativeMethod::REMOVE_AT)); break; }
+                    if(name == "join") { push(make_native_method(array, NativeMethod::JOIN)); break; }
+                    if(name == "last_index") { push(make_native_method(array, NativeMethod::LAST_INDEX_OF)); break; }
+                    if(name == "equals") { push(make_native_method(array, NativeMethod::EQUALS)); break; }
+                    if(name == "count") { push(make_native_method(array, NativeMethod::COUNT)); break; }
+                    if(name == "swap") { push(make_native_method(array, NativeMethod::SWAP)); break; }
+                    if(name == "concat") { push(make_native_method(array, NativeMethod::CONCAT)); break; }
+                    if(name == "copy") { push(make_native_method(array, NativeMethod::COPY)); break; }
+                    if(name == "slice") { push(make_native_method(array, NativeMethod::SLICE)); break; }
+                    if(name == "last") { push(make_native_method(array, NativeMethod::LAST)); break; }
+                    if(name == "first") { push(make_native_method(array, NativeMethod::FIRST)); break; }
+                    if(name == "reverse") { push(make_native_method(array, NativeMethod::REVERSE)); break; }
+                    if(name == "trim") { push(make_native_method(array, NativeMethod::TRIM)); break; }
                     if(name == "sum") { push(make_native_method(array, NativeMethod::SUM)); break; }
                     if(name == "min") { push(make_native_method(array, NativeMethod::MIN)); break; }
                     if(name == "max") { push(make_native_method(array, NativeMethod::MAX)); break; }
                     if(name == "average") { push(make_native_method(array, NativeMethod::AVERAGE)); break; }
+                    throw std::runtime_error("Undefined property \"" + name + "\"");
+                    break;
                 }
 
-                throw std::runtime_error("Undefined method \"" + name + "\"");
+                if(std::holds_alternative<std::shared_ptr<Instance>>(object))
+                {
+                    auto instance = std::get<std::shared_ptr<Instance>>(object);
+                    auto it = instance->fields.find(name);
+                    if(it != instance->fields.end()) { push(it->second); break; }
+
+                    auto method = instance->klass->find_method(name);
+                    if(method)
+                    { 
+                        push(std::make_shared<UserBoundMethod>(instance, method)); 
+                        break; 
+                    }
+
+                    throw std::runtime_error("Undefined property \"" + name + "\"");
+                }
+
+                else
+                {
+                    throw std::runtime_error("Cannot get property \"" + name + "\" of this value");
+                }   
+                
+            }
+
+            case OpCode::SET_PROPERTY:
+            {
+                Value name_val = read_constant();
+                if(!std::holds_alternative<std::string>(name_val))
+                    throw std::runtime_error("Property name must be a string");
+                std::string name = std::get<std::string>(name_val);
+
+                Value value = pop();
+                std::shared_ptr<Instance> instance;
+
+                if(!stack.empty() && std::holds_alternative<std::shared_ptr<Instance>>(stack[frames.back().stack_start]))
+                {
+                    instance = current_instance();
+                }
+
+                else
+                {
+                    instance = pop_instance();
+                }
+
+                instance->fields[name] = value;
+                break;
+            }
+
+            case OpCode::CLASS:
+            {
+                uint8_t name_index = *ip++;
+                Value name_val = chunk->constants[name_index];
+
+                if (!std::holds_alternative<std::string>(name_val))
+                    throw std::runtime_error("Class name must be a string");
+
+                std::string name = std::get<std::string>(name_val);
+
+                auto klass = std::make_shared<Class>(
+                    name,
+                    std::unordered_map<std::string, std::shared_ptr<Function>>{}
+                );
+
+                push(klass);
+                break;
+            }
+
+            case OpCode::INHERIT:
+            {
+                auto super_class_val = pop();
+                auto sub_class_val = pop();
+
+                if(!std::holds_alternative<std::shared_ptr<Class>>(super_class_val) ||
+                   !std::holds_alternative<std::shared_ptr<Class>>(sub_class_val))
+                    throw std::runtime_error("INHERIT expects two classes on stack");
+
+                auto super_class = std::get<std::shared_ptr<Class>>(super_class_val);
+                auto sub_class = std::get<std::shared_ptr<Class>>(sub_class_val);
+
+                for(auto& [name, method] : super_class->methods)
+                {
+                    if(sub_class->methods.find(name) == sub_class->methods.end())
+                        sub_class->methods[name] = method;
+                }
+
+                stack.push_back(sub_class);
+                break;
+            }
+
+            case OpCode::METHOD:
+            {
+                uint8_t name_index = *ip++;
+                Value name_val = chunk->constants[name_index];
+
+                if (!std::holds_alternative<std::string>(name_val))
+                    throw std::runtime_error("Method name must be a string");
+
+                std::string name = std::get<std::string>(name_val);
+
+                auto function = pop_function();
+                auto klass = pop_class();
+
+                if(name == "init" && klass->methods.find("init") != klass->methods.end())
+                {
+                    throw std::runtime_error(
+                        "Class \"" + klass->name + "\" already defines an init method"
+                    );
+                }
+
+                klass->methods[name] = function;
+                push(klass);
+                break;
             }
 
             case OpCode::NULL:
@@ -762,6 +908,40 @@ Value VM::pop()
     return v;
 }
 
+Value VM::pop_constant()
+{
+    return pop();
+}
+
+std::shared_ptr<Function> VM::pop_function()
+{
+    Value v = pop();
+    if(!std::holds_alternative<std::shared_ptr<Function>>(v))
+    {
+        throw std::runtime_error("Expected a function on the stack");
+    }
+    return std::get<std::shared_ptr<Function>>(v);
+}
+
+std::shared_ptr<Class> VM::pop_class()
+{
+    Value v = pop();
+    if(!std::holds_alternative<std::shared_ptr<Class>>(v))
+    {
+        throw std::runtime_error("Expected a class on the stack");
+    }
+    return std::get<std::shared_ptr<Class>>(v);
+}
+
+
+std::shared_ptr<Instance> VM::pop_instance()
+{
+    Value val = pop();
+    if(!std::holds_alternative<std::shared_ptr<Instance>>(val))
+        throw std::runtime_error("Expected Instance");
+    return std::get<std::shared_ptr<Instance>>(val);
+}
+
 void VM::push(Value value)
 {
     stack.push_back(std::move(value));
@@ -770,13 +950,12 @@ void VM::push(Value value)
 uint16_t VM::read_short()
 {
     if(ip + 1 >= chunk->code.data() + chunk->code.size())
-        throw std::runtime_error("read_short past end of bytecode");
+        throw std::runtime_error("read_short() past end of bytecode");
 
     uint16_t high = *ip++;
     uint16_t low = *ip++;
     return (high << 8) | low;
 }
-
 
 bool VM::is_truthy(const Value& value)
 {
@@ -840,10 +1019,29 @@ std::string VM::stringify(const Value& value)
         out << "<function>";
     }
 
+    else if (std::holds_alternative<std::shared_ptr<Class>>(value))
+    {
+        auto klass = std::get<std::shared_ptr<Class>>(value);
+        out << "<class " << klass->name << ">";
+    }
+    else if (std::holds_alternative<std::shared_ptr<Instance>>(value))
+    {
+        auto instance = std::get<std::shared_ptr<Instance>>(value);
+        out << "<" << instance->klass->name << " instance>";
+    }
+    else if (std::holds_alternative<std::shared_ptr<UserBoundMethod>>(value))
+    {
+        out << "<bound method>";
+    }
+    else if (std::holds_alternative<std::shared_ptr<BoundMethod>>(value))
+    {
+        out << "<native method>";
+    }
     else
     {
-        out << "<method>";
+        out << "<unknown>";
     }
+    
     return out.str();
 }
 
@@ -854,4 +1052,18 @@ Value VM::read_constant()
 
     uint8_t index = *ip++;
     return chunk->constants.at(index);
+}
+
+std::shared_ptr<Instance> VM::current_instance()
+{
+    if(frames.empty())
+        throw std::runtime_error("No active frame for current_instance()");
+
+    size_t idx = frames.back().stack_start;
+    Value val = stack.at(idx);
+
+    if(!std::holds_alternative<std::shared_ptr<Instance>>(val))
+        throw std::runtime_error("Expected instance at stack_start");
+
+    return std::get<std::shared_ptr<Instance>>(val);
 }

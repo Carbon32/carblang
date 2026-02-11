@@ -41,7 +41,16 @@ enum class OpCode : uint8_t
     ARRAY,
     GET_INDEX,
     SET_INDEX,
+
+    SET_PROPERTY,
     GET_PROPERTY,
+
+    CLASS,
+    METHOD,
+
+    INHERIT,
+    GET_SUPER,
+    SUPER_INVOKE,
 
     RETURN
 };

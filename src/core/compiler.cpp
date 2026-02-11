@@ -7,7 +7,6 @@ Chunk Compiler::compile(const std::vector<std::shared_ptr<Stmt>> &statements)
         stmt->accept(*this);
     }
 
-    emit(OpCode::NULL);
     emit(OpCode::RETURN);
     return chunk;
 }
@@ -32,7 +31,11 @@ int Compiler::resolve_local(const std::string &name)
 {
     for(int i = locals.size() - 1; i >= 0; i--)
     {
-        if(locals[i].name == name) return i;
+        if(locals[i].name == name)
+        {
+           
+            return i;
+        }
     }
     return -1;
 }
@@ -60,6 +63,33 @@ int Compiler::emit_jump(OpCode op)
     emit_byte(0xff);
     int offset_index = chunk.code.size() - 2;
     return offset_index;
+}
+
+std::shared_ptr<Function> Compiler::compile_function(FunctionStmt& stmt, bool is_constructor = false)
+{
+    Compiler function_compiler;
+    function_compiler.begin_scope();
+
+    function_compiler.locals.push_back({ "this", 0 });
+
+    int slot = 1;
+    for(auto& param : stmt.params)
+    {
+        function_compiler.locals.push_back({ param.lexeme, 0 });
+        slot++;
+    }
+
+    for(auto& s : stmt.body)
+        s->accept(function_compiler);
+
+    if(!is_constructor) function_compiler.emit(OpCode::NULL);
+    function_compiler.emit(OpCode::RETURN);
+
+    return std::make_shared<Function>(
+        stmt.name.lexeme,
+        stmt.params.size(),
+        function_compiler.chunk
+    );
 }
 
 void Compiler::patch_jump(int offset)
@@ -136,7 +166,8 @@ Value Compiler::visit_binary_expression(std::shared_ptr<Binary> expr)
 Value Compiler::visit_expression_stmt(std::shared_ptr<ExprStmt> stmt)
 {
     stmt->expression->accept(*this);
-    emit(OpCode::POP);
+    if(!std::dynamic_pointer_cast<Assign>(stmt->expression)) emit(OpCode::POP);
+
     return {};
 }
 
@@ -203,11 +234,9 @@ Value Compiler::visit_while_stmt(std::shared_ptr<WhileStmt> stmt)
     int loop_start = chunk.code.size();
     stmt->condition->accept(*this);
     int exit_jump = emit_jump(OpCode::JUMP_IF_FALSE);
-    emit(OpCode::POP); 
     stmt->body->accept(*this);
     emit_loop(loop_start);
     patch_jump(exit_jump);
-    emit(OpCode::POP);
 
     return {};
 }
@@ -289,28 +318,7 @@ Value Compiler::visit_block_stmt(std::shared_ptr<BlockStmt> stmt)
 
 Value Compiler::visit_function_stmt(std::shared_ptr<FunctionStmt> stmt)
 {
-    Compiler function_compiler;
-    function_compiler.begin_scope();
-
-    for(int i = 0; i < stmt->params.size(); ++i)
-    {
-        function_compiler.locals.push_back({ stmt->params[i].lexeme, 1 });
-    }
-
-    bool has_return = !stmt->body.empty() && dynamic_cast<ReturnStmt*>(stmt->body.back().get()) != nullptr;
-    for(auto& s : stmt->body) s->accept(function_compiler);
-
-    if(!has_return)
-    {
-        function_compiler.emit(OpCode::NULL);
-        function_compiler.emit(OpCode::RETURN);
-    }
-
-    auto fn = std::make_shared<Function>(
-        stmt->name.lexeme,
-        stmt->params.size(),
-        function_compiler.chunk
-    );
+    auto fn = compile_function(*stmt);
 
     uint8_t fn_index = chunk.add_constant(fn);
     emit(OpCode::CLOSURE);
@@ -382,6 +390,16 @@ Value Compiler::visit_get_expression(std::shared_ptr<Get> expr)
     return {};
 }
 
+Value Compiler::visit_set_expression(std::shared_ptr<Set> expr)
+{
+    expr->object->accept(*this);
+    expr->value->accept(*this);
+    uint8_t name_index = chunk.add_constant(expr->name.lexeme);
+    emit(OpCode::SET_PROPERTY);
+    emit_byte(name_index);
+    return {};
+}
+
 Value Compiler::visit_include_stmt(std::shared_ptr<IncludeStmt> stmt)
 {
     std::ifstream file(stmt->file_name);
@@ -405,4 +423,55 @@ Value Compiler::visit_include_stmt(std::shared_ptr<IncludeStmt> stmt)
     return {};
 }
 
+Value Compiler::visit_class_stmt(std::shared_ptr<ClassStmt> stmt)
+{
+    bool has_super_class = stmt->super_class != nullptr;
 
+    if(has_super_class)
+    {
+        stmt->super_class->accept(*this);
+    }
+
+    emit(OpCode::CLASS);
+    uint8_t name_index = chunk.add_constant(stmt->name.lexeme);
+    emit_byte(name_index);
+
+    for(auto& method : stmt->methods)
+    {
+        bool is_constructor = method->name.lexeme == "init";
+        auto fn = compile_function(*method, is_constructor);
+
+        uint8_t fn_index = chunk.add_constant(fn);
+        emit(OpCode::CLOSURE);
+        emit_byte(fn_index);
+
+        uint8_t method_index = chunk.add_constant(method->name.lexeme);
+        emit(OpCode::METHOD);
+        emit_byte(method_index);
+    }
+
+    if(has_super_class)
+    {
+        emit(OpCode::INHERIT);
+    }
+
+    emit(OpCode::DEFINE_GLOBAL);
+    emit_byte(name_index);
+
+    return {};
+}
+
+Value Compiler::visit_super_expression(std::shared_ptr<Super> expr)
+{
+    emit(OpCode::GET_SUPER);
+    uint8_t name_index = chunk.add_constant(expr->method.lexeme);
+    emit_byte(name_index);
+    return {};
+}
+
+Value Compiler::visit_this_expression(std::shared_ptr<This> expr)
+{
+    emit(OpCode::GET_LOCAL);
+    emit_byte(0);
+    return {};
+}
