@@ -1,0 +1,39 @@
+class Person {
+	function init(name, age, job) {
+		this.name = name;
+		this.age = age;
+		this.job = job;
+	}
+
+	function get_name() {
+		return "Name: " + this.name;
+	}
+
+	function get_age() {
+		return "Age: " + this.age;
+	}
+
+	function get_job() {
+		return "Job: " + this.job;
+	}
+}
+
+var john = Person("John", 24, "Artist");
+var eric = Person("Eric", 42, "Doctor");
+var peter = Person("Peter", 31, "Police Officer");
+
+println(john.get_name());
+println(john.get_age());
+println(john.get_job());
+
+println("");
+
+println(eric.get_name());
+println(eric.get_age());
+println(eric.get_job());
+
+println("");
+
+println(peter.get_name());
+println(peter.get_age());
+println(peter.get_job());

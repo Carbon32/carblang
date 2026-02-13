@@ -89,7 +89,7 @@ class Compiler : public ExpressionVisitor, public StmtVisitor
         void emit(OpCode op);
         void emit_byte(uint8_t byte);
         void emit_constant(Value value);
-        std::shared_ptr<Function> compile_function(FunctionStmt& stmt, bool is_constructor);
+        std::shared_ptr<Function> compile_function(FunctionStmt& stmt, bool is_constructor, bool is_method);
         int emit_jump(OpCode op);
         void patch_jump(int offset);
         void emit_loop(int loop_start);

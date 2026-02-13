@@ -1,0 +1,20 @@
+class Person {
+	function init(name, age) {
+		class Human {
+			function init(name, age) {
+				this.name = name;
+				this.age = age;
+			}
+
+			function print_values() {
+				println("Name: " + this.name);
+				println("Age: " + this.age);
+			}
+		}
+
+		this.human = Human(name, age);
+	}
+}
+
+var p = Person("John", 28);
+p.human.print_values();

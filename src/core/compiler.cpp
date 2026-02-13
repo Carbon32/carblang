@@ -65,12 +65,12 @@ int Compiler::emit_jump(OpCode op)
     return offset_index;
 }
 
-std::shared_ptr<Function> Compiler::compile_function(FunctionStmt& stmt, bool is_constructor = false)
+std::shared_ptr<Function> Compiler::compile_function(FunctionStmt& stmt, bool is_constructor = false, bool is_method = false)
 {
     Compiler function_compiler;
     function_compiler.begin_scope();
 
-    function_compiler.locals.push_back({ "this", 0 });
+    if(is_method) function_compiler.locals.push_back({ "this", 0 });
 
     int slot = 1;
     for(auto& param : stmt.params)
@@ -83,6 +83,7 @@ std::shared_ptr<Function> Compiler::compile_function(FunctionStmt& stmt, bool is
         s->accept(function_compiler);
 
     if(!is_constructor) function_compiler.emit(OpCode::NULL);
+    else function_compiler.emit_constant(IgnoreReturnValue{});
     function_compiler.emit(OpCode::RETURN);
 
     return std::make_shared<Function>(
@@ -439,7 +440,7 @@ Value Compiler::visit_class_stmt(std::shared_ptr<ClassStmt> stmt)
     for(auto& method : stmt->methods)
     {
         bool is_constructor = method->name.lexeme == "init";
-        auto fn = compile_function(*method, is_constructor);
+        auto fn = compile_function(*method, is_constructor, true);
 
         uint8_t fn_index = chunk.add_constant(fn);
         emit(OpCode::CLOSURE);

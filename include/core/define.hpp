@@ -1,3 +1,9 @@
+struct IgnoreReturnValue
+{
+    bool operator==(const IgnoreReturnValue&) const noexcept { return true; }
+};
+
+
 using Value = std::variant<
     std::nullptr_t,
     double,
@@ -8,7 +14,8 @@ using Value = std::variant<
     std::shared_ptr<BoundMethod>,
     std::shared_ptr<Instance>,
     std::shared_ptr<Class>,
-    std::shared_ptr<UserBoundMethod>
+    std::shared_ptr<UserBoundMethod>,
+    IgnoreReturnValue
 >;
 
 struct Chunk

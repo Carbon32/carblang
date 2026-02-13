@@ -1,0 +1,79 @@
+class Vehicle {
+	function init(horse_power, color) {
+		class Engine {
+			function init(horse_power) {
+				if(horse_power > 5000)
+				{
+					println("Too much horse power was given");
+					return;
+
+				}
+
+				this.horse_power = horse_power;
+			}
+		}
+
+		class Color {
+			function init(r, g, b) {
+				if((r > 255 or r < 0) or (g > 255 or g < 0) or (b > 255 or b < 0)) {
+					println("Invalid colors");
+					return;
+				}
+
+				this.r = r;
+				this.g = g;
+				this.b = b;
+			}
+		}
+
+		this.engine = Engine(horse_power);
+		this.color = Color(color[0], color[1], color[2]);
+	}
+
+	function print_information(type) {
+		if(type == "raw") {
+			function vehicle_information_raw(obj) {
+				println(" ");
+				println("RAW DATA: ");
+				println("The Engine: " + obj.engine);
+				println("Color: " + obj.color);
+				println(" ");
+			}
+			vehicle_information_raw(this);
+			return;
+		}
+
+		if(type == "clean") {
+			function vehicle_information_clean(obj) {
+				println(" ");
+				println("CLEAN DATA: ");
+
+				var local_engine = "No engine";
+				var local_color = "No color";
+				if(!(obj.engine == null)) {
+					local_engine = obj.engine.horse_power;
+				}
+
+				if(!(obj.color == null)) {
+					local_color = obj.color.r + " " + obj.color.g + " " + obj.color.b;
+				}
+
+				println("The Engine: " + local_engine);
+				println("Color: " + local_color);
+				println(" ");
+			}
+			vehicle_information_clean(this);
+			return;
+		}
+
+		else {
+			println("Invalid type");
+		}
+	}
+	
+}
+
+var v = Vehicle(501, [255, 144, 65]);
+v.print_information("raw");
+v.print_information("clean");
+v.print_information("whatever");

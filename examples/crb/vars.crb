@@ -1,0 +1,15 @@
+var a = 4;
+var b = 5;
+var c = "Hello";
+var d = true;
+
+println("a: " + a + " b: " + b + " c: " + c + " d: " + d);
+println("a + b: " + (a + b));
+println("a - b: " + (a - b));
+println("a * b: " + (a * b));
+println("a / b: " + (a / b));
+
+println("");
+
+println("a + c: " + (a + c));
+println("a + d: " + (a + d.to_int()));

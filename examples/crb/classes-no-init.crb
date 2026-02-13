@@ -1,0 +1,19 @@
+class Person {
+	function get_name() {
+		return "Name: John";
+	}
+
+	function get_age() {
+		return "Age: 28";
+	}
+
+	function get_job() {
+		return "Job: Miner";
+	}
+}
+
+var john = Person();
+
+println(john.get_name());
+println(john.get_age());
+println(john.get_job());

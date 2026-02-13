@@ -1,0 +1,18 @@
+var i = 0;
+while(i < 6) {
+	println(i);
+	i = i + 1;
+}
+
+println("");
+
+var x = 0;
+var cond = true;
+while(cond) {
+	if(x == 5) {
+		cond = false;
+	}
+
+	println(x);
+	x = x + 1;
+}

@@ -23,6 +23,7 @@ private:
     bool is_truthy(const Value& value);
     bool value_shallow_equal(const Value& x, const Value& y);
     void print_value(const Value& value);
+    void print_stack();
     std::string stringify(const Value& value);
     void dump_state(const char* where);
     Value read_constant();

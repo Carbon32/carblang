@@ -1,0 +1,33 @@
+var x = 5;
+var y = 2;
+
+var a = 3;
+var b = 6;
+
+var c = 9;
+var d = 9;
+
+if(x > y) {
+	println("X is bigger than Y");
+}
+else {
+	println("Y is bigger than X");
+}
+
+if(a > b) {
+	println("A is bigger than B");
+}
+else {
+	println("B is bigger than A");
+}
+
+if(c == d) {
+	println("C contains the same value as D");
+}
+else {
+	println("C and D contain different values");
+}
+
+if(!false) {
+	println("Negation works fine");
+}

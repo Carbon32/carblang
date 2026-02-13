@@ -1,0 +1,22 @@
+class Person {
+	function init(name, age, job) {
+		this.name = name;
+		this.age = age;
+		this.job = job;
+	}
+
+	function print_person() {
+		println("Name: " + this.name);
+		println("Age: " + this.age);
+		println("Job: " + this.job);
+		println(" ");
+	}
+}
+
+var john = Person("John", 24, "Artist");
+var eric = Person("Eric", 42, "Doctor");
+var peter = Person("Peter", 31, "Police Officer");
+
+john.print_person();
+eric.print_person();
+peter.print_person();

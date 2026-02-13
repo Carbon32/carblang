@@ -1,0 +1,11 @@
+function first_function() {
+	function second_function() {
+		function third_function() {
+			return 1;
+		}
+		return 1 + third_function();
+	}
+	return 1 + second_function();
+}
+
+println(first_function());

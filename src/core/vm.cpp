@@ -555,7 +555,6 @@ void VM::run()
                     );
                 }
 
-
                 frames.push_back({
                     chunk,
                     ip,
@@ -579,9 +578,26 @@ void VM::run()
 
                 if(frame.is_constructor)
                 {
+                    // print_stack();
                     if(stack.size() > frame.stack_start + 1)
                     {
-                        pop();
+                        Value v = pop();
+                        if(!std::holds_alternative<IgnoreReturnValue>(v))
+                        {
+                            if(std::holds_alternative<std::nullptr_t>(v) || std::holds_alternative<std::shared_ptr<Instance>>(v))
+                            {
+                                return_value = v;
+                                stack.resize(frame.stack_start);
+                                stack.push_back(return_value);
+                                chunk = frame.chunk;
+                                ip = frame.ip;
+                                break;
+                            }
+                            else
+                            {
+                                throw std::runtime_error("The class method init can only return null or the instance itself");
+                            }
+                        }
                     }
 
                     return_value = stack[frame.stack_start];
@@ -984,28 +1000,28 @@ void VM::print_value(const Value& value)
 std::string VM::stringify(const Value& value)
 {
     std::ostringstream out;
-    if (std::holds_alternative<std::nullptr_t>(value))
+    if(std::holds_alternative<std::nullptr_t>(value))
     {
         out << "null";
     }
-    else if (std::holds_alternative<bool>(value))
+    else if(std::holds_alternative<bool>(value))
     {
         out << (std::get<bool>(value) ? "true" : "false");
     }
-    else if (std::holds_alternative<double>(value))
+    else if(std::holds_alternative<double>(value))
     {
         out << std::get<double>(value);
     }
-    else if (std::holds_alternative<std::string>(value))
+    else if(std::holds_alternative<std::string>(value))
     {
         out << std::get<std::string>(value);
     }
-    else if (std::holds_alternative<std::shared_ptr<Array>>(value))
+    else if(std::holds_alternative<std::shared_ptr<Array>>(value))
     {
         auto array = std::get<std::shared_ptr<Array>>(value);
         std::cout << "[";
 
-        for (size_t i = 0; i < array->elements.size(); ++i)
+        for(size_t i = 0; i < array->elements.size(); ++i)
         {
             print_value(array->elements[i]);
             if (i + 1 < array->elements.size())
@@ -1014,29 +1030,35 @@ std::string VM::stringify(const Value& value)
 
         out << "]";
     }
-    else if (std::holds_alternative<std::shared_ptr<Function>>(value))
+    else if(std::holds_alternative<std::shared_ptr<Function>>(value))
     {
         out << "<function>";
     }
 
-    else if (std::holds_alternative<std::shared_ptr<Class>>(value))
+    else if(std::holds_alternative<std::shared_ptr<Class>>(value))
     {
         auto klass = std::get<std::shared_ptr<Class>>(value);
         out << "<class " << klass->name << ">";
     }
-    else if (std::holds_alternative<std::shared_ptr<Instance>>(value))
+    else if(std::holds_alternative<std::shared_ptr<Instance>>(value))
     {
         auto instance = std::get<std::shared_ptr<Instance>>(value);
         out << "<" << instance->klass->name << " instance>";
     }
-    else if (std::holds_alternative<std::shared_ptr<UserBoundMethod>>(value))
+    else if(std::holds_alternative<std::shared_ptr<UserBoundMethod>>(value))
     {
         out << "<bound method>";
     }
-    else if (std::holds_alternative<std::shared_ptr<BoundMethod>>(value))
+    else if(std::holds_alternative<std::shared_ptr<BoundMethod>>(value))
     {
         out << "<native method>";
     }
+
+    else if(std::holds_alternative<IgnoreReturnValue>(value))
+    {
+        out << "<ignore>";
+    }
+
     else
     {
         out << "<unknown>";
@@ -1066,4 +1088,18 @@ std::shared_ptr<Instance> VM::current_instance()
         throw std::runtime_error("Expected instance at stack_start");
 
     return std::get<std::shared_ptr<Instance>>(val);
+}
+
+void VM::print_stack()
+{
+    std::cout << "=== STACK (" << stack.size() << ") ===\n";
+
+    for (size_t i = 0; i < stack.size(); ++i)
+    {
+        std::cout << "[" << i << "] ";
+
+        std::cout << stringify(stack[i]) << std::endl;
+    }
+
+    std::cout << "====================\n";
 }

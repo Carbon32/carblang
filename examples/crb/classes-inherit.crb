@@ -1,0 +1,30 @@
+class Person {
+	function init(name) {
+		this.name = name;
+	}
+
+	function get_name() {
+		return "Name: John";
+	}
+
+	function get_age() {
+		return "Age: 28";
+	}
+
+	function get_job() {
+		return "Job: Miner";
+	}
+}
+
+class Worker : Person {
+	function print_name() {
+		println("The name is " + this.name);
+	}
+}
+
+var john = Worker("John");
+
+println(john.get_name());
+println(john.get_age());
+println(john.get_job());
+john.print_name();
