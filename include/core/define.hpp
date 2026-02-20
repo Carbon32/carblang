@@ -15,6 +15,7 @@ using Value = std::variant<
     std::shared_ptr<Instance>,
     std::shared_ptr<Class>,
     std::shared_ptr<UserBoundMethod>,
+    std::shared_ptr<Dict>,
     IgnoreReturnValue
 >;
 
@@ -71,6 +72,28 @@ struct UserBoundMethod {
 struct Array
 {
     std::vector<Value> elements;
+};
+
+struct Dict
+{
+    std::unordered_map<std::string, Value> entries;
+
+    void set(const std::string& key, Value val)
+    {
+        entries[key] = std::move(val);
+    }
+
+    Value get(const std::string& key) const
+    {
+        auto it = entries.find(key);
+        if(it != entries.end()) return it->second;
+        return nullptr;
+    }
+
+    bool contains(const std::string& key) const
+    {
+        return entries.find(key) != entries.end();
+    }
 };
 
 struct Instance

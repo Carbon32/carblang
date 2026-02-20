@@ -476,7 +476,6 @@ std::shared_ptr<Expression> Parser::primary()
         return std::make_shared<ArrayExpr>(std::move(elements));
     }
 
-
     if(this->match(LEFT_PAREN))
     {
         std::shared_ptr<Expression> expr = expression();
@@ -487,6 +486,40 @@ std::shared_ptr<Expression> Parser::primary()
     if(this->match(TokenType::THIS))
     {
         return std::make_shared<This>(previous());
+    }
+
+    if(this->match(LEFT_BRACE))
+    {
+        std::vector<std::pair<std::shared_ptr<Expression>, std::shared_ptr<Expression>>> entries;
+
+        if(!check(RIGHT_BRACE))
+        {
+            do
+            {
+                std::shared_ptr<Expression> key;
+                if(match(STRING))
+                {
+                    key = std::make_shared<Literal>(previous().literal);
+                }
+                else if(match(IDENTIFIER))
+                {
+                    key = std::make_shared<Literal>(previous().lexeme);
+                }
+                else
+                {
+                    throw error(peek(), "Expected string or identifier as dictionary key");
+                }
+
+                consume(COLON, "Expected \":\" after dictionary key");
+
+                std::shared_ptr<Expression> value = expression();
+                entries.push_back({key, value});
+            }
+            while(match(COMMA));
+        }
+
+        consume(RIGHT_BRACE, "Expected \"}\" after dictionary literal");
+        return std::make_shared<DictExpr>(std::move(entries));
     }
 
     throw this->error(this->peek(), "Expected expression");

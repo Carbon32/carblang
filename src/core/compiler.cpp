@@ -476,3 +476,17 @@ Value Compiler::visit_this_expression(std::shared_ptr<This> expr)
     emit_byte(0);
     return {};
 }
+
+Value Compiler::visit_dict_expression(std::shared_ptr<DictExpr> expr)
+{
+    emit(OpCode::DICT);
+
+    for(auto& [key, value] : expr->entries)
+    {
+        key->accept(*this);
+        value->accept(*this);
+        emit(OpCode::SET_ITEM);
+    }
+
+    return {};
+}

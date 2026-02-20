@@ -6,6 +6,7 @@ struct Assign;
 struct Variable;
 struct Logical;
 struct Call;
+struct DictExpr;
 struct ArrayExpr;
 struct IndexExpr;
 struct IndexAssign;
@@ -35,6 +36,7 @@ struct ClassStmt;
 class Token;
 class RuntimeError;
 
+struct Dict;
 struct Array;
 struct Function;
 struct BoundMethod;

@@ -15,6 +15,7 @@ struct ExpressionVisitor
     virtual Value visit_set_expression(std::shared_ptr<Set> expr) = 0;
     virtual Value visit_super_expression(std::shared_ptr<Super> expr) = 0;
     virtual Value visit_this_expression(std::shared_ptr<This> expr) = 0;
+    virtual Value visit_dict_expression(std::shared_ptr<DictExpr> expr) = 0;
     virtual ~ExpressionVisitor() = default;
 };
 
@@ -35,6 +36,18 @@ struct This : Expression, public std::enable_shared_from_this<This>
     }
 };
 
+struct DictExpr : Expression, public std::enable_shared_from_this<DictExpr>
+{
+    std::vector<std::pair<std::shared_ptr<Expression>, std::shared_ptr<Expression>>> entries;
+
+    DictExpr(std::vector<std::pair<std::shared_ptr<Expression>, std::shared_ptr<Expression>>> entries)
+        : entries(std::move(entries)) {}
+
+    Value accept(ExpressionVisitor& visitor) override
+    {
+        return visitor.visit_dict_expression(shared_from_this());
+    }
+};
 
 struct Super : Expression, public std::enable_shared_from_this<Super> {
 

@@ -52,5 +52,9 @@ enum class OpCode : uint8_t
     GET_SUPER,
     SUPER_INVOKE,
 
+    DICT,
+    GET_ITEM,
+    SET_ITEM,
+
     RETURN
 };

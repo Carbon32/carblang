@@ -634,32 +634,31 @@ void VM::run()
                 Value index_val = pop();
                 Value container_val = pop();
 
-                if(!std::holds_alternative<double>(index_val))
-                    throw std::runtime_error("Index must be a number");
-
-                int index = static_cast<int>(std::get<double>(index_val));
-
-                if(std::holds_alternative<std::shared_ptr<Array>>(container_val)) {
+                if(std::holds_alternative<std::shared_ptr<Array>>(container_val))
+                {
                     auto array = std::get<std::shared_ptr<Array>>(container_val);
-
+                    int index = static_cast<int>(std::get<double>(index_val));
                     if(index < 0 || index >= (int)array->elements.size())
                         throw std::runtime_error("Array index out of bounds");
-
                     push(array->elements[index]);
                 }
-                else if(std::holds_alternative<std::string>(container_val)) {
+                else if(std::holds_alternative<std::string>(container_val))
+                {
                     const auto& str = std::get<std::string>(container_val);
-
+                    int index = static_cast<int>(std::get<double>(index_val));
                     if(index < 0 || index >= (int)str.size())
                         throw std::runtime_error("String index out of bounds");
-
-                    std::string ch(1, str[index]);
-                    push(ch);
+                    push(std::string(1, str[index]));
+                }
+                else if(std::holds_alternative<std::shared_ptr<Dict>>(container_val))
+                {
+                    auto dict = std::get<std::shared_ptr<Dict>>(container_val);
+                    if(!std::holds_alternative<std::string>(index_val))
+                        throw std::runtime_error("Dictionary key must be string");
+                    push(dict->get(std::get<std::string>(index_val)));
                 }
                 else
-                {
-                    throw std::runtime_error("Can only index arrays or strings");
-                }
+                    throw std::runtime_error("Cannot index this type");
 
                 break;
             }
@@ -668,22 +667,28 @@ void VM::run()
             {
                 Value value = pop();
                 Value index_val = pop();
-                Value array_val = pop();
+                Value container_val = pop();
 
-                if(!std::holds_alternative<std::shared_ptr<Array>>(array_val))
-                    throw std::runtime_error("Can only index arrays");
+                if(std::holds_alternative<std::shared_ptr<Array>>(container_val))
+                {
+                    auto array = std::get<std::shared_ptr<Array>>(container_val);
+                    int index = static_cast<int>(std::get<double>(index_val));
+                    if(index < 0 || index >= (int)array->elements.size())
+                        throw std::runtime_error("Array index out of bounds");
+                    array->elements[index] = value;
+                    push(value);
+                }
+                else if(std::holds_alternative<std::shared_ptr<Dict>>(container_val))
+                {
+                    auto dict = std::get<std::shared_ptr<Dict>>(container_val);
+                    if(!std::holds_alternative<std::string>(index_val))
+                        throw std::runtime_error("Dictionary key must be string");
+                    dict->set(std::get<std::string>(index_val), value);
+                    push(value);
+                }
+                else
+                    throw std::runtime_error("Cannot assign index to this type");
 
-                if(!std::holds_alternative<double>(index_val))
-                    throw std::runtime_error("Array index must be a number");
-
-                auto array = std::get<std::shared_ptr<Array>>(array_val);
-                int index = static_cast<int>(std::get<double>(index_val));
-
-                if(index < 0 || index >= (int)array->elements.size())
-                    throw std::runtime_error("Array index out of bounds");
-
-                array->elements[index] = value;
-                push(value);
                 break;
             }
 
@@ -803,6 +808,48 @@ void VM::run()
                     throw std::runtime_error("Cannot get property \"" + name + "\" of this value");
                 }   
                 
+            }
+
+            case OpCode::DICT:
+            {
+                stack.push_back(std::make_shared<Dict>());
+                break;
+            }
+
+            case OpCode::GET_ITEM:
+            {
+                Value key = pop();
+                Value dict_val = pop();
+
+                if(auto dict = std::get_if<std::shared_ptr<Dict>>(&dict_val))
+                {
+                    if(!std::holds_alternative<std::string>(key))
+                        throw std::runtime_error("Dictionary key must be a string");
+
+                    stack.push_back((*dict)->get(std::get<std::string>(key)));
+                }
+                else throw std::runtime_error("Not a dictionary");
+
+                break;
+            }
+
+            case OpCode::SET_ITEM:
+            {
+                Value val = pop();
+                Value key = pop();
+                Value dict_val = pop();
+
+                if(auto dict = std::get_if<std::shared_ptr<Dict>>(&dict_val))
+                {
+                    if(!std::holds_alternative<std::string>(key))
+                        throw std::runtime_error("Dictionary key must be a string");
+
+                    (*dict)->set(std::get<std::string>(key), std::move(val));
+                    stack.push_back(dict_val);
+                }
+                else throw std::runtime_error("Not a dictionary");
+
+                break;
             }
 
             case OpCode::SET_PROPERTY:
@@ -1004,28 +1051,32 @@ std::string VM::stringify(const Value& value)
     {
         out << "null";
     }
+
     else if(std::holds_alternative<bool>(value))
     {
         out << (std::get<bool>(value) ? "true" : "false");
     }
+
     else if(std::holds_alternative<double>(value))
     {
         out << std::get<double>(value);
     }
+
     else if(std::holds_alternative<std::string>(value))
     {
         out << std::get<std::string>(value);
     }
+
     else if(std::holds_alternative<std::shared_ptr<Array>>(value))
     {
         auto array = std::get<std::shared_ptr<Array>>(value);
-        std::cout << "[";
+        out << "[";
 
         for(size_t i = 0; i < array->elements.size(); ++i)
         {
-            print_value(array->elements[i]);
+            out << stringify(array->elements[i]);
             if (i + 1 < array->elements.size())
-                std::cout << ", ";
+                out << ", ";
         }
 
         out << "]";
@@ -1040,15 +1091,18 @@ std::string VM::stringify(const Value& value)
         auto klass = std::get<std::shared_ptr<Class>>(value);
         out << "<class " << klass->name << ">";
     }
+
     else if(std::holds_alternative<std::shared_ptr<Instance>>(value))
     {
         auto instance = std::get<std::shared_ptr<Instance>>(value);
         out << "<" << instance->klass->name << " instance>";
     }
+
     else if(std::holds_alternative<std::shared_ptr<UserBoundMethod>>(value))
     {
         out << "<bound method>";
     }
+
     else if(std::holds_alternative<std::shared_ptr<BoundMethod>>(value))
     {
         out << "<native method>";
@@ -1057,6 +1111,19 @@ std::string VM::stringify(const Value& value)
     else if(std::holds_alternative<IgnoreReturnValue>(value))
     {
         out << "<ignore>";
+    }
+
+    else if(std::holds_alternative<std::shared_ptr<Dict>>(value))
+    {
+        auto dict = std::get<std::shared_ptr<Dict>>(value);
+        out << "{";
+        size_t count = 0;
+        for(const auto& [key, val] : dict->entries)
+        {
+            out << key << ": " << stringify(val);
+            if(++count < dict->entries.size()) out << ", ";
+        }
+        out << "}";
     }
 
     else

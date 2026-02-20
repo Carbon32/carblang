@@ -1,0 +1,15 @@
+var d = {
+			"first_name": "James",
+			"last_name": "Bond",
+			"age": 24,
+			"list_of_items": ["Keys", "Wallet", "Watch"]
+		};
+
+println(d); // unordered map, so the insertion order may not be the same
+println(d["first_name"]);
+println(d["last_name"]);
+println(d["age"]);
+println(d["list_of_items"]);
+
+d["first_name"] = "Arnold";
+println(d); // unordered map, so the insertion order may not be the same

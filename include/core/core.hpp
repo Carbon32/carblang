@@ -72,6 +72,7 @@ class Compiler : public ExpressionVisitor, public StmtVisitor
         Value visit_set_expression(std::shared_ptr<Set> expr) override;
         Value visit_super_expression(std::shared_ptr<Super> expr) override;
         Value visit_this_expression(std::shared_ptr<This> expr) override;
+        Value visit_dict_expression(std::shared_ptr<DictExpr> expr) override;
 
         Value visit_expression_stmt(std::shared_ptr<ExprStmt> stmt) override;
         Value visit_print_stmt(std::shared_ptr<PrintStmt> stmt) override;
