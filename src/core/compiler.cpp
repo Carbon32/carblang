@@ -403,6 +403,12 @@ Value Compiler::visit_set_expression(std::shared_ptr<Set> expr)
 
 Value Compiler::visit_include_stmt(std::shared_ptr<IncludeStmt> stmt)
 {
+    if(included_files.find(stmt->file_name) != included_files.end()) {
+        throw std::runtime_error("File already included: " + stmt->file_name);
+    }
+
+    included_files.insert(stmt->file_name);
+
     std::ifstream file(stmt->file_name);
     if(!file.is_open())
         throw std::runtime_error("Failed to open include file: " + stmt->file_name);

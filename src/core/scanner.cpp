@@ -70,15 +70,39 @@ void Scanner::scan_single_token()
 			break;
 
 		case '/':
-			if(this->match('/'))
+		    if(this->match('/'))
+		    {
+		        while(peek() != '\n' && !this->at_end())
+		            advance();
+		    }
+		    else if(this->match('*'))
 			{
-			  while(peek() != '\n' && !this->at_end()) advance();
+			    bool closed = false;
+
+			    while(!this->at_end())
+			    {
+			        if(peek() == '\n')
+			            ++this->line;
+
+			        if(peek() == '*' && peek_next() == '/')
+			        {
+			            advance();
+			            advance();
+			            closed = true;
+			            break;
+			        }
+
+			        advance();
+			    }
+
+			    if(!closed)
+			        error(this->line, "Unterminated block comment");
 			}
-			else
-			{
-			  this->add_token(SLASH);
-			}
-			break;
+		    else
+		    {
+		        this->add_token(SLASH);
+		    }
+		    break;
 
 		case ' ':
 		case '\r':
@@ -166,22 +190,48 @@ void Scanner::number()
 
 void Scanner::string()
 {
-	while(this->peek() != '"' && !this->at_end())
-	{
-		if(this->peek() == '\n') ++this->line;
-		this->advance();
-	}
+    std::string value;
+    while(!at_end())
+    {
+        char c = advance();
 
-	if(this->at_end())
-	{
-	  error(this->line, "Unterminated string");
-	  return;
-	}
+        if(c == '"') break;
+        if(c == '\n') ++line;
 
-	this->advance();
+        if(c == '\\')
+        {
+            if(at_end())
+            {
+                error(line, "Unterminated string escape sequence");
+                return;
+            }
 
-	std::string value = this->src.substr(this->start + 1, this->current - 2 - this->start);
-	this->add_token(STRING, value);
+            char next = advance();
+            switch(next)
+            {
+                case 'n': value += '\n'; break;
+                case 't': value += '\t'; break;
+                case 'r': value += '\r'; break;
+                case '"': value += '"'; break;
+                case '\\': value += '\\'; break;
+                default:
+                    error(line, std::string("Unknown escape sequence: \\") + next);
+                    break;
+            }
+        }
+        else
+        {
+            value += c;
+        }
+    }
+
+    if(at_end())
+    {
+        error(line, "Unterminated string");
+        return;
+    }
+
+    add_token(STRING, value);
 }
 
 bool Scanner::match(char expected)

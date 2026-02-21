@@ -20,6 +20,9 @@
 #include <type_traits>
 #include <unordered_map>
 #include <algorithm>
+#include <filesystem>
+#include <set>
+#include <chrono>
 
 // This macro is defined in one of the includes above, it took me a few hours to find it
 #undef NULL

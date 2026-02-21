@@ -8,6 +8,18 @@ void VM::init_globals()
     globals["array_input"] = make_native_method(nullptr, NativeMethod::ARRAY_INPUT);
     globals["random"] = make_native_method(nullptr, NativeMethod::RAND);
     globals["random_integer"] = make_native_method(nullptr, NativeMethod::RANDINT);
+    globals["format"] = make_native_method(nullptr, NativeMethod::FORMAT);
+    globals["printf"] = make_native_method(nullptr, NativeMethod::PRINTF);
+    globals["read"] = make_native_method(nullptr, NativeMethod::READ_FILE);
+    globals["write"] = make_native_method(nullptr, NativeMethod::WRITE_FILE);
+    globals["append"] = make_native_method(nullptr, NativeMethod::APPEND_FILE);
+    globals["erase"] = make_native_method(nullptr, NativeMethod::ERASE_FILE);
+    globals["parse"] = make_native_method(nullptr, NativeMethod::PARSE_JSON);
+    globals["stringify"] = make_native_method(nullptr, NativeMethod::STRINGIFY);
+    globals["profile_start"] = make_native_method(nullptr, NativeMethod::PROFILE_START);
+    globals["profile_end"] = make_native_method(nullptr, NativeMethod::PROFILE_END);
+    globals["profile_report"] = make_native_method(nullptr, NativeMethod::PROFILE_REPORT);
+    globals["profile_reset"] = make_native_method(nullptr, NativeMethod::PROFILE_RESET);
 }
 
 void VM::interpret(Chunk& new_chunk)
@@ -477,6 +489,19 @@ void VM::run()
                         NATIVE_GLOBALS_FILL
                         NATIVE_GLOBALS_INIT
                         NATIVE_GLOBALS_ARRAY_INPUT
+                        NATIVE_GLOBALS_FORMAT
+                        NATIVE_GLOBALS_PRINTF
+                        NATIVE_GLOBALS_READ_FILE
+                        NATIVE_GLOBALS_WRITE_FILE
+                        NATIVE_GLOBALS_APPEND_FILE
+                        NATIVE_GLOBALS_PARSE_JSON
+                        NATIVE_GLOBALS_STRINGIFY
+                        NATIVE_GLOBALS_ERASE_FILE
+
+                        NATIVE_GLOBALS_PROFILE_START
+                        NATIVE_GLOBALS_PROFILE_END
+                        NATIVE_GLOBALS_PROFILE_REPORT
+                        NATIVE_GLOBALS_PROFILE_RESET
 
                         NATIVE_ARRAY_PUSH
                         NATIVE_ARRAY_POP

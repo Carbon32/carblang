@@ -16,7 +16,29 @@
         else if(std::holds_alternative<std::string>(v)) push("string"); \
         else if(std::holds_alternative<std::shared_ptr<Array>>(v)) push("array"); \
         else if(std::holds_alternative<std::shared_ptr<Function>>(v)) push("function"); \
-        else push("method"); \
+        else if(std::holds_alternative<std::shared_ptr<Class>>(v)) \
+        { \
+            auto klass = std::get<std::shared_ptr<Class>>(v); \
+            push("<class " + klass->name + ">"); \
+        } \
+        else if(std::holds_alternative<std::shared_ptr<Instance>>(v)) \
+        { \
+            auto instance = std::get<std::shared_ptr<Instance>>(v); \
+            push("<" + instance->klass->name + " instance>"); \
+        } \
+        else if(std::holds_alternative<std::shared_ptr<UserBoundMethod>>(v)) \
+        { \
+            push("<bound method>"); \
+        } \
+        else if(std::holds_alternative<std::shared_ptr<BoundMethod>>(v)) \
+        { \
+            push("<native method>"); \
+        } \
+        else if(std::holds_alternative<std::shared_ptr<Dict>>(v)) \
+        { \
+            push("<dict>"); \
+        } \
+        else push("<unknown>"); \
     \
         break; \
     }

@@ -5,6 +5,7 @@ class VM
     std::vector<Value> stack;
     std::unordered_map<std::string, Value> globals;
     std::vector<CallFrame> frames;
+    GlobalProfiler profiler;
 
 public:
     void interpret(Chunk& new_chunk);

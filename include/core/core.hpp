@@ -11,6 +11,8 @@ inline bool runtime_error_trigger = false;
 #include "forward.hpp"
 #include "native.hpp"
 #include "define.hpp"
+#include "json.hpp"
+#include "profile.hpp"
 #include "array_methods.hpp"
 #include "dict_methods.hpp"
 #include "primitive_methods.hpp"
@@ -36,7 +38,6 @@ class Carblang
         std::string read_file(const char *file);
 
         void handle_file(const char *file);
-        void run_instructions();
 };
 
 class Compiler : public ExpressionVisitor, public StmtVisitor
@@ -49,6 +50,7 @@ class Compiler : public ExpressionVisitor, public StmtVisitor
     };
 
     std::vector<Local> locals;
+    std::set<std::string> included_files;
     int scope_depth = 0;
 
 

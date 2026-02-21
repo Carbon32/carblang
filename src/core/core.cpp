@@ -9,7 +9,7 @@ void Carblang::start(int argc, char **argv)
 {
     try
     {
-        if(argc > 2)
+        if(argc > 2 || argc < 2)
         {
             std::cout << "Usage: carblang <script>" << std::endl;
             std::exit(64);
@@ -17,10 +17,6 @@ void Carblang::start(int argc, char **argv)
         else if(argc == 2)
         {
             this->handle_file(argv[1]);
-        }
-        else
-        {
-            this->run_instructions();
         }
     }
     catch(const std::runtime_error& exception)
@@ -58,21 +54,6 @@ void Carblang::handle_file(const char *file)
     if(runtime_error_trigger)
     {
         std::exit(70);
-    }
-}
-
-void Carblang::run_instructions()
-{
-    while(true)
-    {
-        std::cout << "> ";
-        std::string line;
-        if(!std::getline(std::cin, line))
-        {
-            break;
-        }
-        this->run(line);
-        error_trigger = false;
     }
 }
 
