@@ -31,6 +31,15 @@ enum class NativeMethod {
     TO_ARRAY,
     STR_COUNT,
     STR_SLICE,
+
+    DICT_CONTAINS,
+    DICT_REMOVE,
+    DICT_LENGTH,
+    DICT_KEYS,
+    DICT_VALUES,
+    DICT_POP,
+    DICT_COPY,
+    DICT_CLEAR,
     
     INPUT, RAND, RANDINT, ARRAY_INPUT,
 

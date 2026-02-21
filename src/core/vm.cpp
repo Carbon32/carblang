@@ -535,6 +535,15 @@ void VM::run()
                         NATIVE_PRIMITIVE_STR_COUNT
                         NATIVE_PRIMITIVE_TO_NUMBER
 
+                        NATIVE_DICT_CONTAINS
+                        NATIVE_DICT_REMOVE
+                        NATIVE_DICT_LENGTH
+                        NATIVE_DICT_KEYS
+                        NATIVE_DICT_VALUES
+                        NATIVE_DICT_POP
+                        NATIVE_DICT_COPY
+                        NATIVE_DICT_CLEAR
+
                         default:
                             throw std::runtime_error("Unrecognized method");
                     }
@@ -783,6 +792,22 @@ void VM::run()
                     if(name == "min") { push(make_native_method(array, NativeMethod::MIN)); break; }
                     if(name == "max") { push(make_native_method(array, NativeMethod::MAX)); break; }
                     if(name == "average") { push(make_native_method(array, NativeMethod::AVERAGE)); break; }
+                    throw std::runtime_error("Undefined property \"" + name + "\"");
+                    break;
+                }
+
+                if(std::holds_alternative<std::shared_ptr<Dict>>(object))
+                {
+                    auto dict = std::get<std::shared_ptr<Dict>>(object);
+
+                    if(name == "contains") { push(make_native_method(dict, NativeMethod::DICT_CONTAINS)); break; }
+                    if(name == "remove") { push(make_native_method(dict, NativeMethod::DICT_REMOVE)); break; }
+                    if(name == "length") { push(make_native_method(dict, NativeMethod::DICT_LENGTH)); break; }
+                    if(name == "keys") { push(make_native_method(dict, NativeMethod::DICT_KEYS)); break; }
+                    if(name == "values") { push(make_native_method(dict, NativeMethod::DICT_VALUES)); break; }
+                    if(name == "pop") { push(make_native_method(dict, NativeMethod::DICT_POP)); break; }
+                    if(name == "copy") { push(make_native_method(dict, NativeMethod::DICT_COPY)); break; }
+                    if(name == "clear") { push(make_native_method(dict, NativeMethod::DICT_CLEAR)); break; }
                     throw std::runtime_error("Undefined property \"" + name + "\"");
                     break;
                 }

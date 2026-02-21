@@ -12,6 +12,7 @@ inline bool runtime_error_trigger = false;
 #include "native.hpp"
 #include "define.hpp"
 #include "array_methods.hpp"
+#include "dict_methods.hpp"
 #include "primitive_methods.hpp"
 #include "globals_methods.hpp"
 

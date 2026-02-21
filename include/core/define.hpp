@@ -3,7 +3,6 @@ struct IgnoreReturnValue
     bool operator==(const IgnoreReturnValue&) const noexcept { return true; }
 };
 
-
 using Value = std::variant<
     std::nullptr_t,
     double,
@@ -93,6 +92,28 @@ struct Dict
     bool contains(const std::string& key) const
     {
         return entries.find(key) != entries.end();
+    }
+
+    bool remove(const std::string& key)
+    {
+        return entries.erase(key) > 0;
+    }
+
+    size_t length() const
+    {
+        return entries.size();
+    }
+
+    void clear()
+    {
+        entries.clear();
+    }
+
+    std::shared_ptr<Dict> copy() const
+    {
+        auto d = std::make_shared<Dict>();
+        d->entries = entries;
+        return d;
     }
 };
 
