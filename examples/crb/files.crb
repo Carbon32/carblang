@@ -1,0 +1,18 @@
+write("hello.txt", "Hello World");
+
+def x = read("hello.txt");
+println(x);
+
+append("hello.txt", "\nHere is more text");
+x = read("hello.txt");
+println(x);
+
+def i;
+for(i = 0; i < 5; i = i + 1) {
+	append("hello.txt", "\nText: " + i);
+}
+
+x = read("hello.txt");
+println(x);
+
+erase("hello.txt");

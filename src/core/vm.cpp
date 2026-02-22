@@ -16,6 +16,7 @@ void VM::init_globals()
     globals["erase"] = make_native_method(nullptr, NativeMethod::ERASE_FILE);
     globals["parse"] = make_native_method(nullptr, NativeMethod::PARSE_JSON);
     globals["stringify"] = make_native_method(nullptr, NativeMethod::STRINGIFY);
+    globals["json"] = make_native_method(nullptr, NativeMethod::TO_JSON);
     globals["profile_start"] = make_native_method(nullptr, NativeMethod::PROFILE_START);
     globals["profile_end"] = make_native_method(nullptr, NativeMethod::PROFILE_END);
     globals["profile_report"] = make_native_method(nullptr, NativeMethod::PROFILE_REPORT);
@@ -495,6 +496,7 @@ void VM::run()
                         NATIVE_GLOBALS_WRITE_FILE
                         NATIVE_GLOBALS_APPEND_FILE
                         NATIVE_GLOBALS_PARSE_JSON
+                        NATIVE_GLOBALS_TO_JSON
                         NATIVE_GLOBALS_STRINGIFY
                         NATIVE_GLOBALS_ERASE_FILE
 
@@ -1070,6 +1072,29 @@ uint16_t VM::read_short()
     return (high << 8) | low;
 }
 
+Value VM::read_constant()
+{
+    if(ip >= chunk->code.data() + chunk->code.size())
+        runtime_error(RuntimeError(Token{END_OF_FILE, "", nullptr, 0}, "Reached end of bytecode while reading constant"));
+
+    uint8_t index = *ip++;
+    return chunk->constants.at(index);
+}
+
+std::shared_ptr<Instance> VM::current_instance()
+{
+    if(frames.empty())
+        throw std::runtime_error("No active frame for current_instance()");
+
+    size_t idx = frames.back().stack_start;
+    Value val = stack.at(idx);
+
+    if(!std::holds_alternative<std::shared_ptr<Instance>>(val))
+        throw std::runtime_error("Expected instance at stack_start");
+
+    return std::get<std::shared_ptr<Instance>>(val);
+}
+
 bool VM::is_truthy(const Value& value)
 {
     if(std::holds_alternative<std::nullptr_t>(value)) return false;
@@ -1184,27 +1209,118 @@ std::string VM::stringify(const Value& value)
     return out.str();
 }
 
-Value VM::read_constant()
+std::string VM::json_escape(const std::string& s)
 {
-    if(ip >= chunk->code.data() + chunk->code.size())
-        runtime_error(RuntimeError(Token{END_OF_FILE, "", nullptr, 0}, "Reached end of bytecode while reading constant"));
+    std::string out;
+    out.reserve(s.size());
 
-    uint8_t index = *ip++;
-    return chunk->constants.at(index);
+    for(unsigned char c : s)
+    {
+        switch(c)
+        {
+            case '"':  out += "\\\""; break;
+            case '\\': out += "\\\\"; break;
+            case '\b': out += "\\b";  break;
+            case '\f': out += "\\f";  break;
+            case '\n': out += "\\n";  break;
+            case '\r': out += "\\r";  break;
+            case '\t': out += "\\t";  break;
+
+            default:
+            {
+                if(c < 0x20)
+                {
+                    std::ostringstream ss;
+                    ss << "\\u"
+                       << std::hex
+                       << std::uppercase
+                       << std::setw(4)
+                       << std::setfill('0')
+                       << (int)c;
+                    out += ss.str();
+                }
+                else
+                {
+                    out += c;
+                }
+            }
+        }
+    }
+
+    return out;
 }
 
-std::shared_ptr<Instance> VM::current_instance()
+std::string VM::json_number(double value)
 {
-    if(frames.empty())
-        throw std::runtime_error("No active frame for current_instance()");
+    std::ostringstream out;
+    out << std::setprecision(15) << value;
 
-    size_t idx = frames.back().stack_start;
-    Value val = stack.at(idx);
+    std::string s = out.str();
 
-    if(!std::holds_alternative<std::shared_ptr<Instance>>(val))
-        throw std::runtime_error("Expected instance at stack_start");
+    if(s.find('.') != std::string::npos)
+    {
+        while(!s.empty() && s.back() == '0')
+            s.pop_back();
 
-    return std::get<std::shared_ptr<Instance>>(val);
+        if(!s.empty() && s.back() == '.')
+            s.pop_back();
+    }
+
+    return s;
+}
+
+std::string VM::json_stringify(const Value& value)
+{
+    if(std::holds_alternative<std::nullptr_t>(value))
+        return "null";
+
+    if(std::holds_alternative<bool>(value))
+        return std::get<bool>(value) ? "true" : "false";
+
+    if(std::holds_alternative<double>(value))
+        return json_number(std::get<double>(value));
+
+    if(std::holds_alternative<std::string>(value))
+        return "\"" + json_escape(std::get<std::string>(value)) + "\"";
+
+    if(std::holds_alternative<std::shared_ptr<Array>>(value))
+    {
+        auto arr = std::get<std::shared_ptr<Array>>(value);
+
+        std::string out = "[";
+        for(size_t i = 0; i < arr->elements.size(); ++i)
+        {
+            out += json_stringify(arr->elements[i]);
+            if(i + 1 < arr->elements.size())
+                out += ",";
+        }
+        out += "]";
+        return out;
+    }
+
+    if(std::holds_alternative<std::shared_ptr<Dict>>(value))
+    {
+        auto dict = std::get<std::shared_ptr<Dict>>(value);
+
+        std::string out = "{";
+        size_t count = 0;
+
+        for(const auto& [key, val] : dict->entries)
+        {
+            out += "\"";
+            out += json_escape(key);
+            out += "\":";
+            out += json_stringify(val);
+
+            if(++count < dict->entries.size())
+                out += ",";
+        }
+
+        out += "}";
+        return out;
+    }
+
+    throw std::runtime_error("Value cannot be serialized to JSON");
 }
 
 void VM::print_stack()

@@ -26,6 +26,9 @@ private:
     void print_value(const Value& value);
     void print_stack();
     std::string stringify(const Value& value);
+    std::string json_escape(const std::string& s);
+    std::string json_number(double value);
+    std::string json_stringify(const Value& value);
     void dump_state(const char* where);
     Value read_constant();
 };

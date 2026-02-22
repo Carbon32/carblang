@@ -298,6 +298,18 @@
         break; \
     }
 
+#define NATIVE_GLOBALS_TO_JSON \
+    case NativeMethod::TO_JSON: \
+    { \
+        if(args.size() != 1) \
+            throw std::runtime_error("json() requires 1 argument"); \
+        if(!std::holds_alternative<std::shared_ptr<Dict>>(args[0])) \
+            throw std::runtime_error("json() only accepts dictionaries"); \
+        \
+        push(json_stringify(args[0])); \
+        break; \
+    }
+
 #define NATIVE_GLOBALS_PROFILE_START \
     case NativeMethod::PROFILE_START: { \
         if(args.size() != 1 || !std::holds_alternative<std::string>(args[0])) \

@@ -1,4 +1,5 @@
-enum class NativeMethod {
+enum class NativeMethod
+{
     PUSH, POP, LENGTH, IS_EMPTY, CLEAR, CONTAINS, INDEX_OF,
     INSERT, REMOVE_AT, JOIN, REVERSE, FIRST, LAST, SLICE,
     COPY, CONCAT, SWAP, COUNT, EQUALS, LAST_INDEX_OF, TRIM,
@@ -47,6 +48,7 @@ enum class NativeMethod {
     APPEND_FILE,
     ERASE_FILE,
     PARSE_JSON,
+    TO_JSON,
     STRINGIFY,
 
     PROFILE_START,
