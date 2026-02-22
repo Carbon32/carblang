@@ -1,0 +1,8 @@
+def first_name = "Eric";
+def last_name = "Peterson";
+def age = 24;
+
+def complete_string = format("% % %", first_name, last_name, age);
+println(complete_string);
+
+printf("Or you can do this: % % %", first_name, last_name, age);
