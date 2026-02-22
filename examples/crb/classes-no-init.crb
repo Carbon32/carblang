@@ -12,8 +12,5 @@ class Person {
 	}
 }
 
-var john = Person();
-
-println(john.get_name());
-println(john.get_age());
-println(john.get_job());
+def john = Person();
+printf("%, %, %\n", john.get_name(), john.get_age(), john.get_job());

@@ -7,8 +7,7 @@ class Person {
 			}
 
 			function print_values() {
-				println("Name: " + this.name);
-				println("Age: " + this.age);
+				printf("Name: %\nAge: %", this.name, this.age);
 			}
 		}
 
@@ -16,5 +15,5 @@ class Person {
 	}
 }
 
-var p = Person("John", 28);
+def p = Person("John", 28);
 p.human.print_values();

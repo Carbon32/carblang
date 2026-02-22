@@ -1,11 +1,11 @@
-var x = 5;
-var y = 2;
+def x = 5;
+def y = 2;
 
-var a = 3;
-var b = 6;
+def a = 3;
+def b = 6;
 
-var c = 9;
-var d = 9;
+def c = 9;
+def d = 9;
 
 if(x > y) {
 	println("X is bigger than Y");

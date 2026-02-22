@@ -1,13 +1,12 @@
-var i = 0;
+def i = 0;
 while(i < 6) {
-	println(i);
+	if((i + 1) == 6) { println(i + "\n"); }
+	else { println(i); }
 	i = i + 1;
 }
 
-println("");
-
-var x = 0;
-var cond = true;
+def x = 0;
+def cond = true;
 while(cond) {
 	if(x == 5) {
 		cond = false;

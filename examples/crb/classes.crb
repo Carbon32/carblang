@@ -6,16 +6,13 @@ class Person {
 	}
 
 	function print_person() {
-		println("Name: " + this.name);
-		println("Age: " + this.age);
-		println("Job: " + this.job);
-		println(" ");
+		printf("Name: %, Age: %, Job: %\n", this.name, this.age, this.job);
 	}
 }
 
-var john = Person("John", 24, "Artist");
-var eric = Person("Eric", 42, "Doctor");
-var peter = Person("Peter", 31, "Police Officer");
+def john = Person("John", 24, "Artist");
+def eric = Person("Eric", 42, "Doctor");
+def peter = Person("Peter", 31, "Police Officer");
 
 john.print_person();
 eric.print_person();

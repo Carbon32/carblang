@@ -33,11 +33,7 @@ class Vehicle {
 	function print_information(type) {
 		if(type == "raw") {
 			function vehicle_information_raw(obj) {
-				println(" ");
-				println("RAW DATA: ");
-				println("The Engine: " + obj.engine);
-				println("Color: " + obj.color);
-				println(" ");
+				printf("\nRaw Data:\nThe Engine: %\nColor: %\n", obj.engine, obj.color);
 			}
 			vehicle_information_raw(this);
 			return;
@@ -45,11 +41,8 @@ class Vehicle {
 
 		if(type == "clean") {
 			function vehicle_information_clean(obj) {
-				println(" ");
-				println("CLEAN DATA: ");
-
-				var local_engine = "No engine";
-				var local_color = "No color";
+				def local_engine = "No engine";
+				def local_color = "No color";
 				if(!(obj.engine == null)) {
 					local_engine = obj.engine.horse_power;
 				}
@@ -58,9 +51,7 @@ class Vehicle {
 					local_color = obj.color.r + " " + obj.color.g + " " + obj.color.b;
 				}
 
-				println("The Engine: " + local_engine);
-				println("Color: " + local_color);
-				println(" ");
+				printf("\nClean Data:\nThe Engine: %\nColor: %\n", local_engine, local_color);
 			}
 			vehicle_information_clean(this);
 			return;
@@ -73,7 +64,7 @@ class Vehicle {
 	
 }
 
-var v = Vehicle(501, [255, 144, 65]);
+def v = Vehicle(501, [255, 144, 65]);
 v.print_information("raw");
 v.print_information("clean");
 v.print_information("whatever");

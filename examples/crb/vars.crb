@@ -1,15 +1,13 @@
-var a = 4;
-var b = 5;
-var c = "Hello";
-var d = true;
+def a = 4;
+def b = 5;
+def c = "Hello";
+def d = true;
 
-println("a: " + a + " b: " + b + " c: " + c + " d: " + d);
+printf("a: %, b: %, c: %, d: %\n", a, b, c, d);
 println("a + b: " + (a + b));
 println("a - b: " + (a - b));
 println("a * b: " + (a * b));
-println("a / b: " + (a / b));
-
-println("");
+println("a / b: " + (a / b) + "\n");
 
 println("a + c: " + (a + c));
 println("a + d: " + (a + d.to_int()));

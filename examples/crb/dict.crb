@@ -1,4 +1,4 @@
-var d = {
+def d = {
 			"first_name": "James",
 			"last_name": "Bond",
 			"age": 24,
@@ -6,15 +6,10 @@ var d = {
 		};
 
 println(d); // unordered map, so the insertion order may not be the same
-println(d["first_name"]);
-println(d["last_name"]);
-println(d["age"]);
-println(d["list_of_items"]);
+printf("%\n%\n%\n%\n", d["first_name"], d["last_name"], d["age"], d["list_of_items"]);
 
 d["first_name"] = "Arnold";
-println(d); // unordered map, so the insertion order may not be the same
-
-println("");
+println(d + "\n"); // unordered map, so the insertion order may not be the same
 
 println("Keys: " + d.keys());
 println("Values: " + d.values());
@@ -27,7 +22,7 @@ println("Removed (first_name): " + d);
 println("Pop: " + d.pop("age"));
 println("After pop: " + d);
 
-var new_d = d.copy();
+def new_d = d.copy();
 new_d["test"] = 6;
 println("new_d (copy): " + new_d);
 println("d (original): " + d);

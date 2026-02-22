@@ -22,7 +22,7 @@ const std::map<std::string, TokenType> Scanner::keywords =
 	{"super",  	  	TokenType::SUPER},
 	{"this",   	 	TokenType::THIS},
 	{"true",   	  	TokenType::TRUE},
-	{"var",    	  	TokenType::VAR},
+	{"def",    	  	TokenType::VAR},
 	{"while",  	  	TokenType::WHILE},
 	{"include",		TokenType::INCLUDE}
 };

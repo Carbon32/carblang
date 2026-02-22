@@ -6,34 +6,22 @@ class Person {
 	}
 
 	function get_name() {
-		return "Name: " + this.name;
+		return format("Name: %", this.name);
 	}
 
 	function get_age() {
-		return "Age: " + this.age;
+		return format("Age: %", this.age);
 	}
 
 	function get_job() {
-		return "Job: " + this.job;
+		return format("Job: %", this.job);
 	}
 }
 
-var john = Person("John", 24, "Artist");
-var eric = Person("Eric", 42, "Doctor");
-var peter = Person("Peter", 31, "Police Officer");
+def john = Person("John", 24, "Artist");
+def eric = Person("Eric", 42, "Doctor");
+def peter = Person("Peter", 31, "Police Officer");
 
-println(john.get_name());
-println(john.get_age());
-println(john.get_job());
-
-println("");
-
-println(eric.get_name());
-println(eric.get_age());
-println(eric.get_job());
-
-println("");
-
-println(peter.get_name());
-println(peter.get_age());
-println(peter.get_job());
+printf("%, %, %\n", john.get_name(), john.get_age(), john.get_job());
+printf("%, %, %\n", eric.get_name(), eric.get_age(), eric.get_job());
+printf("%, %, %\n", peter.get_name(), peter.get_age(), peter.get_job());
