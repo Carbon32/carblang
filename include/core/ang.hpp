@@ -43,10 +43,16 @@ auto ANG(Args&&... args)
 {
     if constexpr(is_expression<NodeType>::value)
     {
+    	#ifdef DEBUG_AST
+		    std::cout << "Created node: " << typeid(NodeType).name() << std::endl;
+		#endif
         return std::make_shared<NodeType>(std::forward<Args>(args)...);
     } 
     else if constexpr(is_stmt<NodeType>::value)
     {
+    	#ifdef DEBUG_AST
+		    std::cout << "Created node: " << typeid(NodeType).name() << std::endl;
+		#endif
         return std::make_shared<NodeType>(std::forward<Args>(args)...);
     } 
     else

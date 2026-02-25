@@ -1,0 +1,66 @@
+class Member {
+    function init(name, role) {
+        this.name = name;
+        this.role = role;
+    }
+
+    function get_information() {
+        return this.name + " (" + this.role + ")";
+    }
+}
+
+class Team {
+    function init(team_name) {
+        this.team_name = team_name;
+        this.members = [];
+    }
+
+    function add_member(member) {
+        this.members.push(member);
+    }
+
+    function remove_member(index) {
+        return this.members.remove(index);
+    }
+
+    function get_member_names() {
+        def names = [];
+        def i;
+        for(i = 0; i < this.members.length(); i = i + 1) {
+            names.push(this.members[i].name);
+        }
+        return names;
+    }
+
+    function print_team() {
+        println("Team: " + this.team_name);
+        println("Members:");
+        def i;
+        for(i = 0; i < this.members.length(); i = i + 1) {
+            println("- " + this.members[i].get_information());
+        }
+    }
+
+    function count_members() {
+        return this.members.length();
+    }
+}
+
+def alice = Member("Alice", "Leader");
+def bob = Member("Bob", "Engineer");
+def charlie = Member("Charlie", "Designer");
+
+def my_team = Team("The Founders Team");
+my_team.add_member(alice);
+my_team.add_member(bob);
+my_team.add_member(charlie);
+
+my_team.print_team();
+println("Member count: " + my_team.count_members() + "\n");
+
+println("Member names: " + my_team.get_member_names());
+println("Is team empty? " + my_team.members.is_empty());
+
+my_team.members.swap(0, 2);
+println("\nAfter swap first and last:");
+my_team.print_team();
