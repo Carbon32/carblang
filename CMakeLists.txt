@@ -14,6 +14,7 @@ set(CORE_SOURCES
     src/core/vm.cpp
     src/core/parser.cpp
     src/core/compiler.cpp
+    src/core/module.cpp
 )
 
 add_library(core STATIC ${CORE_SOURCES})

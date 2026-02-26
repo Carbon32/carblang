@@ -278,6 +278,11 @@ Value Compiler::visit_assign_expression(std::shared_ptr<Assign> expr)
 {
     expr->value->accept(*this);
     int slot = resolve_local(expr->name.lexeme);
+    if(expr->name.lexeme == "os")
+    {
+        throw std::runtime_error("Cannot reassign protected variable \"os\"");
+    }
+
     if(slot != -1)
     {
         emit(OpCode::SET_LOCAL);

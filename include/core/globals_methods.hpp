@@ -344,3 +344,217 @@
         push(nullptr); \
         break; \
     }
+
+#define NATIVE_GLOBALS_EXISTS \
+    case NativeMethod::EXISTS: \
+    { \
+        if(args.size() != 1 || !std::holds_alternative<std::string>(args[0])) \
+            throw std::runtime_error("exists() requires a file path string"); \
+        \
+        const std::string& path = std::get<std::string>(args[0]); \
+        push(std::filesystem::exists(path)); \
+        break; \
+    }
+
+#define NATIVE_GLOBALS_IS_FILE \
+    case NativeMethod::IS_FILE: \
+    { \
+        if(args.size() != 1 || !std::holds_alternative<std::string>(args[0])) \
+            throw std::runtime_error("is_file() requires a file path string"); \
+        \
+        const std::string& path = std::get<std::string>(args[0]); \
+        push(std::filesystem::is_regular_file(path)); \
+        break; \
+    }
+
+#define NATIVE_GLOBALS_IS_DIRECTORY \
+    case NativeMethod::IS_DIRECTORY: \
+    { \
+        if(args.size() != 1 || !std::holds_alternative<std::string>(args[0])) \
+            throw std::runtime_error("is_directory() requires a file path string"); \
+        \
+        const std::string& path = std::get<std::string>(args[0]); \
+        push(std::filesystem::is_directory(path)); \
+        break; \
+    }
+
+#define NATIVE_GLOBALS_MAKE_DIRECTORY \
+    case NativeMethod::MAKE_DIRECTORY: \
+    { \
+        if(args.size() != 1 || !std::holds_alternative<std::string>(args[0])) \
+            throw std::runtime_error("make_directory() requires a path string"); \
+        \
+        const std::string& path = std::get<std::string>(args[0]); \
+        std::error_code ec; \
+        bool created = std::filesystem::create_directory(path, ec); \
+        \
+        if(ec) \
+            throw std::runtime_error("Failed to create directory: " + ec.message()); \
+        \
+        push(created); \
+        break; \
+    }
+
+#define NATIVE_GLOBALS_REMOVE_DIRECTORY \
+    case NativeMethod::REMOVE_DIRECTORY: \
+    { \
+        if(args.size() != 1 || !std::holds_alternative<std::string>(args[0])) \
+            throw std::runtime_error("remove_directory() requires a path string"); \
+        \
+        const std::string& path = std::get<std::string>(args[0]); \
+        std::error_code ec; \
+        bool removed = std::filesystem::remove(path, ec); \
+        \
+        if(ec) \
+            throw std::runtime_error("Failed to remove directory: " + ec.message()); \
+        \
+        push(removed); \
+        break; \
+    }
+
+#define NATIVE_GLOBALS_LIST_DIRECTORIES \
+    case NativeMethod::LIST_DIRECTORIES: \
+    { \
+        if(args.size() != 1 || !std::holds_alternative<std::string>(args[0])) \
+            throw std::runtime_error("list_directories() requires a path string"); \
+        \
+        const std::string& path = std::get<std::string>(args[0]); \
+        \
+        if(!std::filesystem::is_directory(path)) \
+            throw std::runtime_error("Path is not a directory"); \
+        \
+        auto result = std::make_shared<Array>(); \
+        \
+        for(const auto& entry : std::filesystem::directory_iterator(path)) \
+        { \
+            if(entry.is_directory()) \
+                result->elements.push_back(entry.path().filename().string()); \
+        } \
+        \
+        push(result); \
+        break; \
+    }
+
+#define NATIVE_GLOBALS_LIST_FILES \
+    case NativeMethod::LIST_FILES: \
+    { \
+        if(args.size() != 1 || !std::holds_alternative<std::string>(args[0])) \
+            throw std::runtime_error("list_files() requires a directory path string"); \
+        \
+        const std::string& path = std::get<std::string>(args[0]); \
+        \
+        if(!std::filesystem::is_directory(path)) \
+            throw std::runtime_error("Path is not a directory"); \
+        \
+        auto result = std::make_shared<Array>(); \
+        \
+        for(const auto& entry : std::filesystem::directory_iterator(path)) \
+        { \
+            if(entry.is_regular_file()) \
+                result->elements.push_back(entry.path().filename().string()); \
+        } \
+        \
+        push(result); \
+        break; \
+    }
+
+#define NATIVE_GLOBALS_SYSTEM \
+    case NativeMethod::SYSTEM: \
+    { \
+        if(args.size() != 1 || !std::holds_alternative<std::string>(args[0])) \
+            throw std::runtime_error("system() requires a command string"); \
+        \
+        const std::string& cmd = std::get<std::string>(args[0]); \
+        int result = std::system(cmd.c_str()); \
+        push(static_cast<double>(result)); \
+        break; \
+    }
+
+#define NATIVE_GLOBALS_EXIT \
+    case NativeMethod::EXIT: \
+    { \
+        if(args.size() != 1 || !std::holds_alternative<double>(args[0])) \
+            throw std::runtime_error("exit() requires a numeric exit code"); \
+        \
+        int code = static_cast<int>(std::get<double>(args[0])); \
+        std::exit(code); \
+        break; \
+    }
+
+inline std::tm get_local_time(std::time_t tt)
+{
+    std::tm local_tm{};
+    #ifdef _WIN32
+        localtime_s(&local_tm, &tt);
+    #else
+        localtime_r(&tt, &local_tm);
+    #endif
+        return local_tm;
+}
+
+#define NATIVE_GLOBALS_DATE \
+    case NativeMethod::DATE: \
+    { \
+        if(!args.empty()) \
+            throw std::runtime_error("date() takes no arguments"); \
+        \
+        auto now = std::chrono::system_clock::now(); \
+        std::time_t tt = std::chrono::system_clock::to_time_t(now); \
+        std::tm local_tm = get_local_time(tt); \
+        \
+        auto dict = std::make_shared<Dict>(); \
+        dict->set("year",   static_cast<double>(local_tm.tm_year + 1900)); \
+        dict->set("month",  static_cast<double>(local_tm.tm_mon + 1)); \
+        dict->set("day",    static_cast<double>(local_tm.tm_mday)); \
+        dict->set("hour",   static_cast<double>(local_tm.tm_hour)); \
+        dict->set("minute", static_cast<double>(local_tm.tm_min)); \
+        dict->set("second", static_cast<double>(local_tm.tm_sec)); \
+        \
+        push(dict); \
+        break; \
+    }
+
+#define NATIVE_GLOBALS_COPY \
+    case NativeMethod::OS_COPY: \
+    { \
+        if(args.size() != 2 || \
+           !std::holds_alternative<std::string>(args[0]) || \
+           !std::holds_alternative<std::string>(args[1])) \
+            throw std::runtime_error("copy() requires source and destination strings"); \
+        \
+        const std::string& src = std::get<std::string>(args[0]); \
+        const std::string& dst = std::get<std::string>(args[1]); \
+        \
+        std::error_code ec; \
+        std::filesystem::copy_file( \
+            src, dst, \
+            std::filesystem::copy_options::overwrite_existing, \
+            ec); \
+        \
+        if(ec) \
+            throw std::runtime_error("copy() failed: " + ec.message()); \
+        \
+        push(true); \
+        break; \
+    }
+
+#define NATIVE_GLOBALS_RENAME \
+    case NativeMethod::RENAME: \
+    { \
+        if(args.size() != 2 || \
+           !std::holds_alternative<std::string>(args[0]) || \
+           !std::holds_alternative<std::string>(args[1])) \
+            throw std::runtime_error("rename() requires old and new path strings"); \
+        \
+        const std::string& oldp = std::get<std::string>(args[0]); \
+        const std::string& newp = std::get<std::string>(args[1]); \
+        \
+        std::error_code ec; \
+        std::filesystem::rename(oldp, newp, ec); \
+        \
+        if(ec) \
+            throw std::runtime_error("rename() failed: " + ec.message()); \
+        \
+        push(true); \
+        break; \
+    }

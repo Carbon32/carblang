@@ -56,5 +56,18 @@ enum class NativeMethod
     PROFILE_REPORT,
     PROFILE_RESET,
 
+    EXISTS,
+    IS_FILE,
+    IS_DIRECTORY,
+    MAKE_DIRECTORY,
+    REMOVE_DIRECTORY,
+    LIST_DIRECTORIES,
+    LIST_FILES,
+    SYSTEM,
+    EXIT,
+    DATE,
+    OS_COPY,
+    RENAME,
+
     TYPE
 };

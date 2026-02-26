@@ -4,6 +4,7 @@ class VM
     uint8_t* ip = nullptr;
     std::vector<Value> stack;
     std::unordered_map<std::string, Value> globals;
+    std::unordered_set<std::string> const_globals;
     std::vector<CallFrame> frames;
     GlobalProfiler profiler;
 

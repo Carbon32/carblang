@@ -2,25 +2,26 @@
 
 void VM::init_globals()
 {
+    globals["os"] = init_os();
+    globals["text"] = init_text();
+    globals["random"] = init_random();
+    globals["array"] = init_array();
+    globals["file"] = init_file();
+    globals["profiler"] = init_profiler();
+
+    const_globals.insert("os");
+    const_globals.insert("text");
+    const_globals.insert("random");
+    const_globals.insert("array");
+    const_globals.insert("file");
+    const_globals.insert("profiler");
+
     globals["input"] = make_native_method(nullptr, NativeMethod::INPUT);
-    globals["fill"] = make_native_method(nullptr, NativeMethod::FILL);
-    globals["init"] = make_native_method(nullptr, NativeMethod::INIT);
-    globals["array_input"] = make_native_method(nullptr, NativeMethod::ARRAY_INPUT);
-    globals["random"] = make_native_method(nullptr, NativeMethod::RAND);
-    globals["random_integer"] = make_native_method(nullptr, NativeMethod::RANDINT);
     globals["format"] = make_native_method(nullptr, NativeMethod::FORMAT);
     globals["printf"] = make_native_method(nullptr, NativeMethod::PRINTF);
-    globals["read"] = make_native_method(nullptr, NativeMethod::READ_FILE);
-    globals["write"] = make_native_method(nullptr, NativeMethod::WRITE_FILE);
-    globals["append"] = make_native_method(nullptr, NativeMethod::APPEND_FILE);
-    globals["erase"] = make_native_method(nullptr, NativeMethod::ERASE_FILE);
-    globals["parse"] = make_native_method(nullptr, NativeMethod::PARSE_JSON);
-    globals["stringify"] = make_native_method(nullptr, NativeMethod::STRINGIFY);
-    globals["json"] = make_native_method(nullptr, NativeMethod::TO_JSON);
-    globals["profile_start"] = make_native_method(nullptr, NativeMethod::PROFILE_START);
-    globals["profile_end"] = make_native_method(nullptr, NativeMethod::PROFILE_END);
-    globals["profile_report"] = make_native_method(nullptr, NativeMethod::PROFILE_REPORT);
-    globals["profile_reset"] = make_native_method(nullptr, NativeMethod::PROFILE_RESET);
+    globals["exit"] = make_native_method(nullptr, NativeMethod::EXIT);
+    globals["date"] = make_native_method(nullptr, NativeMethod::DATE);
+
 }
 
 void VM::interpret(Chunk& new_chunk)
@@ -273,10 +274,15 @@ void VM::run()
             case OpCode::DEFINE_GLOBAL:
             {
                 uint8_t nameIndex = *ip++;
-                const std::string& name = std::get<std::string>(chunk->constants[nameIndex]);
+                const std::string& name =
+                    std::get<std::string>(chunk->constants[nameIndex]);
+
+                if(const_globals.contains(name))
+                    throw std::runtime_error("Cannot redefine constant \"" + name + "\"");
+
                 globals[name] = pop();
                 break;
-            }
+}
 
             case OpCode::GET_GLOBAL:
             {
@@ -291,10 +297,17 @@ void VM::run()
             case OpCode::SET_GLOBAL:
             {
                 uint8_t nameIndex = *ip++;
-                const std::string& name = std::get<std::string>(chunk->constants[nameIndex]);
+                const std::string& name =
+                    std::get<std::string>(chunk->constants[nameIndex]);
+
                 auto it = globals.find(name);
-                if(it == globals.end()) throw std::runtime_error("Undefined variable \"" + name + "\"");
-                globals[name] = stack.back();
+                if(it == globals.end())
+                    throw std::runtime_error("Undefined variable \"" + name + "\"");
+
+                if(const_globals.contains(name))
+                    throw std::runtime_error("Cannot reassign constant \"" + name + "\"");
+
+                it->second = stack.back();
                 break;
             }
 
@@ -499,6 +512,19 @@ void VM::run()
                         NATIVE_GLOBALS_TO_JSON
                         NATIVE_GLOBALS_STRINGIFY
                         NATIVE_GLOBALS_ERASE_FILE
+
+                        NATIVE_GLOBALS_EXISTS
+                        NATIVE_GLOBALS_IS_FILE
+                        NATIVE_GLOBALS_IS_DIRECTORY
+                        NATIVE_GLOBALS_MAKE_DIRECTORY
+                        NATIVE_GLOBALS_REMOVE_DIRECTORY
+                        NATIVE_GLOBALS_LIST_DIRECTORIES
+                        NATIVE_GLOBALS_LIST_FILES
+                        NATIVE_GLOBALS_SYSTEM
+                        NATIVE_GLOBALS_EXIT
+                        NATIVE_GLOBALS_DATE
+                        NATIVE_GLOBALS_COPY
+                        NATIVE_GLOBALS_RENAME
 
                         NATIVE_GLOBALS_PROFILE_START
                         NATIVE_GLOBALS_PROFILE_END

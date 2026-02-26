@@ -44,3 +44,4 @@ struct UserBoundMethod;
 
 struct Class;
 struct Instance;
+struct Module;

@@ -12,6 +12,7 @@ inline bool runtime_error_trigger = false;
 #include "ang.hpp"
 #include "native.hpp"
 #include "define.hpp"
+#include "module.hpp"
 #include "json.hpp"
 #include "profile.hpp"
 #include "array_methods.hpp"
