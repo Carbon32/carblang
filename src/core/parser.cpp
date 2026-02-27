@@ -23,6 +23,7 @@ std::shared_ptr<Stmt> Parser::declaration()
     {
         if(this->match(FUNCTION)) return function_declaration();
         if(this->match(VAR)) return this->var_declaration();
+        if(this->match(CONST)) return this->const_declaration();
         if(this->match(INCLUDE)) return include_statement();
         if(this->match(CLASS)) return class_declaration();
         return this->statement();
@@ -188,6 +189,19 @@ std::shared_ptr<Stmt> Parser::var_declaration()
 
     this->consume(SEMICOLON, "Expected \";\" after variable declaration");
     return ANG<VarStmt>(std::move(name), initializer);
+}
+
+std::shared_ptr<Stmt> Parser::const_declaration()
+{
+    Token name = consume(IDENTIFIER, "Expected a variable name");
+
+    consume(EQUAL, "Const variables must be initialized");
+
+    std::shared_ptr<Expression> initializer = expression();
+
+    consume(SEMICOLON, "Expected \";\" after const declaration");
+
+    return ANG<VarStmt>(std::move(name), initializer, true);
 }
 
 std::shared_ptr<Stmt> Parser::function_declaration()

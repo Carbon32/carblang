@@ -9,12 +9,12 @@ void VM::init_globals()
     globals["file"] = init_file();
     globals["profiler"] = init_profiler();
 
-    const_globals.insert("os");
-    const_globals.insert("text");
-    const_globals.insert("random");
-    const_globals.insert("array");
-    const_globals.insert("file");
-    const_globals.insert("profiler");
+    const_variables.insert("os");
+    const_variables.insert("text");
+    const_variables.insert("random");
+    const_variables.insert("array");
+    const_variables.insert("file");
+    const_variables.insert("profiler");
 
     globals["input"] = make_native_method(nullptr, NativeMethod::INPUT);
     globals["format"] = make_native_method(nullptr, NativeMethod::FORMAT);
@@ -271,13 +271,27 @@ void VM::run()
                 break;
             }
 
+            case OpCode::DEFINE_CONST:
+            {
+                uint8_t nameIndex = *ip++;
+                const std::string& name =
+                    std::get<std::string>(chunk->constants[nameIndex]);
+
+                if(globals.contains(name))
+                    throw std::runtime_error("Cannot redefine constant \"" + name + "\"");
+
+                globals[name] = pop();
+                const_variables.insert(name);
+                break;
+            }
+
             case OpCode::DEFINE_GLOBAL:
             {
                 uint8_t nameIndex = *ip++;
                 const std::string& name =
                     std::get<std::string>(chunk->constants[nameIndex]);
 
-                if(const_globals.contains(name))
+                if(const_variables.contains(name))
                     throw std::runtime_error("Cannot redefine constant \"" + name + "\"");
 
                 globals[name] = pop();
@@ -304,7 +318,7 @@ void VM::run()
                 if(it == globals.end())
                     throw std::runtime_error("Undefined variable \"" + name + "\"");
 
-                if(const_globals.contains(name))
+                if(const_variables.contains(name))
                     throw std::runtime_error("Cannot reassign constant \"" + name + "\"");
 
                 it->second = stack.back();

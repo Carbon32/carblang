@@ -1,5 +1,7 @@
 #include "core/core.hpp"
 
+std::unordered_set<std::string> protected_names = { "os", "this", "super" }; // Make this better later
+
 Chunk Compiler::compile(const std::vector<std::shared_ptr<Stmt>> &statements)
 {
     for(auto &stmt : statements)
@@ -188,12 +190,17 @@ Value Compiler::visit_println_stmt(std::shared_ptr<PrintLnStmt> stmt)
 
 Value Compiler::visit_var_stmt(std::shared_ptr<VarStmt> stmt)
 {
+    if(protected_names.find(stmt->name.lexeme) != protected_names.end())
+    {
+        throw std::runtime_error("Cannot declare variable with protected name: " + stmt->name.lexeme);
+    }
+
     if(scope_depth > 0)
     {
         if(stmt->initializer) stmt->initializer->accept(*this);
         else emit(OpCode::NULL);
 
-        locals.push_back({ stmt->name.lexeme, scope_depth });
+        locals.push_back({ stmt->name.lexeme, scope_depth, stmt->is_const });
     }
     else
     {
@@ -201,7 +208,10 @@ Value Compiler::visit_var_stmt(std::shared_ptr<VarStmt> stmt)
         else emit(OpCode::NULL);
 
         uint8_t name = chunk.add_constant(stmt->name.lexeme);
-        emit(OpCode::DEFINE_GLOBAL);
+        if(stmt->is_const)
+            emit(OpCode::DEFINE_CONST);
+        else
+            emit(OpCode::DEFINE_GLOBAL);
         emit_byte(name);
     }
     return {};
@@ -276,15 +286,17 @@ Value Compiler::visit_logical_expression(std::shared_ptr<Logical> expr)
 
 Value Compiler::visit_assign_expression(std::shared_ptr<Assign> expr)
 {
+    if(protected_names.find(expr->name.lexeme) != protected_names.end())
+        throw std::runtime_error("Cannot reassign protected variable: " + expr->name.lexeme);
+
     expr->value->accept(*this);
     int slot = resolve_local(expr->name.lexeme);
-    if(expr->name.lexeme == "os")
-    {
-        throw std::runtime_error("Cannot reassign protected variable \"os\"");
-    }
 
     if(slot != -1)
     {
+        if(locals[slot].is_const)
+            throw std::runtime_error("Cannot reassign const variable \"" + expr->name.lexeme + "\"");
+
         emit(OpCode::SET_LOCAL);
         emit_byte(slot);
     }
@@ -294,6 +306,7 @@ Value Compiler::visit_assign_expression(std::shared_ptr<Assign> expr)
         emit(OpCode::SET_GLOBAL);
         emit_byte(name);
     }
+
     return {};
 }
 

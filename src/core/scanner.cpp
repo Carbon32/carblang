@@ -24,7 +24,8 @@ const std::map<std::string, TokenType> Scanner::keywords =
 	{"true",   	  	TokenType::TRUE},
 	{"def",    	  	TokenType::VAR},
 	{"while",  	  	TokenType::WHILE},
-	{"include",		TokenType::INCLUDE}
+	{"include",		TokenType::INCLUDE},
+	{"const",		TokenType::CONST}
 };
 
 std::vector<Token> Scanner::scan_tokens()

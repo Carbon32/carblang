@@ -23,6 +23,7 @@ enum class OpCode : uint8_t
 
     POP,
 
+    DEFINE_CONST,
     DEFINE_GLOBAL,
     GET_GLOBAL,
     SET_GLOBAL,

@@ -133,7 +133,8 @@ struct WhileStmt: Stmt, public std::enable_shared_from_this<WhileStmt>
 
 struct VarStmt : Stmt, public std::enable_shared_from_this<VarStmt>
 {
-    VarStmt(Token name, std::shared_ptr<Expression> initializer) : name{std::move(name)}, initializer{std::move(initializer)}
+    VarStmt(Token name, std::shared_ptr<Expression> initializer, bool is_const = false)
+        : name(std::move(name)), initializer(std::move(initializer)), is_const(is_const)
     {}
 
     Value accept(StmtVisitor& visitor) override
@@ -143,6 +144,7 @@ struct VarStmt : Stmt, public std::enable_shared_from_this<VarStmt>
 
     const Token name;
     const std::shared_ptr<Expression> initializer;
+    bool is_const;
 };
 
 struct FunctionStmt : Stmt, public std::enable_shared_from_this<FunctionStmt>
