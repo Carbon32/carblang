@@ -166,6 +166,33 @@
         break; \
     }
 
+#define NATIVE_GLOBALS_PRINT \
+    case NativeMethod::PRINT: \
+    { \
+        for(size_t i = 0; i < args.size(); ++i) \
+        { \
+            std::cout << stringify(args[i]); \
+            if(i + 1 < args.size()) \
+                std::cout << ' '; \
+        } \
+        push(nullptr); \
+        break; \
+    }
+
+#define NATIVE_GLOBALS_PRINTLN \
+    case NativeMethod::PRINTLN: \
+    { \
+        for(size_t i = 0; i < args.size(); ++i) \
+        { \
+            std::cout << stringify(args[i]); \
+            if(i + 1 < args.size()) \
+                std::cout << ' '; \
+        } \
+        std::cout << std::endl; \
+        push(nullptr); \
+        break; \
+    }
+
 #define NATIVE_GLOBALS_PRINTF \
     case NativeMethod::PRINTF: \
     { \

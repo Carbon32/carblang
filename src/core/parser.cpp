@@ -37,8 +37,6 @@ std::shared_ptr<Stmt> Parser::declaration()
 
 std::shared_ptr<Stmt> Parser::statement()
 {
-    if(this->match(PRINT)) return print_statement();
-    if(this->match(PRINTLN)) return println_statement();
     if(this->match(IF)) return if_statement();
     if(this->match(WHILE)) return while_statement();
     if(this->match(FOR)) return for_statement();
@@ -90,24 +88,6 @@ std::shared_ptr<Stmt> Parser::return_statement()
 
     consume(SEMICOLON, "Expected \";\" after return value");
     return ANG<ReturnStmt>(keyword, value);
-}
-
-std::shared_ptr<Stmt> Parser::print_statement()
-{
-    consume(LEFT_PAREN, "Expected \"(\" after \"print\"");
-    std::shared_ptr<Expression> value = this->expression();
-    consume(RIGHT_PAREN, "Expected \")\" after value");
-    consume(SEMICOLON, "Expected \";\" after value");
-    return ANG<PrintStmt>(value);
-}
-
-std::shared_ptr<Stmt> Parser::println_statement()
-{
-    consume(LEFT_PAREN, "Expected \"(\" after \"println\"");
-    std::shared_ptr<Expression> value = this->expression();
-    consume(RIGHT_PAREN, "Expected \")\" after value");
-    consume(SEMICOLON, "Expected \";\" after value");
-    return ANG<PrintLnStmt>(value);
 }
 
 std::shared_ptr<Stmt> Parser::for_statement()
@@ -523,8 +503,6 @@ void Parser::synchronize()
             case FOR:
             case IF:
             case WHILE:
-            case PRINT:
-            case PRINTLN:
             case RETURN:
                 return;
         }

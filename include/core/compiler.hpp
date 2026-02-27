@@ -37,8 +37,6 @@ class Compiler : public ExpressionVisitor, public StmtVisitor
         Value visit_dict_expression(std::shared_ptr<DictExpr> expr) override;
 
         Value visit_expression_stmt(std::shared_ptr<ExprStmt> stmt) override;
-        Value visit_print_stmt(std::shared_ptr<PrintStmt> stmt) override;
-        Value visit_println_stmt(std::shared_ptr<PrintLnStmt> stmt) override;
         Value visit_var_stmt(std::shared_ptr<VarStmt> stmt) override;
         Value visit_if_stmt(std::shared_ptr<IfStmt> stmt) override;
         Value visit_while_stmt(std::shared_ptr<WhileStmt> stmt) override;

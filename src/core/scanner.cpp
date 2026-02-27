@@ -16,8 +16,6 @@ const std::map<std::string, TokenType> Scanner::keywords =
 	{"if",     	  	TokenType::IF},
 	{"null",    	TokenType::NULL},
 	{"or",     	  	TokenType::OR},
-	{"print",  	  	TokenType::PRINT},
-	{"println",  	TokenType::PRINTLN},
 	{"return", 	  	TokenType::RETURN},
 	{"super",  	  	TokenType::SUPER},
 	{"this",   	 	TokenType::THIS},

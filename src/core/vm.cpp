@@ -19,6 +19,8 @@ void VM::init_globals()
     globals["input"] = make_native_method(nullptr, NativeMethod::INPUT);
     globals["format"] = make_native_method(nullptr, NativeMethod::FORMAT);
     globals["printf"] = make_native_method(nullptr, NativeMethod::PRINTF);
+    globals["print"] = make_native_method(nullptr, NativeMethod::PRINT);
+    globals["println"] = make_native_method(nullptr, NativeMethod::PRINTLN);
     globals["exit"] = make_native_method(nullptr, NativeMethod::EXIT);
     globals["date"] = make_native_method(nullptr, NativeMethod::DATE);
 
@@ -250,15 +252,6 @@ void VM::run()
                 double y = std::get<double>(b);
 
                 stack.push_back(opcode == OpCode::GREATER ? x > y : x < y);
-                break;
-            }
-
-            case OpCode::PRINT:
-            case OpCode::PRINTLN:
-            {
-                Value v = pop();
-                print_value(v);
-                if(opcode == OpCode::PRINTLN) std::cout << std::endl;
                 break;
             }
 
@@ -519,6 +512,8 @@ void VM::run()
                         NATIVE_GLOBALS_ARRAY_INPUT
                         NATIVE_GLOBALS_FORMAT
                         NATIVE_GLOBALS_PRINTF
+                        NATIVE_GLOBALS_PRINT
+                        NATIVE_GLOBALS_PRINTLN
                         NATIVE_GLOBALS_READ_FILE
                         NATIVE_GLOBALS_WRITE_FILE
                         NATIVE_GLOBALS_APPEND_FILE

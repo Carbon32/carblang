@@ -18,9 +18,6 @@ enum class OpCode : uint8_t
     GREATER,
     LESS,
 
-    PRINT,
-    PRINTLN,
-
     POP,
 
     DEFINE_CONST,

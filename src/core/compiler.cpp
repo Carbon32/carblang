@@ -174,20 +174,6 @@ Value Compiler::visit_expression_stmt(std::shared_ptr<ExprStmt> stmt)
     return {};
 }
 
-Value Compiler::visit_print_stmt(std::shared_ptr<PrintStmt> stmt)
-{
-    stmt->expression->accept(*this);
-    emit(OpCode::PRINT);
-    return {};
-}
-
-Value Compiler::visit_println_stmt(std::shared_ptr<PrintLnStmt> stmt)
-{
-    stmt->expression->accept(*this);
-    emit(OpCode::PRINTLN);
-    return {};
-}
-
 Value Compiler::visit_var_stmt(std::shared_ptr<VarStmt> stmt)
 {
     if(protected_names.find(stmt->name.lexeme) != protected_names.end())
