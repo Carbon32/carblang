@@ -69,5 +69,17 @@ enum class NativeMethod
     OS_COPY,
     RENAME,
 
+    INSTANCE_METHODS,
     TYPE
 };
+
+#include "native/array.hpp"
+#include "native/conversion.hpp"
+#include "native/dict.hpp"
+#include "native/file.hpp"
+#include "native/global.hpp"
+#include "native/math.hpp"
+#include "native/profiler.hpp"
+#include "native/random.hpp"
+#include "native/string.hpp"
+#include "native/text.hpp"

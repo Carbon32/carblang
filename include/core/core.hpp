@@ -15,10 +15,6 @@ inline bool runtime_error_trigger = false;
 #include "module.hpp"
 #include "json.hpp"
 #include "profile.hpp"
-#include "array_methods.hpp"
-#include "dict_methods.hpp"
-#include "primitive_methods.hpp"
-#include "globals_methods.hpp"
 
 std::shared_ptr<BoundMethod> make_native_method(Value value, NativeMethod method);
 

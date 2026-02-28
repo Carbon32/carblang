@@ -20,6 +20,17 @@ std::shared_ptr<Instance> init_os()
     return create_module_instance(std::move(os), "os");
 }
 
+std::shared_ptr<Instance> init_math()
+{
+    Module math;
+    math.set_method("pow", make_native_method(nullptr, NativeMethod::POW));
+    math.set_method("sqrt", make_native_method(nullptr, NativeMethod::SQRT));
+    math.set_method("fact", make_native_method(nullptr, NativeMethod::FACT));
+    math.set_method("floor", make_native_method(nullptr, NativeMethod::FLOOR));
+    math.set_method("ceil", make_native_method(nullptr, NativeMethod::CEIL));
+    return create_module_instance(std::move(math), "math");
+}
+
 std::shared_ptr<Instance> init_text()
 {
     Module text;

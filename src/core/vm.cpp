@@ -3,6 +3,7 @@
 void VM::init_globals()
 {
     globals["os"] = init_os();
+    globals["math"] = init_math();
     globals["text"] = init_text();
     globals["random"] = init_random();
     globals["array"] = init_array();
@@ -10,6 +11,7 @@ void VM::init_globals()
     globals["profiler"] = init_profiler();
 
     const_variables.insert("os");
+    const_variables.insert("math");
     const_variables.insert("text");
     const_variables.insert("random");
     const_variables.insert("array");
@@ -23,6 +25,7 @@ void VM::init_globals()
     globals["println"] = make_native_method(nullptr, NativeMethod::PRINTLN);
     globals["exit"] = make_native_method(nullptr, NativeMethod::EXIT);
     globals["date"] = make_native_method(nullptr, NativeMethod::DATE);
+    globals["methods"] = make_native_method(nullptr, NativeMethod::INSTANCE_METHODS);
 
 }
 
@@ -521,6 +524,12 @@ void VM::run()
                         NATIVE_GLOBALS_TO_JSON
                         NATIVE_GLOBALS_STRINGIFY
                         NATIVE_GLOBALS_ERASE_FILE
+                        NATIVE_GLOBALS_INSTANCE_METHODS
+                        NATIVE_GLOBALS_POW
+                        NATIVE_GLOBALS_SQRT
+                        NATIVE_GLOBALS_FACT
+                        NATIVE_GLOBALS_FLOOR
+                        NATIVE_GLOBALS_CEIL
 
                         NATIVE_GLOBALS_EXISTS
                         NATIVE_GLOBALS_IS_FILE
@@ -568,13 +577,8 @@ void VM::run()
 
                         NATIVE_PRIMITIVE_TYPE
                         NATIVE_PRIMITIVE_TO_STRING
-                        NATIVE_PRIMITIVE_POW
-                        NATIVE_PRIMITIVE_SQRT
-                        NATIVE_PRIMITIVE_FACT
                         NATIVE_PRIMITIVE_TO_INT
                         NATIVE_PRIMITIVE_BOOL_TO_INT
-                        NATIVE_PRIMITIVE_FLOOR
-                        NATIVE_PRIMITIVE_CEIL
                         NATIVE_PRIMITIVE_UPPER
                         NATIVE_PRIMITIVE_LOWER
                         NATIVE_PRIMITIVE_CAPITALIZE
@@ -788,12 +792,7 @@ void VM::run()
                 if(std::holds_alternative<double>(object))
                 {
                     if(name == "to_string") { push(make_native_method(object, NativeMethod::TO_STRING)); break; }
-                    if(name == "pow") { push(make_native_method(object, NativeMethod::POW)); break; }
-                    if(name == "sqrt") { push(make_native_method(object, NativeMethod::SQRT)); break; }
-                    if(name == "fact") { push(make_native_method(object, NativeMethod::FACT)); break; }
                     if(name == "to_int") { push(make_native_method(object, NativeMethod::TO_INT)); break; }
-                    if(name == "floor") { push(make_native_method(object, NativeMethod::FLOOR)); break; }
-                    if(name == "ceil") { push(make_native_method(object, NativeMethod::CEIL)); break; }
                     throw std::runtime_error("Undefined property \"" + name + "\"");
                     break;
                 }

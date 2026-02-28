@@ -1,7 +1,3 @@
-// I'm trying to keep the length of each file reasonable, so I'm gonna rely
-// on macros to define the native methods here, this file will contain the
-// native methods of dicts
-
 #define NATIVE_DICT_CONTAINS \
     case NativeMethod::DICT_CONTAINS: \
     { \

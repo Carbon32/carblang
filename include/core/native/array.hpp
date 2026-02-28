@@ -1,6 +1,71 @@
-// I'm trying to keep the length of each file reasonable, so I'm gonna rely
-// on macros to define the native methods here, this file will contain the
-// native methods of arrays
+#define NATIVE_GLOBALS_FILL \
+    case NativeMethod::FILL: \
+    { \
+        auto array = std::make_shared<Array>(); \
+    \
+        for(const auto& value : args) \
+            array->elements.push_back(value); \
+    \
+        push(array); \
+        break; \
+    }
+
+#define NATIVE_GLOBALS_INIT \
+    case NativeMethod::INIT: \
+    { \
+        if(args.size() != 2) \
+            throw std::runtime_error("init() takes exactly 2 arguments"); \
+    \
+        if(!std::holds_alternative<double>(args[0])) \
+            throw std::runtime_error("init() size must be a number"); \
+    \
+        int size = static_cast<int>(std::get<double>(args[0])); \
+        if(size < 0) \
+            throw std::runtime_error("init() size must be >= 0"); \
+    \
+        const auto& value = args[1]; \
+    \
+        auto array = std::make_shared<Array>(); \
+        array->elements.reserve(size); \
+        for(int i = 0; i < size; ++i) \
+            array->elements.push_back(value); \
+    \
+        push(array); \
+        break; \
+    }
+
+#define NATIVE_GLOBALS_ARRAY_INPUT \
+    case NativeMethod::ARRAY_INPUT: \
+    { \
+        if(args.size() != 2) \
+            throw std::runtime_error("array_input() takes exactly 2 arguments"); \
+    \
+        if(!std::holds_alternative<double>(args[0])) \
+            throw std::runtime_error("array_input() count must be a number"); \
+    \
+        if(!std::holds_alternative<std::string>(args[1])) \
+            throw std::runtime_error("array_input() prompt must be a string"); \
+    \
+        int count = static_cast<int>(std::get<double>(args[0])); \
+        if(count < 0) \
+            throw std::runtime_error("array_input() count must be >= 0"); \
+    \
+        const std::string& prompt = std::get<std::string>(args[1]); \
+    \
+        auto array = std::make_shared<Array>(); \
+        array->elements.reserve(count); \
+    \
+        for(int i = 0; i < count; ++i) \
+        { \
+            std::cout << prompt; \
+            std::string line; \
+            std::getline(std::cin, line); \
+            array->elements.push_back(line); \
+        } \
+    \
+        push(array); \
+        break; \
+    }
 
 #define NATIVE_ARRAY_PUSH \
     case NativeMethod::PUSH: \
