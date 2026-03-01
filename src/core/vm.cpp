@@ -4,6 +4,9 @@ void VM::init_globals()
 {
     globals["os"] = init_os();
     globals["math"] = init_math();
+    globals["regex"] = init_regex();
+    globals["time"] = init_time();
+    globals["encode"] = init_encode();
     globals["text"] = init_text();
     globals["random"] = init_random();
     globals["array"] = init_array();
@@ -12,6 +15,9 @@ void VM::init_globals()
 
     const_variables.insert("os");
     const_variables.insert("math");
+    const_variables.insert("regex");
+    const_variables.insert("time");
+    const_variables.insert("encode");
     const_variables.insert("text");
     const_variables.insert("random");
     const_variables.insert("array");
@@ -24,7 +30,6 @@ void VM::init_globals()
     globals["print"] = make_native_method(nullptr, NativeMethod::PRINT);
     globals["println"] = make_native_method(nullptr, NativeMethod::PRINTLN);
     globals["exit"] = make_native_method(nullptr, NativeMethod::EXIT);
-    globals["date"] = make_native_method(nullptr, NativeMethod::DATE);
     globals["methods"] = make_native_method(nullptr, NativeMethod::INSTANCE_METHODS);
 
 }
@@ -525,11 +530,58 @@ void VM::run()
                         NATIVE_GLOBALS_STRINGIFY
                         NATIVE_GLOBALS_ERASE_FILE
                         NATIVE_GLOBALS_INSTANCE_METHODS
+
                         NATIVE_GLOBALS_POW
                         NATIVE_GLOBALS_SQRT
                         NATIVE_GLOBALS_FACT
                         NATIVE_GLOBALS_FLOOR
                         NATIVE_GLOBALS_CEIL
+                        NATIVE_GLOBALS_ABS
+                        NATIVE_GLOBALS_LOG
+                        NATIVE_GLOBALS_LOG10
+                        NATIVE_GLOBALS_LOG2
+                        NATIVE_GLOBALS_MATH_MAX
+                        NATIVE_GLOBALS_MATH_MIN
+                        NATIVE_GLOBALS_MATH_AVERAGE
+                        NATIVE_GLOBALS_SIN
+                        NATIVE_GLOBALS_COS
+                        NATIVE_GLOBALS_TAN
+                        NATIVE_GLOBALS_ASIN
+                        NATIVE_GLOBALS_ACOS
+                        NATIVE_GLOBALS_ATAN
+                        NATIVE_GLOBALS_DEGREES
+                        NATIVE_GLOBALS_RADIANS
+                        NATIVE_GLOBALS_IS_ODD
+                        NATIVE_GLOBALS_IS_EVEN
+                        NATIVE_GLOBALS_IS_PRIME
+                        NATIVE_GLOBALS_GCD
+                        NATIVE_GLOBALS_LCM
+                        NATIVE_GLOBALS_NEXT_PRIME
+                        NATIVE_GLOBALS_SUM_DIGITS
+                        NATIVE_GLOBALS_FIBONACCI
+                        NATIVE_GLOBALS_PALINDROME
+                        NATIVE_GLOBALS_ROUND
+                        NATIVE_GLOBALS_PI
+                        NATIVE_GLOBALS_PRECISION
+
+                        NATIVE_GLOBALS_RANDOM_COLOR_RGB
+                        NATIVE_GLOBALS_RANDOM_COLOR_HEX
+
+                        NATIVE_GLOBALS_MATCH
+
+                        NATIVE_GLOBALS_SECOND_TO_MINUTE
+                        NATIVE_GLOBALS_SECOND_TO_HOUR
+                        NATIVE_GLOBALS_SECOND_TO_DAY
+                        NATIVE_GLOBALS_MINUTE_TO_SECOND
+                        NATIVE_GLOBALS_MINUTE_TO_HOUR
+                        NATIVE_GLOBALS_MINUTE_TO_DAY
+                        NATIVE_GLOBALS_HOUR_TO_SECOND
+                        NATIVE_GLOBALS_HOUR_TO_MINUTE
+                        NATIVE_GLOBALS_HOUR_TO_DAY
+                        NATIVE_GLOBALS_LEAP_YEAR
+                        NATIVE_GLOBALS_TODAY
+
+                        NATIVE_GLOBALS_BASE
 
                         NATIVE_GLOBALS_EXISTS
                         NATIVE_GLOBALS_IS_FILE
@@ -1166,9 +1218,25 @@ std::string VM::stringify(const Value& value)
         out << (std::get<bool>(value) ? "true" : "false");
     }
 
-    else if(std::holds_alternative<double>(value))
+    else if (std::holds_alternative<double>(value))
     {
-        out << std::get<double>(value);
+        double d = std::get<double>(value);
+
+        if(std::isinf(d)) {
+            out << (d > 0 ? "Infinity" : "-Infinity");
+        } 
+        else {
+            std::ostringstream oss;
+            oss << std::setprecision(std::numeric_limits<double>::digits10 + 1);
+
+            if((d != 0.0 && (std::abs(d) < 1e-4 || std::abs(d) >= 1e7))) {
+                oss << std::scientific << d;
+            } else {
+                oss << std::defaultfloat << d;
+            }
+
+            out << oss.str();
+        }
     }
 
     else if(std::holds_alternative<std::string>(value))
@@ -1183,13 +1251,20 @@ std::string VM::stringify(const Value& value)
 
         for(size_t i = 0; i < array->elements.size(); ++i)
         {
-            out << stringify(array->elements[i]);
+            const auto& elem = array->elements[i];
+
+            if(std::holds_alternative<std::string>(elem))
+                out << "\"" << std::get<std::string>(elem) << "\"";
+            else
+                out << stringify(elem);
+
             if (i + 1 < array->elements.size())
                 out << ", ";
         }
 
         out << "]";
     }
+
     else if(std::holds_alternative<std::shared_ptr<Function>>(value))
     {
         out << "<function>";
@@ -1227,11 +1302,20 @@ std::string VM::stringify(const Value& value)
         auto dict = std::get<std::shared_ptr<Dict>>(value);
         out << "{";
         size_t count = 0;
+
         for(const auto& [key, val] : dict->entries)
         {
-            out << key << ": " << stringify(val);
-            if(++count < dict->entries.size()) out << ", ";
+            out << "\"" << key << "\": ";
+
+            if(std::holds_alternative<std::string>(val))
+                out << "\"" << std::get<std::string>(val) << "\"";
+            else
+                out << stringify(val);
+
+            if(++count < dict->entries.size())
+                out << ", ";
         }
+
         out << "}";
     }
 

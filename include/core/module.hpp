@@ -19,6 +19,9 @@ struct Module
 std::shared_ptr<Instance> create_module_instance(Module&& module, const std::string& name);
 std::shared_ptr<Instance> init_os();
 std::shared_ptr<Instance> init_math();
+std::shared_ptr<Instance> init_regex();
+std::shared_ptr<Instance> init_time();
+std::shared_ptr<Instance> init_encode();
 std::shared_ptr<Instance> init_text();
 std::shared_ptr<Instance> init_random();
 std::shared_ptr<Instance> init_array();

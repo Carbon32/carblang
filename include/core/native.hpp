@@ -5,6 +5,53 @@ enum class NativeMethod
     COPY, CONCAT, SWAP, COUNT, EQUALS, LAST_INDEX_OF, TRIM,
     MIN, MAX, SUM, AVERAGE, FILL, INIT,
 
+    ABS,
+    LOG,
+    LOG10,
+    LOG2,
+    MATH_MAX,
+    MATH_MIN,
+    MATH_AVERAGE,
+    SIN,
+    COS,
+    TAN,
+    ASIN,
+    ACOS,
+    ATAN,
+    DEGREES,
+    RADIANS,
+    IS_ODD,
+    IS_EVEN,
+    IS_PRIME,
+    GCD,
+    LCM,
+    NEXT_PRIME,
+    SUM_DIGITS,
+    FIBONACCI,
+    PALINDROME,
+    ROUND,
+    PI,
+    PRECISION,
+
+    RANDOM_COLOR_RGB,
+    RANDOM_COLOR_HEX,
+
+    MATCH,
+
+    SECOND_TO_MINUTE,
+    SECOND_TO_HOUR,
+    SECOND_TO_DAY,
+    MINUTE_TO_SECOND,
+    MINUTE_TO_HOUR,
+    MINUTE_TO_DAY,
+    HOUR_TO_SECOND,
+    HOUR_TO_MINUTE,
+    HOUR_TO_DAY,
+    LEAP_YEAR,
+    TODAY,
+
+    BASE,
+
     TO_STRING, POW, SQRT, FACT,
 
     TO_INT, FLOOR, CEIL,
@@ -83,3 +130,6 @@ enum class NativeMethod
 #include "native/random.hpp"
 #include "native/string.hpp"
 #include "native/text.hpp"
+#include "native/encode.hpp"
+#include "native/regex.hpp"
+#include "native/time.hpp"

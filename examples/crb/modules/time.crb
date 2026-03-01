@@ -1,0 +1,13 @@
+println(time.date());
+println(time.today());
+println(time.leap_year(2024));
+println(time.leap_year(2023));
+println(time.second_to_minute(120));
+println(time.second_to_hour(5400));
+println(time.second_to_day(129600));
+println(time.minute_to_second(5));
+println(time.minute_to_hour(90));
+println(time.minute_to_day(2880));
+println(time.hour_to_second(2));
+println(time.hour_to_minute(1.5));
+println(time.hour_to_day(48));

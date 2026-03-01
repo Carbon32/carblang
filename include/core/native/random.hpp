@@ -33,3 +33,50 @@
         push(static_cast<double>(dist(rng))); \
         break; \
     }
+
+#define NATIVE_GLOBALS_RANDOM_COLOR_RGB \
+    case NativeMethod::RANDOM_COLOR_RGB: \
+    { \
+        if(!args.empty()) \
+            throw std::runtime_error("random_color_rgb() expects 0 arguments"); \
+        \
+        static std::mt19937 rng(std::random_device{}()); \
+        static std::uniform_int_distribution<int> dist(0, 255); \
+        \
+        int r = dist(rng); \
+        int g = dist(rng); \
+        int b = dist(rng); \
+        \
+        auto array = std::make_shared<Array>(); \
+        array->elements.push_back(static_cast<double>(r)); \
+        array->elements.push_back(static_cast<double>(g)); \
+        array->elements.push_back(static_cast<double>(b)); \
+        \
+        push(array); \
+        break; \
+    }
+
+#define NATIVE_GLOBALS_RANDOM_COLOR_HEX \
+    case NativeMethod::RANDOM_COLOR_HEX: \
+    { \
+        if(!args.empty()) \
+            throw std::runtime_error("random_color_hex() expects 0 arguments"); \
+        \
+        static std::mt19937 rng(std::random_device{}()); \
+        static std::uniform_int_distribution<int> dist(0, 255); \
+        \
+        int r = dist(rng); \
+        int g = dist(rng); \
+        int b = dist(rng); \
+        \
+        std::stringstream ss; \
+        ss << "#" \
+           << std::uppercase \
+           << std::hex \
+           << std::setw(2) << std::setfill('0') << r \
+           << std::setw(2) << std::setfill('0') << g \
+           << std::setw(2) << std::setfill('0') << b; \
+        \
+        push(ss.str()); \
+        break; \
+    }

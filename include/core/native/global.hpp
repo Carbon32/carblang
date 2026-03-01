@@ -1,14 +1,3 @@
-inline std::tm get_local_time(std::time_t tt)
-{
-    std::tm local_tm{};
-    #ifdef _WIN32
-        localtime_s(&local_tm, &tt);
-    #else
-        localtime_r(&tt, &local_tm);
-    #endif
-        return local_tm;
-}
-
 #define NATIVE_PRIMITIVE_TYPE \
     case NativeMethod::TYPE: \
     { \
@@ -50,27 +39,6 @@ inline std::tm get_local_time(std::time_t tt)
         break; \
     }
 
-#define NATIVE_GLOBALS_DATE \
-    case NativeMethod::DATE: \
-    { \
-        if(!args.empty()) \
-            throw std::runtime_error("date() takes no arguments"); \
-        \
-        auto now = std::chrono::system_clock::now(); \
-        std::time_t tt = std::chrono::system_clock::to_time_t(now); \
-        std::tm local_tm = get_local_time(tt); \
-        \
-        auto dict = std::make_shared<Dict>(); \
-        dict->set("year",   static_cast<double>(local_tm.tm_year + 1900)); \
-        dict->set("month",  static_cast<double>(local_tm.tm_mon + 1)); \
-        dict->set("day",    static_cast<double>(local_tm.tm_mday)); \
-        dict->set("hour",   static_cast<double>(local_tm.tm_hour)); \
-        dict->set("minute", static_cast<double>(local_tm.tm_min)); \
-        dict->set("second", static_cast<double>(local_tm.tm_sec)); \
-        \
-        push(dict); \
-        break; \
-    }
 
 #define NATIVE_GLOBALS_SYSTEM \
     case NativeMethod::SYSTEM: \
