@@ -21,7 +21,7 @@ struct ExpressionVisitor
 
 struct Expression
 {
-    virtual Value accept(ExpressionVisitor& visitor) = 0;
+    virtual Value accept(ExpressionVisitor &visitor) = 0;
 };
 
 struct This : Expression, public std::enable_shared_from_this<This>
@@ -30,7 +30,7 @@ struct This : Expression, public std::enable_shared_from_this<This>
 
     This(Token keyword) : keyword(std::move(keyword)) {}
 
-    Value accept(ExpressionVisitor& visitor) override
+    Value accept(ExpressionVisitor &visitor) override
     {
         return visitor.visit_this_expression(shared_from_this());
     }
@@ -43,25 +43,27 @@ struct DictExpr : Expression, public std::enable_shared_from_this<DictExpr>
     DictExpr(std::vector<std::pair<std::shared_ptr<Expression>, std::shared_ptr<Expression>>> entries)
         : entries(std::move(entries)) {}
 
-    Value accept(ExpressionVisitor& visitor) override
+    Value accept(ExpressionVisitor &visitor) override
     {
         return visitor.visit_dict_expression(shared_from_this());
     }
 };
 
-struct Super : Expression, public std::enable_shared_from_this<Super> {
+struct Super : Expression, public std::enable_shared_from_this<Super>
+{
 
     Token method;
-    
+
     Super(Token method) : method(std::move(method)) {}
 
-    Value accept(ExpressionVisitor& visitor) override
+    Value accept(ExpressionVisitor &visitor) override
     {
         return visitor.visit_super_expression(shared_from_this());
     }
 };
 
-struct Set : Expression, public std::enable_shared_from_this<Set> {
+struct Set : Expression, public std::enable_shared_from_this<Set>
+{
     std::shared_ptr<Expression> object;
     Token name;
     std::shared_ptr<Expression> value;
@@ -69,7 +71,8 @@ struct Set : Expression, public std::enable_shared_from_this<Set> {
     Set(std::shared_ptr<Expression> object, Token name, std::shared_ptr<Expression> value)
         : object(std::move(object)), name(std::move(name)), value(std::move(value)) {}
 
-    Value accept(ExpressionVisitor& visitor) override {
+    Value accept(ExpressionVisitor &visitor) override
+    {
         return visitor.visit_set_expression(shared_from_this());
     }
 };
@@ -81,7 +84,7 @@ struct ArrayExpr : Expression, public std::enable_shared_from_this<ArrayExpr>
     ArrayExpr(std::vector<std::shared_ptr<Expression>> elements)
         : elements(std::move(elements)) {}
 
-    Value accept(ExpressionVisitor& visitor) override
+    Value accept(ExpressionVisitor &visitor) override
     {
         return visitor.visit_array_expression(shared_from_this());
     }
@@ -97,7 +100,7 @@ struct IndexExpr : Expression, public std::enable_shared_from_this<IndexExpr>
         : array(std::move(array)),
           index(std::move(index)) {}
 
-    Value accept(ExpressionVisitor& visitor) override
+    Value accept(ExpressionVisitor &visitor) override
     {
         return visitor.visit_index_expression(shared_from_this());
     }
@@ -116,7 +119,7 @@ struct IndexAssign : Expression, public std::enable_shared_from_this<IndexAssign
           index(std::move(index)),
           value(std::move(value)) {}
 
-    Value accept(ExpressionVisitor& visitor) override
+    Value accept(ExpressionVisitor &visitor) override
     {
         return visitor.visit_index_assign_expression(shared_from_this());
     }
@@ -130,7 +133,7 @@ struct Get : Expression, public std::enable_shared_from_this<Get>
     Get(std::shared_ptr<Expression> object, Token name)
         : object(object), name(name) {}
 
-    Value accept(ExpressionVisitor& visitor) override
+    Value accept(ExpressionVisitor &visitor) override
     {
         return visitor.visit_get_expression(shared_from_this());
     }
@@ -149,19 +152,19 @@ struct Call : Expression, public std::enable_shared_from_this<Call>
           paren(std::move(paren)),
           arguments(std::move(arguments)) {}
 
-    Value accept(ExpressionVisitor& visitor) override
+    Value accept(ExpressionVisitor &visitor) override
     {
         return visitor.visit_call_expression(shared_from_this());
     }
 };
 
-
 struct Binary : Expression, public std::enable_shared_from_this<Binary>
 {
     Binary(std::shared_ptr<Expression> left, Token operator_token, std::shared_ptr<Expression> right) : left{std::move(left)}, operator_token{std::move(operator_token)}, right{std::move(right)}
-    {}
+    {
+    }
 
-    Value accept(ExpressionVisitor& visitor) override
+    Value accept(ExpressionVisitor &visitor) override
     {
         return visitor.visit_binary_expression(shared_from_this());
     }
@@ -174,9 +177,10 @@ struct Binary : Expression, public std::enable_shared_from_this<Binary>
 struct Grouping : Expression, public std::enable_shared_from_this<Grouping>
 {
     Grouping(std::shared_ptr<Expression> expression) : expression{std::move(expression)}
-    {}
+    {
+    }
 
-    Value accept(ExpressionVisitor& visitor) override
+    Value accept(ExpressionVisitor &visitor) override
     {
         return visitor.visit_grouping_expression(shared_from_this());
     }
@@ -187,22 +191,24 @@ struct Grouping : Expression, public std::enable_shared_from_this<Grouping>
 struct Literal : Expression, public std::enable_shared_from_this<Literal>
 {
     Literal(Value value) : value{std::move(value)}
-    {}
+    {
+    }
 
-    Value accept(ExpressionVisitor& visitor) override
+    Value accept(ExpressionVisitor &visitor) override
     {
         return visitor.visit_literal_expression(shared_from_this());
     }
 
-  const Value value;
+    const Value value;
 };
 
 struct Logical : Expression, public std::enable_shared_from_this<Logical>
 {
     Logical(std::shared_ptr<Expression> left, Token operator_token, std::shared_ptr<Expression> right) : left{std::move(left)}, operator_token{std::move(operator_token)}, right{std::move(right)}
-    {}
+    {
+    }
 
-    Value accept(ExpressionVisitor& visitor) override
+    Value accept(ExpressionVisitor &visitor) override
     {
         return visitor.visit_logical_expression(shared_from_this());
     }
@@ -215,9 +221,10 @@ struct Logical : Expression, public std::enable_shared_from_this<Logical>
 struct Unary : Expression, public std::enable_shared_from_this<Unary>
 {
     Unary(Token operator_token, std::shared_ptr<Expression> right) : operator_token{std::move(operator_token)}, right{std::move(right)}
-    {}
+    {
+    }
 
-    Value accept(ExpressionVisitor& visitor) override
+    Value accept(ExpressionVisitor &visitor) override
     {
         return visitor.visit_unary_expression(shared_from_this());
     }
@@ -229,9 +236,10 @@ struct Unary : Expression, public std::enable_shared_from_this<Unary>
 struct Assign : Expression, public std::enable_shared_from_this<Assign>
 {
     Assign(Token name, std::shared_ptr<Expression> value) : name{std::move(name)}, value{std::move(value)}
-    {}
+    {
+    }
 
-    Value accept(ExpressionVisitor& visitor) override
+    Value accept(ExpressionVisitor &visitor) override
     {
         return visitor.visit_assign_expression(shared_from_this());
     }
@@ -243,9 +251,10 @@ struct Assign : Expression, public std::enable_shared_from_this<Assign>
 struct Variable : Expression, public std::enable_shared_from_this<Variable>
 {
     Variable(Token name) : name{std::move(name)}
-    {}
+    {
+    }
 
-    Value accept(ExpressionVisitor& visitor) override
+    Value accept(ExpressionVisitor &visitor) override
     {
         return visitor.visit_variable_expression(shared_from_this());
     }

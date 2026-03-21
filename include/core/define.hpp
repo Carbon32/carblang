@@ -1,6 +1,6 @@
 struct IgnoreReturnValue
 {
-    bool operator==(const IgnoreReturnValue&) const noexcept { return true; }
+    bool operator==(const IgnoreReturnValue &) const noexcept { return true; }
 };
 
 using Value = std::variant<
@@ -15,8 +15,7 @@ using Value = std::variant<
     std::shared_ptr<Class>,
     std::shared_ptr<UserBoundMethod>,
     std::shared_ptr<Dict>,
-    IgnoreReturnValue
->;
+    IgnoreReturnValue>;
 
 struct Chunk
 {
@@ -36,8 +35,8 @@ struct Chunk
 
 struct CallFrame
 {
-    Chunk* chunk;
-    uint8_t* ip;
+    Chunk *chunk;
+    uint8_t *ip;
     size_t stack_start;
     bool is_constructor = false;
 };
@@ -60,7 +59,8 @@ struct BoundMethod
         : receiver(std::move(receiver)), method(method) {}
 };
 
-struct UserBoundMethod {
+struct UserBoundMethod
+{
     std::shared_ptr<Instance> receiver;
     std::shared_ptr<Function> method;
 
@@ -77,24 +77,25 @@ struct Dict
 {
     std::unordered_map<std::string, Value> entries;
 
-    void set(const std::string& key, Value val)
+    void set(const std::string &key, Value val)
     {
         entries[key] = std::move(val);
     }
 
-    Value get(const std::string& key) const
+    Value get(const std::string &key) const
     {
         auto it = entries.find(key);
-        if(it != entries.end()) return it->second;
+        if (it != entries.end())
+            return it->second;
         return nullptr;
     }
 
-    bool contains(const std::string& key) const
+    bool contains(const std::string &key) const
     {
         return entries.find(key) != entries.end();
     }
 
-    bool remove(const std::string& key)
+    bool remove(const std::string &key)
     {
         return entries.erase(key) > 0;
     }
@@ -135,11 +136,13 @@ struct Class
           std::shared_ptr<Class> super_class = nullptr)
         : name(std::move(name)), methods(std::move(methods)), super_class(std::move(super_class)) {}
 
-    std::shared_ptr<Function> find_method(const std::string& name)
+    std::shared_ptr<Function> find_method(const std::string &name)
     {
         auto it = methods.find(name);
-        if(it != methods.end()) return it->second;
-        if(super_class) return super_class->find_method(name);
+        if (it != methods.end())
+            return it->second;
+        if (super_class)
+            return super_class->find_method(name);
         return nullptr;
     }
 };

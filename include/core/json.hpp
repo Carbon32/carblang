@@ -1,197 +1,224 @@
-class JsonParser {
-    public:
-        JsonParser(const std::string& src) : src(src) {}
+class JsonParser
+{
+public:
+    JsonParser(const std::string &src) : src(src) {}
 
-        Value parse()
-        {
-            skip_whitespace();
-            Value v = parse_value();
-            skip_whitespace();
-            if(pos != src.size())
-                throw std::runtime_error("Unexpected trailing JSON data");
-            return v;
-        }
+    Value parse()
+    {
+        skip_whitespace();
+        Value v = parse_value();
+        skip_whitespace();
+        if (pos != src.size())
+            throw std::runtime_error("Unexpected trailing JSON data");
+        return v;
+    }
 
-    private:
-        const std::string& src;
-        size_t pos = 0;
+private:
+    const std::string &src;
+    size_t pos = 0;
 
-        char peek() const
-        {
-            if(pos >= src.size()) return '\0';
-            return src[pos];
-        }
+    char peek() const
+    {
+        if (pos >= src.size())
+            return '\0';
+        return src[pos];
+    }
 
-        char advance()
-        {
-            return src[pos++];
-        }
+    char advance()
+    {
+        return src[pos++];
+    }
 
-        void skip_whitespace()
-        {
-            while(std::isspace(peek())) advance();
-        }
-
-        Value parse_value()
-        {
-            skip_whitespace();
-
-            if(peek() == '"') return parse_string();
-            if(peek() == '{') return parse_object();
-            if(peek() == '[') return parse_array();
-            if(std::isdigit(peek()) || peek() == '-') return parse_number();
-
-            if(src.compare(pos, 4, "null") == 0) 
-            {
-                pos += 4;
-                return nullptr;
-            }
-
-            if(src.compare(pos, 4, "true") == 0)
-            {
-                pos += 4;
-                return true;
-            }
-
-            if(src.compare(pos, 5, "false") == 0)
-            {
-                pos += 5;
-                return false;
-            }
-
-            throw std::runtime_error("Invalid JSON value");
-        }
-
-        Value parse_string()
-        {
+    void skip_whitespace()
+    {
+        while (std::isspace(peek()))
             advance();
-            std::string result;
+    }
 
-            while(true)
-            {
-                if(pos >= src.size())
-                    throw std::runtime_error("Unterminated JSON string");
+    Value parse_value()
+    {
+        skip_whitespace();
 
-                char c = advance();
+        if (peek() == '"')
+            return parse_string();
+        if (peek() == '{')
+            return parse_object();
+        if (peek() == '[')
+            return parse_array();
+        if (std::isdigit(peek()) || peek() == '-')
+            return parse_number();
 
-                if(c == '"') break;
-
-                if(c == '\\')
-                {
-                    char next = advance();
-                    switch(next)
-                    {
-                        case '"': result += '"'; break;
-                        case '\\': result += '\\'; break;
-                        case '/': result += '/'; break;
-                        case 'b': result += '\b'; break;
-                        case 'f': result += '\f'; break;
-                        case 'n': result += '\n'; break;
-                        case 'r': result += '\r'; break;
-                        case 't': result += '\t'; break;
-                        default:
-                            throw std::runtime_error("Invalid escape in JSON");
-                    }
-                }
-                else
-                {
-                    result += c;
-                }
-            }
-
-            return result;
+        if (src.compare(pos, 4, "null") == 0)
+        {
+            pos += 4;
+            return nullptr;
         }
 
-        Value parse_number()
+        if (src.compare(pos, 4, "true") == 0)
         {
-            size_t start = pos;
-
-            if(peek() == '-') advance();
-            while(std::isdigit(peek())) advance();
-
-            if(peek() == '.')
-            {
-                advance();
-                while(std::isdigit(peek())) advance();
-            }
-
-            return std::stod(src.substr(start, pos - start));
+            pos += 4;
+            return true;
         }
 
-        Value parse_array()
+        if (src.compare(pos, 5, "false") == 0)
         {
-            advance();
+            pos += 5;
+            return false;
+        }
 
-            auto arr = std::make_shared<Array>();
-            skip_whitespace();
+        throw std::runtime_error("Invalid JSON value");
+    }
 
-            if(peek() == ']')
+    Value parse_string()
+    {
+        advance();
+        std::string result;
+
+        while (true)
+        {
+            if (pos >= src.size())
+                throw std::runtime_error("Unterminated JSON string");
+
+            char c = advance();
+
+            if (c == '"')
+                break;
+
+            if (c == '\\')
             {
-                advance();
-                return arr;
-            }
-
-            while(true)
-            {
-                arr->elements.push_back(parse_value());
-                skip_whitespace();
-
-                if(peek() == ']')
+                char next = advance();
+                switch (next)
                 {
-                    advance();
+                case '"':
+                    result += '"';
                     break;
+                case '\\':
+                    result += '\\';
+                    break;
+                case '/':
+                    result += '/';
+                    break;
+                case 'b':
+                    result += '\b';
+                    break;
+                case 'f':
+                    result += '\f';
+                    break;
+                case 'n':
+                    result += '\n';
+                    break;
+                case 'r':
+                    result += '\r';
+                    break;
+                case 't':
+                    result += '\t';
+                    break;
+                default:
+                    throw std::runtime_error("Invalid escape in JSON");
                 }
-
-                if(peek() != ',')
-                    throw std::runtime_error("Expected \",\" in JSON array");
-
-                advance();
             }
+            else
+            {
+                result += c;
+            }
+        }
 
+        return result;
+    }
+
+    Value parse_number()
+    {
+        size_t start = pos;
+
+        if (peek() == '-')
+            advance();
+        while (std::isdigit(peek()))
+            advance();
+
+        if (peek() == '.')
+        {
+            advance();
+            while (std::isdigit(peek()))
+                advance();
+        }
+
+        return std::stod(src.substr(start, pos - start));
+    }
+
+    Value parse_array()
+    {
+        advance();
+
+        auto arr = std::make_shared<Array>();
+        skip_whitespace();
+
+        if (peek() == ']')
+        {
+            advance();
             return arr;
         }
 
-        Value parse_object()
+        while (true)
         {
-            advance();
-
-            auto dict = std::make_shared<Dict>();
+            arr->elements.push_back(parse_value());
             skip_whitespace();
 
-            if(peek() == '}')
+            if (peek() == ']')
             {
                 advance();
-                return dict;
+                break;
             }
 
-            while(true)
-            {
-                if(peek() != '"')
-                    throw std::runtime_error("Expected string key in JSON object");
+            if (peek() != ',')
+                throw std::runtime_error("Expected \",\" in JSON array");
 
-                std::string key = std::get<std::string>(parse_string());
+            advance();
+        }
 
-                skip_whitespace();
-                if(peek() != ':')
-                    throw std::runtime_error("Expected \":\" in JSON object");
+        return arr;
+    }
 
-                advance();
+    Value parse_object()
+    {
+        advance();
 
-                dict->entries[key] = parse_value();
-                skip_whitespace();
+        auto dict = std::make_shared<Dict>();
+        skip_whitespace();
 
-                if(peek() == '}')
-                {
-                    advance();
-                    break;
-                }
-
-                if(peek() != ',')
-                    throw std::runtime_error("Expected \",\" in JSON object");
-
-                advance();
-            }
-
+        if (peek() == '}')
+        {
+            advance();
             return dict;
         }
+
+        while (true)
+        {
+            if (peek() != '"')
+                throw std::runtime_error("Expected string key in JSON object");
+
+            std::string key = std::get<std::string>(parse_string());
+
+            skip_whitespace();
+            if (peek() != ':')
+                throw std::runtime_error("Expected \":\" in JSON object");
+
+            advance();
+
+            dict->entries[key] = parse_value();
+            skip_whitespace();
+
+            if (peek() == '}')
+            {
+                advance();
+                break;
+            }
+
+            if (peek() != ',')
+                throw std::runtime_error("Expected \",\" in JSON object");
+
+            advance();
+        }
+
+        return dict;
+    }
 };

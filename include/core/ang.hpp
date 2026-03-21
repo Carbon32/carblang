@@ -1,14 +1,26 @@
 // This little system simply makes things easier, it always does. It makes management easier,
 // adds extra compile-time type safety and offers a single point of control
 
-template<typename T>
-struct is_expression : std::false_type {};
+template <typename T>
+struct is_expression : std::false_type
+{
+};
 
-template<typename T>
-struct is_stmt : std::false_type {};
+template <typename T>
+struct is_stmt : std::false_type
+{
+};
 
-#define DECL_EXPR(NodeType) template<> struct is_expression<NodeType> : std::true_type {};
-#define DECL_STMT(NodeType) template<> struct is_stmt<NodeType> : std::true_type {};
+#define DECL_EXPR(NodeType)                         \
+    template <>                                     \
+    struct is_expression<NodeType> : std::true_type \
+    {                                               \
+    };
+#define DECL_STMT(NodeType)                   \
+    template <>                               \
+    struct is_stmt<NodeType> : std::true_type \
+    {                                         \
+    };
 
 DECL_EXPR(Literal)
 DECL_EXPR(Variable)
@@ -38,23 +50,23 @@ DECL_STMT(FunctionStmt)
 DECL_STMT(ClassStmt)
 DECL_STMT(IncludeStmt)
 
-template<typename NodeType, typename... Args>
-auto ANG(Args&&... args)
+template <typename NodeType, typename... Args>
+auto ANG(Args &&...args)
 {
-    if constexpr(is_expression<NodeType>::value)
+    if constexpr (is_expression<NodeType>::value)
     {
-    	#ifdef DEBUG_AST
-		    std::cout << "Created node: " << typeid(NodeType).name() << std::endl;
-		#endif
+#ifdef DEBUG_AST
+        std::cout << "Created node: " << typeid(NodeType).name() << std::endl;
+#endif
         return std::make_shared<NodeType>(std::forward<Args>(args)...);
-    } 
-    else if constexpr(is_stmt<NodeType>::value)
+    }
+    else if constexpr (is_stmt<NodeType>::value)
     {
-    	#ifdef DEBUG_AST
-		    std::cout << "Created node: " << typeid(NodeType).name() << std::endl;
-		#endif
+#ifdef DEBUG_AST
+        std::cout << "Created node: " << typeid(NodeType).name() << std::endl;
+#endif
         return std::make_shared<NodeType>(std::forward<Args>(args)...);
-    } 
+    }
     else
     {
         static_assert(sizeof(NodeType) == 0, "NodeType must be Expression or Stmt");

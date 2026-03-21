@@ -1,10 +1,10 @@
 #include "core/core.hpp"
 
-std::unordered_set<std::string> protected_names = { "os", "this", "super" }; // Make this better later
+std::unordered_set<std::string> protected_names = {"os", "this", "super"}; // Make this better later
 
 Chunk Compiler::compile(const std::vector<std::shared_ptr<Stmt>> &statements)
 {
-    for(auto &stmt : statements)
+    for (auto &stmt : statements)
     {
         stmt->accept(*this);
     }
@@ -22,7 +22,7 @@ void Compiler::end_scope()
 {
     scope_depth--;
 
-    while(!locals.empty() && locals.back().depth > scope_depth)
+    while (!locals.empty() && locals.back().depth > scope_depth)
     {
         emit(OpCode::POP);
         locals.pop_back();
@@ -31,11 +31,11 @@ void Compiler::end_scope()
 
 int Compiler::resolve_local(const std::string &name)
 {
-    for(int i = locals.size() - 1; i >= 0; i--)
+    for (int i = locals.size() - 1; i >= 0; i--)
     {
-        if(locals[i].name == name)
+        if (locals[i].name == name)
         {
-           
+
             return i;
         }
     }
@@ -67,38 +67,41 @@ int Compiler::emit_jump(OpCode op)
     return offset_index;
 }
 
-std::shared_ptr<Function> Compiler::compile_function(FunctionStmt& stmt, bool is_constructor = false, bool is_method = false)
+std::shared_ptr<Function> Compiler::compile_function(FunctionStmt &stmt, bool is_constructor = false, bool is_method = false)
 {
     Compiler function_compiler;
     function_compiler.begin_scope();
 
-    if(is_method) function_compiler.locals.push_back({ "this", 0 });
+    if (is_method)
+        function_compiler.locals.push_back({"this", 0});
 
     int slot = 1;
-    for(auto& param : stmt.params)
+    for (auto &param : stmt.params)
     {
-        function_compiler.locals.push_back({ param.lexeme, 0 });
+        function_compiler.locals.push_back({param.lexeme, 0});
         slot++;
     }
 
-    for(auto& s : stmt.body)
+    for (auto &s : stmt.body)
         s->accept(function_compiler);
 
-    if(!is_constructor) function_compiler.emit(OpCode::NULL);
-    else function_compiler.emit_constant(IgnoreReturnValue{});
+    if (!is_constructor)
+        function_compiler.emit(OpCode::NULL);
+    else
+        function_compiler.emit_constant(IgnoreReturnValue{});
     function_compiler.emit(OpCode::RETURN);
 
     return std::make_shared<Function>(
         stmt.name.lexeme,
         stmt.params.size(),
-        function_compiler.chunk
-    );
+        function_compiler.chunk);
 }
 
 void Compiler::patch_jump(int offset)
 {
     int jump = chunk.code.size() - offset - 2;
-    if(jump > UINT16_MAX) throw std::runtime_error("Jump too large");
+    if (jump > UINT16_MAX)
+        throw std::runtime_error("Jump too large");
 
     chunk.code[offset] = (jump >> 8) & 0xff;
     chunk.code[offset + 1] = jump & 0xff;
@@ -108,16 +111,20 @@ void Compiler::emit_loop(int loop_start)
 {
     int offset = chunk.code.size() - loop_start + 3;
     emit(OpCode::LOOP);
-    if(offset > UINT16_MAX) throw std::runtime_error("Loop too large");
+    if (offset > UINT16_MAX)
+        throw std::runtime_error("Loop too large");
     emit_byte((offset >> 8) & 0xff);
     emit_byte(offset & 0xff);
 }
 
 Value Compiler::visit_literal_expression(std::shared_ptr<Literal> expr)
 {
-    if(std::holds_alternative<std::nullptr_t>(expr->value)) emit(OpCode::NULL);
-    else if(std::holds_alternative<bool>(expr->value)) emit(std::get<bool>(expr->value) ? OpCode::TRUE : OpCode::FALSE);
-    else emit_constant(expr->value);
+    if (std::holds_alternative<std::nullptr_t>(expr->value))
+        emit(OpCode::NULL);
+    else if (std::holds_alternative<bool>(expr->value))
+        emit(std::get<bool>(expr->value) ? OpCode::TRUE : OpCode::FALSE);
+    else
+        emit_constant(expr->value);
 
     return {};
 }
@@ -131,13 +138,17 @@ Value Compiler::visit_grouping_expression(std::shared_ptr<Grouping> expr)
 Value Compiler::visit_unary_expression(std::shared_ptr<Unary> expr)
 {
     expr->right->accept(*this);
-    switch(expr->operator_token.type)
+    switch (expr->operator_token.type)
     {
-        case MINUS: emit(OpCode::NEGATE); break;
-        case BANG: emit(OpCode::NOT); break;
+    case MINUS:
+        emit(OpCode::NEGATE);
+        break;
+    case BANG:
+        emit(OpCode::NOT);
+        break;
 
-        default:
-            throw std::runtime_error("Invalid unary operator");
+    default:
+        throw std::runtime_error("Invalid unary operator");
     }
 
     return {};
@@ -148,19 +159,33 @@ Value Compiler::visit_binary_expression(std::shared_ptr<Binary> expr)
     expr->left->accept(*this);
     expr->right->accept(*this);
 
-    switch(expr->operator_token.type)
+    switch (expr->operator_token.type)
     {
-        case PLUS: emit(OpCode::ADD); break;
-        case MINUS: emit(OpCode::SUBTRACT); break;
-        case STAR: emit(OpCode::MULTIPLY); break;
-        case SLASH: emit(OpCode::DIVIDE); break;
+    case PLUS:
+        emit(OpCode::ADD);
+        break;
+    case MINUS:
+        emit(OpCode::SUBTRACT);
+        break;
+    case STAR:
+        emit(OpCode::MULTIPLY);
+        break;
+    case SLASH:
+        emit(OpCode::DIVIDE);
+        break;
 
-        case EQUAL_EQUAL: emit(OpCode::EQUAL); break;
-        case GREATER: emit(OpCode::GREATER); break;
-        case LESS: emit(OpCode::LESS); break;
+    case EQUAL_EQUAL:
+        emit(OpCode::EQUAL);
+        break;
+    case GREATER:
+        emit(OpCode::GREATER);
+        break;
+    case LESS:
+        emit(OpCode::LESS);
+        break;
 
-        default:
-            throw std::runtime_error("Unsupported binary operator");
+    default:
+        throw std::runtime_error("Unsupported binary operator");
     }
 
     return {};
@@ -169,32 +194,37 @@ Value Compiler::visit_binary_expression(std::shared_ptr<Binary> expr)
 Value Compiler::visit_expression_stmt(std::shared_ptr<ExprStmt> stmt)
 {
     stmt->expression->accept(*this);
-    if(!std::dynamic_pointer_cast<Assign>(stmt->expression)) emit(OpCode::POP);
+    if (!std::dynamic_pointer_cast<Assign>(stmt->expression))
+        emit(OpCode::POP);
 
     return {};
 }
 
 Value Compiler::visit_var_stmt(std::shared_ptr<VarStmt> stmt)
 {
-    if(protected_names.find(stmt->name.lexeme) != protected_names.end())
+    if (protected_names.find(stmt->name.lexeme) != protected_names.end())
     {
         throw std::runtime_error("Cannot declare variable with protected name: " + stmt->name.lexeme);
     }
 
-    if(scope_depth > 0)
+    if (scope_depth > 0)
     {
-        if(stmt->initializer) stmt->initializer->accept(*this);
-        else emit(OpCode::NULL);
+        if (stmt->initializer)
+            stmt->initializer->accept(*this);
+        else
+            emit(OpCode::NULL);
 
-        locals.push_back({ stmt->name.lexeme, scope_depth, stmt->is_const });
+        locals.push_back({stmt->name.lexeme, scope_depth, stmt->is_const});
     }
     else
     {
-        if(stmt->initializer) stmt->initializer->accept(*this);
-        else emit(OpCode::NULL);
+        if (stmt->initializer)
+            stmt->initializer->accept(*this);
+        else
+            emit(OpCode::NULL);
 
         uint8_t name = chunk.add_constant(stmt->name.lexeme);
-        if(stmt->is_const)
+        if (stmt->is_const)
             emit(OpCode::DEFINE_CONST);
         else
             emit(OpCode::DEFINE_GLOBAL);
@@ -210,14 +240,14 @@ Value Compiler::visit_if_stmt(std::shared_ptr<IfStmt> stmt)
     stmt->then_branch->accept(*this);
 
     int end_jump = 0;
-    if(stmt->else_branch)
+    if (stmt->else_branch)
     {
         end_jump = emit_jump(OpCode::JUMP);
     }
 
     patch_jump(else_jump);
 
-    if(stmt->else_branch)
+    if (stmt->else_branch)
     {
         stmt->else_branch->accept(*this);
         patch_jump(end_jump);
@@ -242,7 +272,7 @@ Value Compiler::visit_logical_expression(std::shared_ptr<Logical> expr)
 {
     expr->left->accept(*this);
 
-    if(expr->operator_token.type == OR)
+    if (expr->operator_token.type == OR)
     {
         int jump = emit_jump(OpCode::JUMP_IF_TRUE);
         expr->right->accept(*this);
@@ -272,15 +302,15 @@ Value Compiler::visit_logical_expression(std::shared_ptr<Logical> expr)
 
 Value Compiler::visit_assign_expression(std::shared_ptr<Assign> expr)
 {
-    if(protected_names.find(expr->name.lexeme) != protected_names.end())
+    if (protected_names.find(expr->name.lexeme) != protected_names.end())
         throw std::runtime_error("Cannot reassign protected variable: " + expr->name.lexeme);
 
     expr->value->accept(*this);
     int slot = resolve_local(expr->name.lexeme);
 
-    if(slot != -1)
+    if (slot != -1)
     {
-        if(locals[slot].is_const)
+        if (locals[slot].is_const)
             throw std::runtime_error("Cannot reassign const variable \"" + expr->name.lexeme + "\"");
 
         emit(OpCode::SET_LOCAL);
@@ -299,7 +329,7 @@ Value Compiler::visit_assign_expression(std::shared_ptr<Assign> expr)
 Value Compiler::visit_variable_expression(std::shared_ptr<Variable> expr)
 {
     int slot = resolve_local(expr->name.lexeme);
-    if(slot != -1)
+    if (slot != -1)
     {
         emit(OpCode::GET_LOCAL);
         emit_byte(slot);
@@ -316,7 +346,8 @@ Value Compiler::visit_variable_expression(std::shared_ptr<Variable> expr)
 Value Compiler::visit_block_stmt(std::shared_ptr<BlockStmt> stmt)
 {
     begin_scope();
-    for(auto& s : stmt->statements) s->accept(*this);
+    for (auto &s : stmt->statements)
+        s->accept(*this);
     end_scope();
     return {};
 }
@@ -340,7 +371,8 @@ Value Compiler::visit_call_expression(std::shared_ptr<Call> expr)
 {
     expr->callee->accept(*this);
 
-    for(auto& arg : expr->arguments) arg->accept(*this);
+    for (auto &arg : expr->arguments)
+        arg->accept(*this);
 
     emit(OpCode::CALL);
     emit_byte(static_cast<uint8_t>(expr->arguments.size()));
@@ -350,8 +382,10 @@ Value Compiler::visit_call_expression(std::shared_ptr<Call> expr)
 
 Value Compiler::visit_return_stmt(std::shared_ptr<ReturnStmt> stmt)
 {
-    if(stmt->value) stmt->value->accept(*this);
-    else emit(OpCode::NULL);
+    if (stmt->value)
+        stmt->value->accept(*this);
+    else
+        emit(OpCode::NULL);
 
     emit(OpCode::RETURN);
     return {};
@@ -359,7 +393,8 @@ Value Compiler::visit_return_stmt(std::shared_ptr<ReturnStmt> stmt)
 
 Value Compiler::visit_array_expression(std::shared_ptr<ArrayExpr> expr)
 {
-    for(auto& element : expr->elements) element->accept(*this);
+    for (auto &element : expr->elements)
+        element->accept(*this);
 
     emit(OpCode::ARRAY);
     emit_byte(static_cast<uint8_t>(expr->elements.size()));
@@ -407,14 +442,15 @@ Value Compiler::visit_set_expression(std::shared_ptr<Set> expr)
 
 Value Compiler::visit_include_stmt(std::shared_ptr<IncludeStmt> stmt)
 {
-    if(included_files.find(stmt->file_name) != included_files.end()) {
+    if (included_files.find(stmt->file_name) != included_files.end())
+    {
         throw std::runtime_error("File already included: " + stmt->file_name);
     }
 
     included_files.insert(stmt->file_name);
 
     std::ifstream file(stmt->file_name);
-    if(!file.is_open())
+    if (!file.is_open())
         throw std::runtime_error("Failed to open include file: " + stmt->file_name);
 
     std::stringstream buffer;
@@ -426,7 +462,7 @@ Value Compiler::visit_include_stmt(std::shared_ptr<IncludeStmt> stmt)
     Parser parser(tokens);
     std::vector<std::shared_ptr<Stmt>> stmts = parser.parse();
 
-    for(auto &s : stmts)
+    for (auto &s : stmts)
     {
         s->accept(*this);
     }
@@ -438,7 +474,7 @@ Value Compiler::visit_class_stmt(std::shared_ptr<ClassStmt> stmt)
 {
     bool has_super_class = stmt->super_class != nullptr;
 
-    if(has_super_class)
+    if (has_super_class)
     {
         stmt->super_class->accept(*this);
     }
@@ -447,7 +483,7 @@ Value Compiler::visit_class_stmt(std::shared_ptr<ClassStmt> stmt)
     uint8_t name_index = chunk.add_constant(stmt->name.lexeme);
     emit_byte(name_index);
 
-    for(auto& method : stmt->methods)
+    for (auto &method : stmt->methods)
     {
         bool is_constructor = method->name.lexeme == "init";
         auto fn = compile_function(*method, is_constructor, true);
@@ -461,7 +497,7 @@ Value Compiler::visit_class_stmt(std::shared_ptr<ClassStmt> stmt)
         emit_byte(method_index);
     }
 
-    if(has_super_class)
+    if (has_super_class)
     {
         emit(OpCode::INHERIT);
     }
@@ -491,7 +527,7 @@ Value Compiler::visit_dict_expression(std::shared_ptr<DictExpr> expr)
 {
     emit(OpCode::DICT);
 
-    for(auto& [key, value] : expr->entries)
+    for (auto &[key, value] : expr->entries)
     {
         key->accept(*this);
         value->accept(*this);

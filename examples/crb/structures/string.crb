@@ -22,7 +22,6 @@ println("is_number: " + number.is_number());
 println("is_space: " + " ".is_space());
 println("is_all_spaces: " + "     ".is_all_spaces() + "\n");
 
-
 println("replace \"world\" with \"wniverse\": " + str.replace("world", "universe"));
 printf("trim: \"%\"\n", str.trim());
 println("to_array: " + another_str.to_array() + "\n");

@@ -162,3 +162,38 @@
         push(json_stringify(args[0])); \
         break; \
     }
+
+#define NATIVE_GLOBALS_PARSE_CSV \
+    case NativeMethod::PARSE_CSV: \
+    { \
+        if(args.size() != 1 || !std::holds_alternative<std::string>(args[0])) \
+            throw std::runtime_error("parse_csv() requires a string"); \
+        \
+        CsvParser parser(std::get<std::string>(args[0])); \
+        auto raw = parser.parse(); \
+        auto outer = std::make_shared<Array>(); \
+        for(const auto& row : raw) \
+        { \
+            auto inner = std::make_shared<Array>(); \
+            for(const auto& cell : row) \
+            { \
+                inner->elements.push_back(cell); \
+            } \
+            outer->elements.push_back(inner); \
+        } \
+        push(outer); \
+        break; \
+    }
+
+#define NATIVE_GLOBALS_TO_CSV \
+    case NativeMethod::TO_CSV: \
+    { \
+        if(args.size() != 1) \
+            throw std::runtime_error("csv() requires 1 argument"); \
+        \
+        if(!std::holds_alternative<std::shared_ptr<Array>>(args[0])) \
+            throw std::runtime_error("csv() expects an array of rows"); \
+        \
+        push(csv_stringify(args[0])); \
+        break; \
+    }

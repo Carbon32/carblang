@@ -116,6 +116,9 @@ enum class NativeMethod
     OS_COPY,
     RENAME,
 
+    PARSE_CSV,
+    TO_CSV,
+
     INSTANCE_METHODS,
     TYPE
 };

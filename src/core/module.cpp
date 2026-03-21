@@ -1,11 +1,11 @@
 #include "core/core.hpp"
 
-std::shared_ptr<Instance> create_module_instance(Module&& module, const std::string& name)
+std::shared_ptr<Instance> create_module_instance(Module &&module, const std::string &name)
 {
     auto klass = std::make_shared<Class>(name, std::unordered_map<std::string, std::shared_ptr<Function>>{});
     auto instance = std::make_shared<Instance>(klass);
 
-    for(auto& [method_name, method_value] : module.methods)
+    for (auto &[method_name, method_value] : module.methods)
     {
         instance->fields[method_name] = method_value;
     }
@@ -19,7 +19,6 @@ std::shared_ptr<Instance> init_os()
     os.set_method("system", make_native_method(nullptr, NativeMethod::SYSTEM));
     return create_module_instance(std::move(os), "os");
 }
-
 
 std::shared_ptr<Instance> init_regex()
 {
@@ -97,6 +96,8 @@ std::shared_ptr<Instance> init_text()
     text.set_method("parse_json", make_native_method(nullptr, NativeMethod::PARSE_JSON));
     text.set_method("stringify", make_native_method(nullptr, NativeMethod::STRINGIFY));
     text.set_method("to_json", make_native_method(nullptr, NativeMethod::TO_JSON));
+    text.set_method("parse_csv", make_native_method(nullptr, NativeMethod::PARSE_CSV));
+    text.set_method("to_csv", make_native_method(nullptr, NativeMethod::TO_CSV));
     return create_module_instance(std::move(text), "text");
 }
 

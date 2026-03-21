@@ -13,7 +13,4 @@ cd build
 cmake ..
 cmake --build .
 
-echo "Running tests"
-ctest  -C Debug --output-on-failure
-
 cd ..

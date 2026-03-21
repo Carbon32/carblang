@@ -14,6 +14,7 @@ inline bool runtime_error_trigger = false;
 #include "define.hpp"
 #include "module.hpp"
 #include "json.hpp"
+#include "csv.hpp"
 #include "profile.hpp"
 
 std::shared_ptr<BoundMethod> make_native_method(Value value, NativeMethod method);
@@ -28,14 +29,14 @@ std::shared_ptr<BoundMethod> make_native_method(Value value, NativeMethod method
 
 class Carblang
 {
-    public:
-        Carblang();
-        void start(int argc, char **argv);
-        void run(std::string code);
+public:
+    Carblang();
+    void start(int argc, char **argv);
+    void run(std::string code);
 
-        std::string read_file(const char *file);
+    std::string read_file(const char *file);
 
-        void handle_file(const char *file);
+    void handle_file(const char *file);
 };
 
 #include "compiler.hpp"

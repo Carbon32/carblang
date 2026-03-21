@@ -11,9 +11,9 @@ void error(int line, std::string message)
     report(line, "", message);
 }
 
-void error(const Token& token, std::string message)
+void error(const Token &token, std::string message)
 {
-    if(token.type == END_OF_FILE)
+    if (token.type == END_OF_FILE)
     {
         report(token.line, " at end", message);
     }
@@ -23,7 +23,7 @@ void error(const Token& token, std::string message)
     }
 }
 
-void runtime_error(const RuntimeError& error) // I believe this is broken, doesn't even print the line
+void runtime_error(const RuntimeError &error) // I believe this is broken, doesn't even print the line
 {
     std::cerr << error.what() << "\n[line " << error.token.line << "]\n";
     runtime_error_trigger = true;

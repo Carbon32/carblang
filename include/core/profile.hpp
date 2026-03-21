@@ -8,66 +8,66 @@ struct ProfilerEntry
 
 class GlobalProfiler
 {
-    public:
-        std::unordered_map<std::string, ProfilerEntry> entries;
+public:
+    std::unordered_map<std::string, ProfilerEntry> entries;
 
-        void start(const std::string &name)
+    void start(const std::string &name)
+    {
+        if (name.empty())
+            throw std::runtime_error("Profiler name cannot be empty");
+
+        auto &entry = entries[name];
+
+        if (entry.running)
+            throw std::runtime_error("Profiler block already started: " + name);
+
+        entry.start = std::chrono::high_resolution_clock::now();
+        entry.running = true;
+    }
+
+    void end(const std::string &name)
+    {
+        if (name.empty())
+            throw std::runtime_error("Profiler name cannot be empty");
+
+        auto it = entries.find(name);
+        if (it == entries.end())
+            throw std::runtime_error("Profiler block not found: " + name);
+
+        auto &entry = it->second;
+
+        if (!entry.running)
+            throw std::runtime_error("Profiler block was not started: " + name);
+
+        auto now = std::chrono::high_resolution_clock::now();
+        entry.total += now - entry.start;
+        entry.count++;
+        entry.running = false;
+    }
+
+    std::string report()
+    {
+        if (entries.empty())
         {
-            if(name.empty())
-                throw std::runtime_error("Profiler name cannot be empty");
-
-            auto &entry = entries[name];
-
-            if(entry.running)
-                throw std::runtime_error("Profiler block already started: " + name);
-
-            entry.start = std::chrono::high_resolution_clock::now();
-            entry.running = true;
+            return "No profiling data collected";
         }
 
-        void end(const std::string &name)
+        std::stringstream ss;
+        for (auto &[name, entry] : entries)
         {
-            if(name.empty())
-                throw std::runtime_error("Profiler name cannot be empty");
-
-            auto it = entries.find(name);
-            if(it == entries.end())
-                throw std::runtime_error("Profiler block not found: " + name);
-
-            auto &entry = it->second;
-
-            if(!entry.running)
-                throw std::runtime_error("Profiler block was not started: " + name);
-
-            auto now = std::chrono::high_resolution_clock::now();
-            entry.total += now - entry.start;
-            entry.count++;
-            entry.running = false;
+            ss << name
+               << ": "
+               << entry.total.count()
+               << " ms over "
+               << entry.count
+               << " calls\n";
         }
 
-        std::string report()
-        {
-            if(entries.empty())
-            {
-                return "No profiling data collected";
-            }
+        return ss.str();
+    }
 
-            std::stringstream ss;
-            for(auto &[name, entry] : entries)
-            {
-                ss << name
-                   << ": "
-                   << entry.total.count()
-                   << " ms over "
-                   << entry.count
-                   << " calls\n";
-            }
-
-            return ss.str();
-        }
-
-        void reset()
-        {
-            entries.clear();
-        }
+    void reset()
+    {
+        entries.clear();
+    }
 };

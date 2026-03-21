@@ -1,7 +1,7 @@
 class VM
 {
-    Chunk* chunk = nullptr;
-    uint8_t* ip = nullptr;
+    Chunk *chunk = nullptr;
+    uint8_t *ip = nullptr;
     std::vector<Value> stack;
     std::unordered_map<std::string, Value> globals;
     std::unordered_set<std::string> const_variables;
@@ -9,7 +9,7 @@ class VM
     GlobalProfiler profiler;
 
 public:
-    void interpret(Chunk& new_chunk);
+    void interpret(Chunk &new_chunk);
     void init_globals();
 
 private:
@@ -22,14 +22,17 @@ private:
     std::shared_ptr<Instance> current_instance();
     void push(Value value);
     uint16_t read_short();
-    bool is_truthy(const Value& value);
-    bool value_shallow_equal(const Value& x, const Value& y);
-    void print_value(const Value& value);
+    bool is_truthy(const Value &value);
+    bool value_shallow_equal(const Value &x, const Value &y);
+    void print_value(const Value &value);
     void print_stack();
-    std::string stringify(const Value& value);
-    std::string json_escape(const std::string& s);
+    std::string stringify(const Value &value);
+    std::string json_escape(const std::string &s);
     std::string json_number(double value);
-    std::string json_stringify(const Value& value);
-    void dump_state(const char* where);
+    std::string json_stringify(const Value &value);
+    std::string csv_escape(const std::string &s);
+    std::string csv_value(const Value &value);
+    std::string csv_stringify(const Value &value);
+    void dump_state(const char *where);
     Value read_constant();
 };
