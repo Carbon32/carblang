@@ -3037,6 +3037,63 @@
         break;                                                                      \
     }
 
+#define NATIVE_HTML_ATTR                                                     \
+    case NativeMethod::HTML_ATTR:                                            \
+    {                                                                        \
+        if (args.size() != 2)                                                \
+            throw std::runtime_error("attr() takes exactly 2 arguments");    \
+                                                                             \
+        if (!std::holds_alternative<std::string>(args[0]) ||                 \
+            !std::holds_alternative<std::string>(args[1]))                   \
+        {                                                                    \
+            throw std::runtime_error("attr() takes only string arguments");  \
+        }                                                                    \
+                                                                             \
+        if (!std::holds_alternative<std::shared_ptr<Tag>>(method->receiver)) \
+            throw std::runtime_error("attr() must be called on a tag");      \
+                                                                             \
+        auto tag = std::get<std::shared_ptr<Tag>>(method->receiver);         \
+                                                                             \
+        const std::string &key = std::get<std::string>(args[0]);             \
+        const std::string &value = std::get<std::string>(args[1]);           \
+                                                                             \
+        tag->attr(key, value);                                               \
+        push(tag);                                                           \
+        break;                                                               \
+    }
+
+#define NATIVE_HTML_APPEND                                                     \
+    case NativeMethod::HTML_APPEND:                                            \
+    {                                                                          \
+        if (args.empty())                                                      \
+            throw std::runtime_error("append() needs at least one argument");  \
+                                                                               \
+        if (!std::holds_alternative<std::shared_ptr<Tag>>(method->receiver))   \
+            throw std::runtime_error("append() must be called on a tag");      \
+                                                                               \
+        auto tag = std::get<std::shared_ptr<Tag>>(method->receiver);           \
+                                                                               \
+        for (auto &arg : args)                                                 \
+        {                                                                      \
+            if (std::holds_alternative<std::shared_ptr<Tag>>(arg))             \
+            {                                                                  \
+                tag->child(std::get<std::shared_ptr<Tag>>(arg));               \
+            }                                                                  \
+            else if (std::holds_alternative<std::string>(arg))                 \
+            {                                                                  \
+                tag->child(std::make_shared<Tag>("text",                       \
+                                                 std::get<std::string>(arg))); \
+            }                                                                  \
+            else                                                               \
+            {                                                                  \
+                throw std::runtime_error("append() expects tag or string");    \
+            }                                                                  \
+        }                                                                      \
+                                                                               \
+        push(tag);                                                             \
+        break;                                                                 \
+    }
+
 #define NATIVE_HTML_CONSTRUCT           \
     case NativeMethod::HTML_CONSTRUCT:  \
     {                                   \

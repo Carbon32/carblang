@@ -244,7 +244,9 @@ enum class NativeMethod
     HTML_TRACK,
     HTML_UL,
     HTML_VIDEO,
-    HTML_WBR
+    HTML_WBR,
+    HTML_ATTR,
+    HTML_APPEND
 };
 
 #include "native/array.hpp"

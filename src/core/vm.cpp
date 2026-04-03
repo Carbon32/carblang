@@ -292,6 +292,19 @@ void VM::run()
                 break;
             }
 
+            if (opcode == OpCode::ADD &&
+                std::holds_alternative<std::shared_ptr<Tag>>(a) &&
+                std::holds_alternative<std::shared_ptr<Tag>>(b))
+            {
+                auto parent = std::get<std::shared_ptr<Tag>>(a);
+                auto child = std::get<std::shared_ptr<Tag>>(b);
+
+                parent->child(child);
+
+                stack.push_back(parent);
+                break;
+            }
+
             if (!std::holds_alternative<double>(a) ||
                 !std::holds_alternative<double>(b))
             {
@@ -853,6 +866,8 @@ void VM::run()
                     NATIVE_HTML_UL
                     NATIVE_HTML_VIDEO
                     NATIVE_HTML_WBR
+                    NATIVE_HTML_ATTR
+                    NATIVE_HTML_APPEND
 
                 default:
                     throw std::runtime_error("Unrecognized method");
@@ -1294,6 +1309,25 @@ void VM::run()
                 if (name == "average")
                 {
                     push(make_native_method(array, NativeMethod::AVERAGE));
+                    break;
+                }
+                throw std::runtime_error("Undefined property \"" + name + "\"");
+                break;
+            }
+
+            if (std::holds_alternative<std::shared_ptr<Tag>>(object))
+            {
+                auto tag = std::get<std::shared_ptr<Tag>>(object);
+
+                if (name == "attr")
+                {
+                    push(make_native_method(tag, NativeMethod::HTML_ATTR));
+                    break;
+                }
+
+                if (name == "append")
+                {
+                    push(make_native_method(tag, NativeMethod::HTML_APPEND));
                     break;
                 }
                 throw std::runtime_error("Undefined property \"" + name + "\"");

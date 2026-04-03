@@ -1,25 +1,10 @@
-class Person
-{
-	function init(name, age, job)
-	{
-		this.name = name;
-		this.age = age;
-		this.job = job;
-	}
-}
-
-def john = Person("John", 24, "Teacher");
-def eric = Person("Eric", 52, "Cook");
-def miller = Person("Miller", 31, "Waiter");
+def some_tag = div()
+				+ h1("Testing here").attr("style", "color: red;")
+				+ p("Whatever").attr("style", "color: green;")
+				+ h4("Ehhh").attr("style", "color: blue;");
 
 body(
-	div(
-		h1(format("% % %", john.name, john.age, john.job)),
-		h1(format("% % %", eric.name, eric.age, eric.job)),
-		h1(format("% % %", miller.name, miller.age, miller.job)),
-		p("Some testing stuff"),
-		a("Click me", "#")
-	)
+	some_tag
 );
 
 print(builder.construct());

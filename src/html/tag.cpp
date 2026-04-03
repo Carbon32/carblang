@@ -20,8 +20,20 @@ Tag::Tag(const std::string &name, std::vector<std::shared_ptr<Tag>> children)
 
 Tag *Tag::attr(const std::string &key, const std::string &value)
 {
-    if (!value.empty())
+    auto it = attributes.find(key);
+
+    if (it == attributes.end())
+    {
         attributes[key] = value;
+    }
+    else
+    {
+        if (!it->second.empty())
+            it->second += " ";
+
+        it->second += value;
+    }
+
     return this;
 }
 
