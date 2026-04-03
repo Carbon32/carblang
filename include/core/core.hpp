@@ -10,6 +10,7 @@ inline bool runtime_error_trigger = false;
 
 #include "forward.hpp"
 #include "ang.hpp"
+#include "html/cml.hpp"
 #include "native.hpp"
 #include "define.hpp"
 #include "module.hpp"

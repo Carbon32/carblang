@@ -12,6 +12,7 @@ void VM::init_globals()
     globals["array"] = init_array();
     globals["file"] = init_file();
     globals["profiler"] = init_profiler();
+    globals["builder"] = init_builder();
 
     const_variables.insert("os");
     const_variables.insert("math");
@@ -23,14 +24,112 @@ void VM::init_globals()
     const_variables.insert("array");
     const_variables.insert("file");
     const_variables.insert("profiler");
+    const_variables.insert("builder");
 
-    globals["input"] = make_native_method(nullptr, NativeMethod::INPUT);
+    globals["scan"] = make_native_method(nullptr, NativeMethod::INPUT);
     globals["format"] = make_native_method(nullptr, NativeMethod::FORMAT);
     globals["printf"] = make_native_method(nullptr, NativeMethod::PRINTF);
     globals["print"] = make_native_method(nullptr, NativeMethod::PRINT);
     globals["println"] = make_native_method(nullptr, NativeMethod::PRINTLN);
     globals["exit"] = make_native_method(nullptr, NativeMethod::EXIT);
     globals["methods"] = make_native_method(nullptr, NativeMethod::INSTANCE_METHODS);
+
+    globals["a"] = make_native_method(nullptr, NativeMethod::HTML_A);
+    globals["address"] = make_native_method(nullptr, NativeMethod::HTML_ADDRESS);
+    globals["area"] = make_native_method(nullptr, NativeMethod::HTML_AREA);
+    globals["article"] = make_native_method(nullptr, NativeMethod::HTML_ARTICLE);
+    globals["aside"] = make_native_method(nullptr, NativeMethod::HTML_ASIDE);
+    globals["audio"] = make_native_method(nullptr, NativeMethod::HTML_AUDIO);
+    // globals["base"] = make_native_method(nullptr, NativeMethod::HTML_BASE);
+    globals["blockquote"] = make_native_method(nullptr, NativeMethod::HTML_BLOCKQUOTE);
+    globals["body"] = make_native_method(nullptr, NativeMethod::HTML_BODY);
+    globals["br"] = make_native_method(nullptr, NativeMethod::HTML_BR);
+    globals["button"] = make_native_method(nullptr, NativeMethod::HTML_BUTTON);
+    globals["canvas"] = make_native_method(nullptr, NativeMethod::HTML_CANVAS);
+    globals["caption"] = make_native_method(nullptr, NativeMethod::HTML_CAPTION);
+    globals["cite"] = make_native_method(nullptr, NativeMethod::HTML_CITE);
+    globals["code"] = make_native_method(nullptr, NativeMethod::HTML_CODE);
+    globals["col"] = make_native_method(nullptr, NativeMethod::HTML_COL);
+    globals["colgroup"] = make_native_method(nullptr, NativeMethod::HTML_COLGROUP);
+    globals["construct"] = make_native_method(nullptr, NativeMethod::HTML_CONSTRUCT);
+    globals["datalist"] = make_native_method(nullptr, NativeMethod::HTML_DATALIST);
+    globals["dd"] = make_native_method(nullptr, NativeMethod::HTML_DD);
+    globals["del"] = make_native_method(nullptr, NativeMethod::HTML_DEL);
+    globals["div"] = make_native_method(nullptr, NativeMethod::HTML_DIV);
+    globals["dl"] = make_native_method(nullptr, NativeMethod::HTML_DL);
+    globals["dt"] = make_native_method(nullptr, NativeMethod::HTML_DT);
+    globals["em"] = make_native_method(nullptr, NativeMethod::HTML_EM);
+    // globals["embed"] = make_native_method(nullptr, NativeMethod::HTML_EMBED);
+    globals["fieldset"] = make_native_method(nullptr, NativeMethod::HTML_FIELDSET);
+    globals["figcaption"] = make_native_method(nullptr, NativeMethod::HTML_FIGCAPTION);
+    globals["figure"] = make_native_method(nullptr, NativeMethod::HTML_FIGURE);
+    globals["footer"] = make_native_method(nullptr, NativeMethod::HTML_FOOTER);
+    globals["form"] = make_native_method(nullptr, NativeMethod::HTML_FORM);
+    globals["h1"] = make_native_method(nullptr, NativeMethod::HTML_H1);
+    globals["h2"] = make_native_method(nullptr, NativeMethod::HTML_H2);
+    globals["h3"] = make_native_method(nullptr, NativeMethod::HTML_H3);
+    globals["h4"] = make_native_method(nullptr, NativeMethod::HTML_H4);
+    globals["h5"] = make_native_method(nullptr, NativeMethod::HTML_H5);
+    globals["h6"] = make_native_method(nullptr, NativeMethod::HTML_H6);
+    globals["head"] = make_native_method(nullptr, NativeMethod::HTML_HEAD);
+    globals["header"] = make_native_method(nullptr, NativeMethod::HTML_HEADER);
+    globals["hr"] = make_native_method(nullptr, NativeMethod::HTML_HR);
+    globals["iframe"] = make_native_method(nullptr, NativeMethod::HTML_IFRAME);
+    globals["img"] = make_native_method(nullptr, NativeMethod::HTML_IMG);
+    globals["input"] = make_native_method(nullptr, NativeMethod::HTML_INPUT);
+    globals["ins"] = make_native_method(nullptr, NativeMethod::HTML_INS);
+    globals["label"] = make_native_method(nullptr, NativeMethod::HTML_LABEL);
+    globals["legend"] = make_native_method(nullptr, NativeMethod::HTML_LEGEND);
+    globals["li"] = make_native_method(nullptr, NativeMethod::HTML_LI);
+    globals["link"] = make_native_method(nullptr, NativeMethod::HTML_LINK);
+    globals["main"] = make_native_method(nullptr, NativeMethod::HTML_MAIN);
+    globals["map"] = make_native_method(nullptr, NativeMethod::HTML_MAP);
+    globals["mark"] = make_native_method(nullptr, NativeMethod::HTML_MARK);
+    globals["meta"] = make_native_method(nullptr, NativeMethod::HTML_META);
+    globals["meter"] = make_native_method(nullptr, NativeMethod::HTML_METER);
+    globals["nav"] = make_native_method(nullptr, NativeMethod::HTML_NAV);
+    globals["object"] = make_native_method(nullptr, NativeMethod::HTML_OBJECT);
+    globals["ol"] = make_native_method(nullptr, NativeMethod::HTML_OL);
+    globals["optgroup"] = make_native_method(nullptr, NativeMethod::HTML_OPTGROUP);
+    globals["option"] = make_native_method(nullptr, NativeMethod::HTML_OPTION);
+    globals["output"] = make_native_method(nullptr, NativeMethod::HTML_OUTPUT);
+    globals["p"] = make_native_method(nullptr, NativeMethod::HTML_P);
+    globals["param"] = make_native_method(nullptr, NativeMethod::HTML_PARAM);
+    globals["picture"] = make_native_method(nullptr, NativeMethod::HTML_PICTURE);
+    globals["pre"] = make_native_method(nullptr, NativeMethod::HTML_PRE);
+    globals["progress"] = make_native_method(nullptr, NativeMethod::HTML_PROGRESS);
+    globals["q"] = make_native_method(nullptr, NativeMethod::HTML_Q);
+    globals["section"] = make_native_method(nullptr, NativeMethod::HTML_SECTION);
+    globals["select"] = make_native_method(nullptr, NativeMethod::HTML_SELECT);
+    globals["small"] = make_native_method(nullptr, NativeMethod::HTML_SMALL);
+    globals["source"] = make_native_method(nullptr, NativeMethod::HTML_SOURCE);
+    globals["span"] = make_native_method(nullptr, NativeMethod::HTML_SPAN);
+    globals["strong"] = make_native_method(nullptr, NativeMethod::HTML_STRONG);
+    globals["style"] = make_native_method(nullptr, NativeMethod::HTML_STYLE);
+    globals["sub"] = make_native_method(nullptr, NativeMethod::HTML_SUB);
+    globals["sup"] = make_native_method(nullptr, NativeMethod::HTML_SUP);
+    globals["table"] = make_native_method(nullptr, NativeMethod::HTML_TABLE);
+    globals["tbody"] = make_native_method(nullptr, NativeMethod::HTML_TBODY);
+    globals["td"] = make_native_method(nullptr, NativeMethod::HTML_TD);
+    globals["textarea"] = make_native_method(nullptr, NativeMethod::HTML_TEXTAREA);
+    globals["tfoot"] = make_native_method(nullptr, NativeMethod::HTML_TFOOT);
+    globals["th"] = make_native_method(nullptr, NativeMethod::HTML_TH);
+    globals["thead"] = make_native_method(nullptr, NativeMethod::HTML_THEAD);
+    globals["time"] = make_native_method(nullptr, NativeMethod::HTML_TIME);
+    globals["title"] = make_native_method(nullptr, NativeMethod::HTML_TITLE);
+    globals["tr"] = make_native_method(nullptr, NativeMethod::HTML_TR);
+    globals["track"] = make_native_method(nullptr, NativeMethod::HTML_TRACK);
+    globals["ul"] = make_native_method(nullptr, NativeMethod::HTML_UL);
+    globals["video"] = make_native_method(nullptr, NativeMethod::HTML_VIDEO);
+    globals["wbr"] = make_native_method(nullptr, NativeMethod::HTML_WBR);
+
+    const_variables.insert("scan");
+    const_variables.insert("format");
+    const_variables.insert("printf");
+    const_variables.insert("print");
+    const_variables.insert("println");
+    const_variables.insert("exit");
+    const_variables.insert("methods");
 }
 
 void VM::interpret(Chunk &new_chunk)
@@ -279,9 +378,9 @@ void VM::run()
 
         case OpCode::DEFINE_CONST:
         {
-            uint8_t nameIndex = *ip++;
+            uint8_t name_index = *ip++;
             const std::string &name =
-                std::get<std::string>(chunk->constants[nameIndex]);
+                std::get<std::string>(chunk->constants[name_index]);
 
             if (globals.contains(name))
                 throw std::runtime_error("Cannot redefine constant \"" + name + "\"");
@@ -293,9 +392,9 @@ void VM::run()
 
         case OpCode::DEFINE_GLOBAL:
         {
-            uint8_t nameIndex = *ip++;
+            uint8_t name_index = *ip++;
             const std::string &name =
-                std::get<std::string>(chunk->constants[nameIndex]);
+                std::get<std::string>(chunk->constants[name_index]);
 
             if (const_variables.contains(name))
                 throw std::runtime_error("Cannot redefine constant \"" + name + "\"");
@@ -306,8 +405,8 @@ void VM::run()
 
         case OpCode::GET_GLOBAL:
         {
-            uint8_t nameIndex = *ip++;
-            const std::string &name = std::get<std::string>(chunk->constants[nameIndex]);
+            uint8_t name_index = *ip++;
+            const std::string &name = std::get<std::string>(chunk->constants[name_index]);
             auto it = globals.find(name);
             if (it == globals.end())
                 throw std::runtime_error("Undefined variable \"" + name + "\"");
@@ -317,9 +416,9 @@ void VM::run()
 
         case OpCode::SET_GLOBAL:
         {
-            uint8_t nameIndex = *ip++;
+            uint8_t name_index = *ip++;
             const std::string &name =
-                std::get<std::string>(chunk->constants[nameIndex]);
+                std::get<std::string>(chunk->constants[name_index]);
 
             auto it = globals.find(name);
             if (it == globals.end())
@@ -665,6 +764,95 @@ void VM::run()
                     NATIVE_DICT_POP
                     NATIVE_DICT_COPY
                     NATIVE_DICT_CLEAR
+
+                    NATIVE_HTML_A
+                    NATIVE_HTML_ADDRESS
+                    NATIVE_HTML_AREA
+                    NATIVE_HTML_ARTICLE
+                    NATIVE_HTML_ASIDE
+                    NATIVE_HTML_AUDIO
+                    // NATIVE_HTML_BASE
+                    NATIVE_HTML_BLOCKQUOTE
+                    NATIVE_HTML_BODY
+                    NATIVE_HTML_BR
+                    NATIVE_HTML_BUTTON
+                    NATIVE_HTML_CANVAS
+                    NATIVE_HTML_CAPTION
+                    NATIVE_HTML_CITE
+                    NATIVE_HTML_CODE
+                    NATIVE_HTML_COL
+                    NATIVE_HTML_COLGROUP
+                    NATIVE_HTML_CONSTRUCT
+                    NATIVE_HTML_DATALIST
+                    NATIVE_HTML_DD
+                    NATIVE_HTML_DEL
+                    NATIVE_HTML_DIV
+                    NATIVE_HTML_DL
+                    NATIVE_HTML_DT
+                    NATIVE_HTML_EM
+                    // NATIVE_HTML_EMBED
+                    NATIVE_HTML_FIELDSET
+                    NATIVE_HTML_FIGCAPTION
+                    NATIVE_HTML_FIGURE
+                    NATIVE_HTML_FOOTER
+                    NATIVE_HTML_FORM
+                    NATIVE_HTML_H1
+                    NATIVE_HTML_H2
+                    NATIVE_HTML_H3
+                    NATIVE_HTML_H4
+                    NATIVE_HTML_H5
+                    NATIVE_HTML_H6
+                    NATIVE_HTML_HEAD
+                    NATIVE_HTML_HEADER
+                    NATIVE_HTML_HR
+                    NATIVE_HTML_IFRAME
+                    NATIVE_HTML_IMG
+                    NATIVE_HTML_INPUT
+                    NATIVE_HTML_INS
+                    NATIVE_HTML_LABEL
+                    NATIVE_HTML_LEGEND
+                    NATIVE_HTML_LI
+                    NATIVE_HTML_LINK
+                    NATIVE_HTML_MAIN
+                    NATIVE_HTML_MAP
+                    NATIVE_HTML_MARK
+                    NATIVE_HTML_META
+                    NATIVE_HTML_METER
+                    NATIVE_HTML_NAV
+                    NATIVE_HTML_OBJECT
+                    NATIVE_HTML_OL
+                    NATIVE_HTML_OPTGROUP
+                    NATIVE_HTML_OPTION
+                    NATIVE_HTML_OUTPUT
+                    NATIVE_HTML_P
+                    NATIVE_HTML_PARAM
+                    NATIVE_HTML_PICTURE
+                    NATIVE_HTML_PRE
+                    NATIVE_HTML_PROGRESS
+                    NATIVE_HTML_Q
+                    NATIVE_HTML_SECTION
+                    NATIVE_HTML_SELECT
+                    NATIVE_HTML_SMALL
+                    NATIVE_HTML_SOURCE
+                    NATIVE_HTML_SPAN
+                    NATIVE_HTML_STRONG
+                    NATIVE_HTML_STYLE
+                    NATIVE_HTML_SUB
+                    NATIVE_HTML_SUP
+                    NATIVE_HTML_TABLE
+                    NATIVE_HTML_TBODY
+                    NATIVE_HTML_TD
+                    NATIVE_HTML_TEXTAREA
+                    NATIVE_HTML_TFOOT
+                    NATIVE_HTML_TH
+                    NATIVE_HTML_THEAD
+                    NATIVE_HTML_TIME
+                    NATIVE_HTML_TITLE
+                    NATIVE_HTML_TR
+                    NATIVE_HTML_TRACK
+                    NATIVE_HTML_UL
+                    NATIVE_HTML_VIDEO
+                    NATIVE_HTML_WBR
 
                 default:
                     throw std::runtime_error("Unrecognized method");
@@ -1534,6 +1722,11 @@ std::string VM::stringify(const Value &value)
     else if (std::holds_alternative<std::shared_ptr<BoundMethod>>(value))
     {
         out << "<native method>";
+    }
+
+    else if (std::holds_alternative<std::shared_ptr<Tag>>(value))
+    {
+        out << "<html tag>";
     }
 
     else if (std::holds_alternative<IgnoreReturnValue>(value))

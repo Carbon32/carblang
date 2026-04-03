@@ -1,3 +1,5 @@
+#include "core/html/tag.hpp"
+
 struct IgnoreReturnValue
 {
     bool operator==(const IgnoreReturnValue &) const noexcept { return true; }
@@ -15,6 +17,7 @@ using Value = std::variant<
     std::shared_ptr<Class>,
     std::shared_ptr<UserBoundMethod>,
     std::shared_ptr<Dict>,
+    std::shared_ptr<Tag>,
     IgnoreReturnValue>;
 
 struct Chunk

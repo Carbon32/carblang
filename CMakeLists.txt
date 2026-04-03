@@ -13,10 +13,14 @@ set(CORE_SOURCES
     src/core/parser.cpp
     src/core/compiler.cpp
     src/core/module.cpp
+    src/html/page.cpp
+    src/html/tag.cpp 
+    src/html/components.cpp
 )
 
 add_library(core STATIC ${CORE_SOURCES})
 target_include_directories(core PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(core PUBLIC ${CMAKE_SOURCE_DIR}/src/html)
 
 add_executable(carblang src/carblang.cpp)
 target_link_libraries(carblang PRIVATE core)

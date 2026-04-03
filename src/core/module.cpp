@@ -148,3 +148,10 @@ std::shared_ptr<Instance> init_profiler()
     profiler.set_method("reset", make_native_method(nullptr, NativeMethod::PROFILE_RESET));
     return create_module_instance(std::move(profiler), "profiler");
 }
+
+std::shared_ptr<Instance> init_builder()
+{
+    Module builder;
+    builder.set_method("construct", make_native_method(nullptr, NativeMethod::HTML_CONSTRUCT));
+    return create_module_instance(std::move(builder), "builder");
+}

@@ -27,3 +27,4 @@ std::shared_ptr<Instance> init_random();
 std::shared_ptr<Instance> init_array();
 std::shared_ptr<Instance> init_file();
 std::shared_ptr<Instance> init_profiler();
+std::shared_ptr<Instance> init_builder();
