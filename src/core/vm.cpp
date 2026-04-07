@@ -13,6 +13,7 @@ void VM::init_globals()
     globals["file"] = init_file();
     globals["profiler"] = init_profiler();
     globals["builder"] = init_builder();
+    globals["gui"] = init_gui();
 
     const_variables.insert("os");
     const_variables.insert("math");
@@ -25,6 +26,7 @@ void VM::init_globals()
     const_variables.insert("file");
     const_variables.insert("profiler");
     const_variables.insert("builder");
+    const_variables.insert("gui");
 
     globals["scan"] = make_native_method(nullptr, NativeMethod::INPUT);
     globals["format"] = make_native_method(nullptr, NativeMethod::FORMAT);
@@ -868,6 +870,9 @@ void VM::run()
                     NATIVE_HTML_WBR
                     NATIVE_HTML_ATTR
                     NATIVE_HTML_APPEND
+
+                    NATIVE_GUI_INIT
+                    NATIVE_GUI_START
 
                 default:
                     throw std::runtime_error("Unrecognized method");

@@ -246,7 +246,10 @@ enum class NativeMethod
     HTML_VIDEO,
     HTML_WBR,
     HTML_ATTR,
-    HTML_APPEND
+    HTML_APPEND,
+
+    GUI_INIT,
+    GUI_START
 };
 
 #include "native/array.hpp"
@@ -263,3 +266,4 @@ enum class NativeMethod
 #include "native/regex.hpp"
 #include "native/time.hpp"
 #include "native/web.hpp"
+#include "native/graphics.hpp"

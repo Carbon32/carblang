@@ -155,3 +155,11 @@ std::shared_ptr<Instance> init_builder()
     builder.set_method("construct", make_native_method(nullptr, NativeMethod::HTML_CONSTRUCT));
     return create_module_instance(std::move(builder), "builder");
 }
+
+std::shared_ptr<Instance> init_gui()
+{
+    Module gui;
+    gui.set_method("init", make_native_method(nullptr, NativeMethod::GUI_INIT));
+    gui.set_method("start", make_native_method(nullptr, NativeMethod::GUI_START));
+    return create_module_instance(std::move(gui), "gui");
+}

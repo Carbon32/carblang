@@ -1,0 +1,4 @@
+println("Starting graphics stuff");
+gui.init("Test", 800, 600);
+gui.start();
+print("Bye bye graphics stuff");

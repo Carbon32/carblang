@@ -27,6 +27,7 @@
 #include <ctime>
 #include <regex>
 #include <numeric>
+#include <functional>
 
 // This macro is defined in one of the includes above, it took me a few hours to find it
 #undef NULL
