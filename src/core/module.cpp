@@ -161,5 +161,12 @@ std::shared_ptr<Instance> init_gui()
     Module gui;
     gui.set_method("init", make_native_method(nullptr, NativeMethod::GUI_INIT));
     gui.set_method("start", make_native_method(nullptr, NativeMethod::GUI_START));
+    gui.set_method("draw_text", make_native_method(nullptr, NativeMethod::GUI_DRAW_TEXT));
+    gui.set_method("draw_rect", make_native_method(nullptr, NativeMethod::GUI_DRAW_RECT));
+    gui.set_method("draw_circle", make_native_method(nullptr, NativeMethod::GUI_DRAW_CIRCLE));
+    gui.set_method("load_texture", make_native_method(nullptr, NativeMethod::GUI_LOAD_TEXTURE));
+    gui.set_method("draw_texture", make_native_method(nullptr, NativeMethod::GUI_DRAW_TEXTURE));
+    gui.set_method("clear", make_native_method(nullptr, NativeMethod::GUI_CLEAR));
+
     return create_module_instance(std::move(gui), "gui");
 }

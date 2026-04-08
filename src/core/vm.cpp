@@ -873,6 +873,12 @@ void VM::run()
 
                     NATIVE_GUI_INIT
                     NATIVE_GUI_START
+                    NATIVE_GUI_DRAW_TEXT
+                    NATIVE_GUI_DRAW_RECT
+                    NATIVE_GUI_DRAW_CIRCLE
+                    NATIVE_GUI_LOAD_TEXTURE
+                    NATIVE_GUI_DRAW_TEXTURE
+                    NATIVE_GUI_CLEAR_TASKS
 
                 default:
                     throw std::runtime_error("Unrecognized method");

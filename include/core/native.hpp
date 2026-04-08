@@ -249,7 +249,13 @@ enum class NativeMethod
     HTML_APPEND,
 
     GUI_INIT,
-    GUI_START
+    GUI_START,
+    GUI_DRAW_TEXT,
+    GUI_DRAW_RECT,
+    GUI_DRAW_CIRCLE,
+    GUI_LOAD_TEXTURE,
+    GUI_DRAW_TEXTURE,
+    GUI_CLEAR
 };
 
 #include "native/array.hpp"

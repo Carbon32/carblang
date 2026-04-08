@@ -1,0 +1,3 @@
+gui.init("Test", 800, 600);
+gui.draw_text("Hello world", 280, 100, 40);
+gui.start();

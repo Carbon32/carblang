@@ -57,6 +57,7 @@ public:
         {
             SetTraceLogLevel(LOG_NONE);
             InitWindow(width, height, title);
+            SetTargetFPS(60);
             running = true;
         }
 
