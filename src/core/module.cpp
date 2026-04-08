@@ -164,7 +164,9 @@ std::shared_ptr<Instance> init_gui()
     gui.set_method("is_running", make_native_method(nullptr, NativeMethod::GUI_IS_RUNNING));
     gui.set_method("tick", make_native_method(nullptr, NativeMethod::GUI_TICK));
     gui.set_method("draw_text", make_native_method(nullptr, NativeMethod::GUI_DRAW_TEXT));
+    gui.set_method("draw_text_advanced", make_native_method(nullptr, NativeMethod::GUI_DRAW_TEXT_COLOR));
     gui.set_method("draw_rect", make_native_method(nullptr, NativeMethod::GUI_DRAW_RECT));
+    gui.set_method("draw_rect_advanced", make_native_method(nullptr, NativeMethod::GUI_DRAW_RECT_ADV));
     gui.set_method("draw_circle", make_native_method(nullptr, NativeMethod::GUI_DRAW_CIRCLE));
     gui.set_method("load_texture", make_native_method(nullptr, NativeMethod::GUI_LOAD_TEXTURE));
     gui.set_method("draw_texture", make_native_method(nullptr, NativeMethod::GUI_DRAW_TEXTURE));
@@ -173,7 +175,11 @@ std::shared_ptr<Instance> init_gui()
     gui.set_method("key_pressed", make_native_method(nullptr, NativeMethod::GUI_KEY_PRESSED));
     gui.set_method("key_released", make_native_method(nullptr, NativeMethod::GUI_KEY_RELEASED));
     gui.set_method("mouse_pressed", make_native_method(nullptr, NativeMethod::GUI_MOUSE_PRESSED));
+    gui.set_method("mouse_released", make_native_method(nullptr, NativeMethod::GUI_MOUSE_RELEASED));
     gui.set_method("mouse_position", make_native_method(nullptr, NativeMethod::GUI_MOUSE_POS));
+    gui.set_method("create_rectangle", make_native_method(nullptr, NativeMethod::GUI_CREATE_RECTANGLE));
+    gui.set_method("rectangle_collide", make_native_method(nullptr, NativeMethod::GUI_RECTANGLE_COLLISION));
+    gui.set_method("rectangle_mouse_collide", make_native_method(nullptr, NativeMethod::GUI_RECTANGLE_MOUSE_COLLISION));
     gui.set_method("clear", make_native_method(nullptr, NativeMethod::GUI_CLEAR));
 
     return create_module_instance(std::move(gui), "gui");

@@ -63,6 +63,32 @@
         break;                                                                                      \
     }
 
+#define NATIVE_GUI_DRAW_TEXT_COLOR                                                                                 \
+    case NativeMethod::GUI_DRAW_TEXT_COLOR:                                                                        \
+    {                                                                                                              \
+        if (args.size() != 7)                                                                                      \
+            throw std::runtime_error("Use the correct arguments, gui_draw_text_color(text, x, y, size, r, g, b)"); \
+                                                                                                                   \
+        if (!std::holds_alternative<std::string>(args[0]))                                                         \
+            throw std::runtime_error("Text must be string");                                                       \
+                                                                                                                   \
+        std::string text = std::get<std::string>(args[0]);                                                         \
+        int x = (int)std::get<double>(args[1]);                                                                    \
+        int y = (int)std::get<double>(args[2]);                                                                    \
+        int size = (int)std::get<double>(args[3]);                                                                 \
+                                                                                                                   \
+        int r = (int)std::get<double>(args[4]);                                                                    \
+        int g = (int)std::get<double>(args[5]);                                                                    \
+        int b = (int)std::get<double>(args[6]);                                                                    \
+                                                                                                                   \
+        Color color = {(unsigned char)r, (unsigned char)g, (unsigned char)b, 255};                                 \
+                                                                                                                   \
+        gui.add_draw_task([text, x, y, size, color]() { DrawText(text.c_str(), x, y, size, color); });             \
+                                                                                                                   \
+        push(nullptr);                                                                                             \
+        break;                                                                                                     \
+    }
+
 #define NATIVE_GUI_DRAW_RECT                                                                  \
     case NativeMethod::GUI_DRAW_RECT:                                                         \
     {                                                                                         \
@@ -77,6 +103,34 @@
         gui.add_draw_task(DrawRectangle, x, y, w, h, BLUE);                                   \
         push(nullptr);                                                                        \
         break;                                                                                \
+    }
+
+#define NATIVE_GUI_DRAW_RECT_ADV                                                                                      \
+    case NativeMethod::GUI_DRAW_RECT_ADV:                                                                             \
+    {                                                                                                                 \
+        if (args.size() != 8)                                                                                         \
+            throw std::runtime_error("Use the correct arguments, gui_draw_rect_adv(x, y, w, h, r, g, b, roundness)"); \
+                                                                                                                      \
+        int x = (int)std::get<double>(args[0]);                                                                       \
+        int y = (int)std::get<double>(args[1]);                                                                       \
+        int w = (int)std::get<double>(args[2]);                                                                       \
+        int h = (int)std::get<double>(args[3]);                                                                       \
+                                                                                                                      \
+        int r = (int)std::get<double>(args[4]);                                                                       \
+        int g = (int)std::get<double>(args[5]);                                                                       \
+        int b = (int)std::get<double>(args[6]);                                                                       \
+        float roundness = (float)std::get<double>(args[7]);                                                           \
+                                                                                                                      \
+        Color color = {(unsigned char)r, (unsigned char)g, (unsigned char)b, 255};                                    \
+                                                                                                                      \
+        gui.add_draw_task(DrawRectangleRounded,                                                                       \
+                          Rectangle{(float)x, (float)y, (float)w, (float)h},                                          \
+                          roundness,                                                                                  \
+                          10,                                                                                         \
+                          color);                                                                                     \
+                                                                                                                      \
+        push(nullptr);                                                                                                \
+        break;                                                                                                        \
     }
 
 #define NATIVE_GUI_DRAW_CIRCLE                                                               \
@@ -206,6 +260,21 @@
         break;                                                                            \
     }
 
+#define NATIVE_GUI_MOUSE_RELEASED                                                          \
+    case NativeMethod::GUI_MOUSE_RELEASED:                                                 \
+    {                                                                                      \
+        if (args.size() != 1)                                                              \
+            throw std::runtime_error("Use the correct arguments, mouse_released(button)"); \
+                                                                                           \
+        if (!std::holds_alternative<double>(args[0]))                                      \
+            throw std::runtime_error("Button must be number");                             \
+                                                                                           \
+        int button = (int)std::get<double>(args[0]);                                       \
+                                                                                           \
+        push(IsMouseButtonReleased(button));                                               \
+        break;                                                                             \
+    }
+
 #define NATIVE_GUI_KEY_PRESSED                                                       \
     case NativeMethod::GUI_KEY_PRESSED:                                              \
     {                                                                                \
@@ -223,21 +292,21 @@
         break;                                                                       \
     }
 
-#define NATIVE_GUI_KEY_RELEASED                             \
-    case NativeMethod::GUI_KEY_RELEASED:                    \
-    {                                                       \
-        if (args.size() != 1)                               \
-            throw std::runtime_error("key_released(key)");  \
-                                                            \
-        if (!std::holds_alternative<double>(args[0]))       \
-            throw std::runtime_error("key must be number"); \
-                                                            \
-        int key = (int)std::get<double>(args[0]);           \
-                                                            \
-        bool released = IsKeyReleased(key);                 \
-                                                            \
-        push(released);                                     \
-        break;                                              \
+#define NATIVE_GUI_KEY_RELEASED                                                       \
+    case NativeMethod::GUI_KEY_RELEASED:                                              \
+    {                                                                                 \
+        if (args.size() != 1)                                                         \
+            throw std::runtime_error("Use the correct arguments, key_released(key)"); \
+                                                                                      \
+        if (!std::holds_alternative<double>(args[0]))                                 \
+            throw std::runtime_error("Key must be number");                           \
+                                                                                      \
+        int key = (int)std::get<double>(args[0]);                                     \
+                                                                                      \
+        bool released = IsKeyReleased(key);                                           \
+                                                                                      \
+        push(released);                                                               \
+        break;                                                                        \
     }
 
 #define NATIVE_GUI_MOUSE_POS                      \
@@ -251,6 +320,80 @@
                                                   \
         push(array);                              \
         break;                                    \
+    }
+
+#define NATIVE_GUI_CREATE_RECTANGLE                                                              \
+    case NativeMethod::GUI_CREATE_RECTANGLE:                                                     \
+    {                                                                                            \
+        if (args.size() != 4)                                                                    \
+            throw std::runtime_error("Use the correct arguments, create_rectangle(x, y, w, h)"); \
+                                                                                                 \
+        auto rect = std::make_shared<Array>();                                                   \
+        rect->elements.push_back(args[0]);                                                       \
+        rect->elements.push_back(args[1]);                                                       \
+        rect->elements.push_back(args[2]);                                                       \
+        rect->elements.push_back(args[3]);                                                       \
+                                                                                                 \
+        push(rect);                                                                              \
+        break;                                                                                   \
+    }
+
+#define NATIVE_GUI_RECTANGLE_COLLISION                                                        \
+    case NativeMethod::GUI_RECTANGLE_COLLISION:                                               \
+    {                                                                                         \
+        if (args.size() != 2)                                                                 \
+            throw std::runtime_error("Use the correct arguments, rectangle_collision(a, b)"); \
+                                                                                              \
+        auto a = std::get<std::shared_ptr<Array>>(args[0]);                                   \
+        auto b = std::get<std::shared_ptr<Array>>(args[1]);                                   \
+                                                                                              \
+        if (a->elements.size() < 4 || b->elements.size() < 4)                                 \
+            throw std::runtime_error("Rectangles must have 4 elements");                      \
+                                                                                              \
+        float ax = (float)std::get<double>(a->elements[0]);                                   \
+        float ay = (float)std::get<double>(a->elements[1]);                                   \
+        float aw = (float)std::get<double>(a->elements[2]);                                   \
+        float ah = (float)std::get<double>(a->elements[3]);                                   \
+                                                                                              \
+        float bx = (float)std::get<double>(b->elements[0]);                                   \
+        float by = (float)std::get<double>(b->elements[1]);                                   \
+        float bw = (float)std::get<double>(b->elements[2]);                                   \
+        float bh = (float)std::get<double>(b->elements[3]);                                   \
+                                                                                              \
+        bool collision =                                                                      \
+            ax < bx + bw &&                                                                   \
+            ax + aw > bx &&                                                                   \
+            ay < by + bh &&                                                                   \
+            ay + ah > by;                                                                     \
+                                                                                              \
+        push(collision);                                                                      \
+        break;                                                                                \
+    }
+
+#define NATIVE_GUI_RECTANGLE_MOUSE_COLLISION                                                             \
+    case NativeMethod::GUI_RECTANGLE_MOUSE_COLLISION:                                                    \
+    {                                                                                                    \
+        if (args.size() != 1)                                                                            \
+            throw std::runtime_error("Use the correct arguments, rectangle_collision_with_mouse(rect)"); \
+                                                                                                         \
+        auto rect = std::get<std::shared_ptr<Array>>(args[0]);                                           \
+                                                                                                         \
+        if (rect->elements.size() < 4)                                                                   \
+            throw std::runtime_error("Rectangle must have 4 elements");                                  \
+                                                                                                         \
+        float x = (float)std::get<double>(rect->elements[0]);                                            \
+        float y = (float)std::get<double>(rect->elements[1]);                                            \
+        float w = (float)std::get<double>(rect->elements[2]);                                            \
+        float h = (float)std::get<double>(rect->elements[3]);                                            \
+                                                                                                         \
+        Vector2 mouse = GetMousePosition();                                                              \
+                                                                                                         \
+        bool inside =                                                                                    \
+            mouse.x >= x && mouse.x <= x + w &&                                                          \
+            mouse.y >= y && mouse.y <= y + h;                                                            \
+                                                                                                         \
+        push(inside);                                                                                    \
+        break;                                                                                           \
     }
 
 #define NATIVE_GUI_CLEAR_TASKS    \

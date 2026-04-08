@@ -1,0 +1,16 @@
+gui.init("Button", 800, 600);
+gui.start();
+
+#include "sixui/button.crb"
+
+def button = Button(100, 100, 200, 60, "Button", 32);
+
+while(gui.is_running())
+{
+    button.handle();
+    if(button.clicked_once())
+    {
+        println("Clicked");
+    }
+    gui.tick();
+}

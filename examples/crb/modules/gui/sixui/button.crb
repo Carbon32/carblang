@@ -1,0 +1,176 @@
+class Button
+{
+    function init(x, y, width, height, button_text, font_size)
+    {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+
+        this.font_size = font_size;
+        this.button_text = button_text;
+        this.clicked = false;
+
+        this.text_x = this.x + (this.width - (button_text.length() * font_size * 0.6)) / 2;
+        this.text_y = this.y + (this.height - this.font_size) / 2;
+
+        this.rect = [x, y, width, height];
+
+        class Color
+        {
+            function init(r, g, b)
+            {
+                this.r = r;
+                this.g = g;
+                this.b = b;
+            }
+        }
+
+        this.text_color = Color(200, 200, 200);
+        this.button_color = Color(48, 48, 48);
+
+        this.text_hover_color = Color(255, 255, 255);
+        this.button_hover_color = Color(56, 56, 56);
+
+        this.text_clicked_color = Color(255, 255, 255);
+        this.button_clicked_color = Color(80, 80, 80);
+    }
+
+    function set_text_clicked_color(r, g, b)
+    {
+        this.text_clicked_color = Color(r, g, b);
+    }
+
+    function set_button_clicked_color(r, g, b)
+    {
+        this.button_clicked_color = Color(r, g, b);
+    }
+
+    function set_text_hover_color(r, g, b)
+    {
+        this.button_color = Color(r, g, b);
+    }
+
+    function set_button_hover_color(r, g, b)
+    {
+        this.button_color = Color(r, g, b);
+    }
+
+    function set_text_color(r, g, b)
+    {
+        this.text_color = Color(r, g, b);
+    }
+
+    function set_button_color(r, g, b)
+    {
+        this.button_color = Color(r, g, b);
+    }
+
+    function draw(hover)
+    {
+        if(!hover)
+        {
+            gui.draw_rect_advanced(
+                this.x,
+                this.y,
+                this.width, 
+                this.height,
+                this.button_color.r,
+                this.button_color.g,
+                this.button_color.b, 
+                0.4
+            );
+
+            gui.draw_text_advanced(
+                this.button_text,
+                this.text_x, 
+                this.text_y,
+                this.font_size, 
+                this.text_color.r, 
+                this.text_color.g, 
+                this.text_color.b
+            );
+        }
+
+        else
+        {
+            gui.draw_rect_advanced(
+                this.x,
+                this.y,
+                this.width,
+                this.height,
+                this.button_hover_color.r,
+                this.button_hover_color.g,
+                this.button_hover_color.b,
+                0.4
+            );
+
+            gui.draw_text_advanced(
+                this.button_text,
+                this.text_x, 
+                this.text_y,
+                this.font_size,
+                this.text_hover_color.r,
+                this.text_hover_color.g,
+                this.text_hover_color.b
+            );
+        }
+    }
+
+    function draw_clicked()
+    {
+        gui.draw_rect_advanced(
+            this.x,
+            this.y,
+            this.width,
+            this.height,
+            this.button_clicked_color.r,
+            this.button_clicked_color.g,
+            this.button_clicked_color.b,
+            0.4
+        );
+
+        gui.draw_text_advanced(
+            this.button_text,
+            this.text_x,
+            this.text_y,
+            this.font_size,
+            this.text_clicked_color.r,
+            this.text_clicked_color.g,
+            this.text_clicked_color.b
+        );
+    }
+
+    function handle()
+    {
+        if(gui.rectangle_mouse_collide(this.rect)) {
+            if(gui.mouse_pressed(0)) {
+                this.clicked = true;
+            }
+
+            if(gui.mouse_released(0))
+            {
+                this.clicked = false;
+            }
+
+            if(this.clicked)
+            {
+                this.draw_clicked();
+            }
+
+            else
+            {
+                this.draw(true);
+            }
+        }
+        else
+        {
+            this.draw(false);
+        }
+    }
+
+    function clicked_once()
+    {
+        return gui.rectangle_mouse_collide(this.rect) and gui.mouse_pressed(0);
+    }
+}

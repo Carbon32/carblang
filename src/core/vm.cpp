@@ -877,7 +877,9 @@ void VM::run()
                     NATIVE_GUI_TICK
                     NATIVE_GUI_IS_RUNNING
                     NATIVE_GUI_DRAW_TEXT
+                    NATIVE_GUI_DRAW_TEXT_COLOR
                     NATIVE_GUI_DRAW_RECT
+                    NATIVE_GUI_DRAW_RECT_ADV
                     NATIVE_GUI_DRAW_CIRCLE
                     NATIVE_GUI_LOAD_TEXTURE
                     NATIVE_GUI_DRAW_TEXTURE
@@ -886,7 +888,11 @@ void VM::run()
                     NATIVE_GUI_KEY_PRESSED
                     NATIVE_GUI_KEY_RELEASED
                     NATIVE_GUI_MOUSE_PRESSED
+                    NATIVE_GUI_MOUSE_RELEASED
                     NATIVE_GUI_MOUSE_POS
+                    NATIVE_GUI_RECTANGLE_MOUSE_COLLISION
+                    NATIVE_GUI_RECTANGLE_COLLISION
+                    NATIVE_GUI_CREATE_RECTANGLE
                     NATIVE_GUI_CLEAR_TASKS
 
                 default:

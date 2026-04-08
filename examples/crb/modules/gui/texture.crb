@@ -6,9 +6,6 @@ const KEY_DOWN = 264;
 const KEY_LEFT = 263;
 const KEY_RIGHT = 262;
 
-def moose_texture = gui.load_texture("textures/test/moose.png");
-def moose_list = [];
-
 class Chicken {
     function init(texture, x, y, w, h) {
         this.texture = texture;
@@ -103,12 +100,6 @@ class Chicken {
         if(gui.mouse_pressed(0))
         {
             this.flip_x = !this.flip_x;
-        }
-
-        if(gui.mouse_pressed(1))
-        {
-            moose_list.push([gui.mouse_position()[0], gui.mouse_position()[1]]);
-            
         }
     }
 }
