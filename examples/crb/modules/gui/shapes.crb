@@ -1,5 +1,10 @@
 gui.init("Shapes", 800, 600);
-gui.draw_text("Shapes", 20, 20, 20);
-gui.draw_rect(100, 100, 200, 150);
-gui.draw_circle(500, 300, 60);
 gui.start();
+
+while(gui.is_running())
+{
+	gui.draw_text("Shapes", 20, 20, 20);
+	gui.draw_rect(100, 100, 200, 150);
+	gui.draw_circle(500, 300, 60);
+	gui.tick();
+}

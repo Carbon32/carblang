@@ -12,9 +12,10 @@ public:
     std::vector<std::function<void()>> update_tasks;
 
     std::string title_storage;
-    const char *title;
-    int width;
-    int height;
+    const char *title = nullptr;
+
+    int width = 0;
+    int height = 0;
 
     bool init = false;
     bool running = false;
@@ -41,46 +42,59 @@ public:
             });
     }
 
-    void set_window_config(const std::string &title, int width, int height)
+    void set_window_config(const std::string &t, int w, int h)
     {
-        this->title_storage = title;
-        this->title = this->title_storage.c_str();
-
-        this->width = width;
-        this->height = height;
-        this->init = true;
+        title_storage = t;
+        title = title_storage.c_str();
+        width = w;
+        height = h;
+        init = true;
     }
 
-    void handle_event_loop()
+    void start()
     {
-        if (init && !running)
+        if (!init)
+            throw std::runtime_error("GUI not initialized");
+
+        if (!running)
         {
             SetTraceLogLevel(LOG_NONE);
             InitWindow(width, height, title);
             SetTargetFPS(60);
             running = true;
         }
+    }
 
-        if (running)
+    void tick()
+    {
+        if (!running)
+            return;
+
+        if (WindowShouldClose())
         {
-            while (!WindowShouldClose())
-            {
-                for (auto &task : update_tasks)
-                    task();
-
-                BeginDrawing();
-                ClearBackground(RAYWHITE);
-
-                for (auto &task : draw_tasks)
-                    task();
-
-                EndDrawing();
-            }
-
             running = false;
             CloseWindow();
+            return;
         }
+
+        for (auto &task : update_tasks)
+            task();
+
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+
+        for (auto &task : draw_tasks)
+            task();
+
+        EndDrawing();
+
+        draw_tasks.clear();
+    }
+
+    bool is_running() const
+    {
+        return running;
     }
 };
 
-inline CarbGUI gui = CarbGUI();
+inline CarbGUI gui;

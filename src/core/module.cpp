@@ -161,11 +161,19 @@ std::shared_ptr<Instance> init_gui()
     Module gui;
     gui.set_method("init", make_native_method(nullptr, NativeMethod::GUI_INIT));
     gui.set_method("start", make_native_method(nullptr, NativeMethod::GUI_START));
+    gui.set_method("is_running", make_native_method(nullptr, NativeMethod::GUI_IS_RUNNING));
+    gui.set_method("tick", make_native_method(nullptr, NativeMethod::GUI_TICK));
     gui.set_method("draw_text", make_native_method(nullptr, NativeMethod::GUI_DRAW_TEXT));
     gui.set_method("draw_rect", make_native_method(nullptr, NativeMethod::GUI_DRAW_RECT));
     gui.set_method("draw_circle", make_native_method(nullptr, NativeMethod::GUI_DRAW_CIRCLE));
     gui.set_method("load_texture", make_native_method(nullptr, NativeMethod::GUI_LOAD_TEXTURE));
     gui.set_method("draw_texture", make_native_method(nullptr, NativeMethod::GUI_DRAW_TEXTURE));
+    gui.set_method("draw_sized_texture", make_native_method(nullptr, NativeMethod::GUI_DRAW_TEXTURE_SIZED));
+    gui.set_method("draw_flipped_texture", make_native_method(nullptr, NativeMethod::GUI_DRAW_TEXTURE_FLIPPED));
+    gui.set_method("key_pressed", make_native_method(nullptr, NativeMethod::GUI_KEY_PRESSED));
+    gui.set_method("key_released", make_native_method(nullptr, NativeMethod::GUI_KEY_RELEASED));
+    gui.set_method("mouse_pressed", make_native_method(nullptr, NativeMethod::GUI_MOUSE_PRESSED));
+    gui.set_method("mouse_position", make_native_method(nullptr, NativeMethod::GUI_MOUSE_POS));
     gui.set_method("clear", make_native_method(nullptr, NativeMethod::GUI_CLEAR));
 
     return create_module_instance(std::move(gui), "gui");

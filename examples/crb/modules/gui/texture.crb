@@ -1,0 +1,122 @@
+gui.init("Hen", 800, 600);
+gui.start();
+
+const KEY_UP = 265;
+const KEY_DOWN = 264;
+const KEY_LEFT = 263;
+const KEY_RIGHT = 262;
+
+def moose_texture = gui.load_texture("textures/test/moose.png");
+def moose_list = [];
+
+class Chicken {
+    function init(texture, x, y, w, h) {
+        this.texture = texture;
+        this.x = x;
+        this.y = y;
+        this.w = w;
+        this.h = h;
+
+        this.x_direction = 0;
+        this.y_direction = 0;
+
+        this.speed = 5;
+
+        this.up = false;
+        this.down = false;
+        this.left = false;
+        this.right = false;
+
+        this.flip_x = true;
+    }
+
+    function draw() {
+        gui.draw_flipped_texture(this.texture, this.x, this.y, this.w, this.h, this.flip_x, false);
+    }
+
+    function handle_input() {
+        if(gui.key_pressed(KEY_UP)) {
+            this.up = true;
+        }
+
+        if(gui.key_released(KEY_UP)) {
+            this.up = false;
+        }
+
+        if(gui.key_pressed(KEY_DOWN)) {
+            this.down = true;
+        }
+
+        if(gui.key_released(KEY_DOWN)) {
+            this.down = false;
+        }
+
+        if(gui.key_pressed(KEY_LEFT)) {
+            this.left = true;
+            this.flip_x = false;
+        }
+
+        if(gui.key_released(KEY_LEFT)) {
+            this.left = false;
+        }
+
+        if(gui.key_pressed(KEY_RIGHT)) {
+            this.right = true;
+            this.flip_x = true;
+        }
+
+        if(gui.key_released(KEY_RIGHT)) {
+            this.right = false;
+        }
+
+        this.x_direction = 0;
+        this.y_direction = 0;
+
+        if(this.up) {
+            this.y_direction = this.y_direction - 1;
+        }
+
+        if(this.down) {
+            this.y_direction = this.y_direction + 1;
+        }
+
+        if(this.left) {
+            this.x_direction = this.x_direction - 1;
+        }
+
+        if(this.right) {
+            this.x_direction = this.x_direction + 1;
+        }
+
+        if(!(this.x_direction == 0) and !(this.y_direction == 0)) {
+            this.x_direction = this.x_direction * 0.707;
+            this.y_direction = this.y_direction * 0.707;
+        }
+    }
+
+    function update() {
+        this.handle_input();
+
+        this.x = this.x + this.x_direction * this.speed;
+        this.y = this.y + this.y_direction * this.speed;
+
+        if(gui.mouse_pressed(0))
+        {
+            this.flip_x = !this.flip_x;
+        }
+
+        if(gui.mouse_pressed(1))
+        {
+            moose_list.push([gui.mouse_position()[0], gui.mouse_position()[1]]);
+            
+        }
+    }
+}
+
+def chicken = Chicken(gui.load_texture("textures/test/hen.png"), 150, 50, 128, 128);
+
+while(gui.is_running()) {
+    chicken.update();
+    chicken.draw();
+    gui.tick();
+}

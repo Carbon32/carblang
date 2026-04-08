@@ -153,7 +153,8 @@ void VM::run()
         for (size_t i = 0; i < stack.size(); ++i)
         {
             std::cout << stringify(stack[i]);
-            if(i + 1 < stack.size()) std::cout << ", ";
+            if (i + 1 < stack.size())
+                std::cout << ", ";
         }
         std::cout << "]" << std::endl; */
 
@@ -454,7 +455,7 @@ void VM::run()
             /* std::cout << "[DEBUG] GET_LOCAL slot=" << int(slot)
                       << ", stack.size=" << stack.size();
 
-            if(!frames.empty())
+            if (!frames.empty())
                 std::cout << ", frame.stack_start=" << frames.back().stack_start;
 
             std::cout << std::endl; */
@@ -482,7 +483,7 @@ void VM::run()
             /* std::cout << "[DEBUG] SET_LOCAL slot=" << int(slot)
                       << ", stack.size=" << stack.size();
 
-            if(!frames.empty())
+            if (!frames.empty())
                 std::cout << ", frame.stack_start=" << frames.back().stack_start;
 
             std::cout << std::endl; */
@@ -873,11 +874,19 @@ void VM::run()
 
                     NATIVE_GUI_INIT
                     NATIVE_GUI_START
+                    NATIVE_GUI_TICK
+                    NATIVE_GUI_IS_RUNNING
                     NATIVE_GUI_DRAW_TEXT
                     NATIVE_GUI_DRAW_RECT
                     NATIVE_GUI_DRAW_CIRCLE
                     NATIVE_GUI_LOAD_TEXTURE
                     NATIVE_GUI_DRAW_TEXTURE
+                    NATIVE_GUI_DRAW_TEXTURE_SIZED
+                    NATIVE_GUI_DRAW_TEXTURE_FLIPPED
+                    NATIVE_GUI_KEY_PRESSED
+                    NATIVE_GUI_KEY_RELEASED
+                    NATIVE_GUI_MOUSE_PRESSED
+                    NATIVE_GUI_MOUSE_POS
                     NATIVE_GUI_CLEAR_TASKS
 
                 default:
@@ -1772,6 +1781,11 @@ std::string VM::stringify(const Value &value)
     else if (std::holds_alternative<std::shared_ptr<Tag>>(value))
     {
         out << "<html tag>";
+    }
+
+    else if (std::holds_alternative<std::shared_ptr<Texture2D>>(value))
+    {
+        out << "2d texture>";
     }
 
     else if (std::holds_alternative<IgnoreReturnValue>(value))
