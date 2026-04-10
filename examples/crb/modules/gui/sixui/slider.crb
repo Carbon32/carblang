@@ -1,0 +1,142 @@
+class Slider
+{
+    function init(x, y, width, height, min, max, value)
+    {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+
+        this.min = min;
+        this.max = max;
+        this.target_value = value;
+        this.value = value;
+
+        this.percent = 0;
+        this.fill_width = 0;
+
+        this.dragging = false;
+
+        this.rect = [x, y, width, height];
+
+        class Color
+        {
+            function init(r, g, b)
+            {
+                this.r = r;
+                this.g = g;
+                this.b = b;
+            }
+        }
+
+        this.bg_color = Color(50, 50, 50);
+        this.fill_color = Color(80, 160, 220);
+        this.knob_color = Color(244, 244, 244);
+        this.hover_color = Color(255, 255, 255);
+        this.curr_knob_color = this.knob_color;
+
+        this.knob_radius = height / 2;
+        this.knob_x = 0;
+
+        this.visual_value = value;
+        this.animation_speed = 0.2;
+    }
+
+    function draw(hover)
+    {
+        gui.draw_rect_advanced(
+            this.x,
+            this.y + this.height / 3,
+            this.width,
+            this.height / 3,
+            this.bg_color.r,
+            this.bg_color.g,
+            this.bg_color.b,
+            0.8
+        );
+
+        this.percent = (this.visual_value - this.min) / (this.max - this.min);
+        this.fill_width = this.percent * this.width;
+
+        gui.draw_rect_advanced(
+            this.x,
+            this.y + this.height / 3,
+            this.fill_width,
+            this.height / 3,
+            this.fill_color.r,
+            this.fill_color.g,
+            this.fill_color.b,
+            0.8
+        );
+
+        this.knob_x = this.x + this.fill_width - this.knob_radius;
+
+        if(hover)
+        {
+            this.curr_knob_color = this.hover_color;
+        }
+
+        else
+        {
+            this.curr_knob_color = this.knob_color;
+        }
+
+        gui.draw_rect_advanced(
+            this.knob_x,
+            this.y,
+            this.knob_radius * 2,
+            this.knob_radius * 2,
+            this.curr_knob_color.r,
+            this.curr_knob_color.g,
+            this.curr_knob_color.b,
+            1.0
+        );
+    }
+
+    function handle()
+    {
+        def hover = gui.rectangle_mouse_collide(this.rect);
+
+        if(hover and gui.mouse_pressed(0))
+        {
+            this.dragging = true;
+        }
+
+        if(gui.mouse_released(0))
+        {
+            this.dragging = false;
+        }
+
+        if(this.dragging)
+        {
+            def mouse_x = gui.mouse_position()[0];
+
+            this.percent = (mouse_x - this.x) / this.width;
+
+            if(this.percent < 0) { this.percent = 0; }
+            if(this.percent > 1) { this.percent = 1; }
+
+            this.target_value = this.min + this.percent * (this.max - this.min);
+
+            this.value = this.value + (this.target_value - this.value) * 12 * gui.delta();
+        }
+
+        this.visual_value = this.visual_value +
+        (this.value - this.visual_value) * 12 * gui.delta();
+
+        this.draw(hover);
+    }
+
+    function get_value()
+    {
+        return this.value;
+    }
+
+    function set_value(v)
+    {
+        if(v < this.min) v = this.min;
+        if(v > this.max) v = this.max;
+
+        this.value = v;
+    }
+}

@@ -1,0 +1,19 @@
+gui.init("Menu", 800, 600);
+gui.start();
+
+#include "../sixui/menu.crb"
+
+def options = ["Vehicle", "Airplane", "Boat", "Whatever"];
+def menu = Menu(100, 100, 200, 40, options, 0);
+
+while(gui.is_running())
+{
+    menu.handle();
+
+    if(gui.key_pressed(257))
+    {
+        println(menu.get_selected());
+    }
+
+    gui.tick();
+}

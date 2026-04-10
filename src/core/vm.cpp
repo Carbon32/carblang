@@ -311,7 +311,7 @@ void VM::run()
             if (!std::holds_alternative<double>(a) ||
                 !std::holds_alternative<double>(b))
             {
-                throw std::runtime_error("Operands must be numbers");
+                throw std::runtime_error("Operands must be numbers: " + stringify(a) + " " + stringify(b));
             }
 
             double x = std::get<double>(a);
@@ -886,12 +886,16 @@ void VM::run()
                     NATIVE_GUI_DRAW_TEXTURE_SIZED
                     NATIVE_GUI_DRAW_TEXTURE_FLIPPED
                     NATIVE_GUI_KEY_PRESSED
+                    NATIVE_GUI_KEY_DOWN
+                    NATIVE_GUI_GET_CHAR
                     NATIVE_GUI_KEY_RELEASED
+                    NATIVE_GUI_MEASURE_TEXT
                     NATIVE_GUI_MOUSE_PRESSED
                     NATIVE_GUI_MOUSE_RELEASED
                     NATIVE_GUI_MOUSE_POS
                     NATIVE_GUI_RECTANGLE_MOUSE_COLLISION
                     NATIVE_GUI_RECTANGLE_COLLISION
+                    NATIVE_GUI_DELTA_TIME
                     NATIVE_GUI_CREATE_RECTANGLE
                     NATIVE_GUI_CLEAR_TASKS
 

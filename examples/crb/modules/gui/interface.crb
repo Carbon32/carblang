@@ -1,0 +1,29 @@
+gui.init("Interface", 800, 600);
+gui.start();
+
+#include "sixui/input.crb"
+#include "sixui/switch.crb"
+
+def name_input = InputField(150, 20, 300, 30, "");
+def email_input = InputField(150, 70, 300, 30, "");
+def toggle = ToggleSwitch(150, 120, 60, 25, false);
+
+while(gui.is_running())
+{
+	gui.draw_text("Username: ", 25, 25, 20);
+	name_input.handle();
+
+	gui.draw_text("E-mail: ", 25, 75, 20);
+	email_input.handle();
+
+	gui.draw_text("Student: ", 25, 125, 20);
+	toggle.handle();
+
+    if(gui.key_pressed(257))
+    {
+        println(name_input.get_text());
+        println(email_input.get_text());
+        println(toggle.get_state());
+    }
+	gui.tick();
+}

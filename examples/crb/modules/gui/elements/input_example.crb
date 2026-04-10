@@ -1,0 +1,18 @@
+gui.init("Input", 800, 600);
+gui.start();
+
+#include "../sixui/input.crb"
+
+def input = InputField(100, 100, 300, 50, "");
+
+while(gui.is_running())
+{
+    input.handle();
+
+    if(gui.key_pressed(257))
+    {
+        println(input.get_text());
+    }
+
+    gui.tick();
+}

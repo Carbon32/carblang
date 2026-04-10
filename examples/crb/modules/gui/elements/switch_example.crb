@@ -1,0 +1,17 @@
+gui.init("Switch", 800, 600);
+gui.start();
+
+#include "../sixui/switch.crb"
+
+def toggle = ToggleSwitch(100, 100, 60, 25, false);
+
+while(gui.is_running())
+{
+    toggle.handle();
+
+    if(gui.key_pressed(257))
+    {
+        println(toggle.get_state());
+    }
+    gui.tick();
+}

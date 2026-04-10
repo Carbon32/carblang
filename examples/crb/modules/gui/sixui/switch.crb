@@ -1,0 +1,132 @@
+class ToggleSwitch
+{
+    function init(x, y, width, height, initial_state)
+    {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+
+        this.state = initial_state;
+        this.clicked = false;
+
+        this.rect = [x, y, width, height];
+
+        class Color
+        {
+            function init(r, g, b)
+            {
+                this.r = r;
+                this.g = g;
+                this.b = b;
+            }
+        }
+
+        this.off_color = Color(60, 60, 60);
+        this.off_knob_color = Color(180, 180, 180);
+
+        this.on_color = Color(60, 60, 60);
+        this.on_knob_color = Color(0, 200, 0);
+
+        this.hover_color = Color(90, 90, 90);
+
+        this.knob_padding = 4;
+        this.knob_size = this.height - this.knob_padding * 2;
+
+        this.knob_x_current = this.x + this.knob_padding;
+        this.animation_speed = 0.2;
+    }
+
+    function draw(hover)
+    {
+        def bg = null;
+
+        if(this.state) {
+            bg = this.on_color;
+        }
+        else if(hover) {
+            bg = this.hover_color;
+        }
+        else {
+            bg = this.off_color;
+        }
+
+        gui.draw_rect_advanced(
+            this.x,
+            this.y,
+            this.width,
+            this.height,
+            bg.r,
+            bg.g,
+            bg.b,
+            0.8
+        );
+
+        def target_x = 0;
+
+        if(this.state) {
+            target_x = this.x + this.width - this.knob_size - this.knob_padding;
+        }
+        else {
+            target_x = this.x + this.knob_padding;
+        }
+
+        this.knob_x_current = this.knob_x_current + (target_x - this.knob_x_current) * 12 * gui.delta();
+
+        def knob_color;
+
+        if(this.state) {
+            knob_color = this.on_knob_color;
+        }
+
+        else {
+            knob_color = this.off_knob_color;
+        }
+
+        gui.draw_rect_advanced(
+            this.knob_x_current,
+            this.y + this.knob_padding,
+            this.knob_size,
+            this.knob_size,
+            knob_color.r,
+            knob_color.g,
+            knob_color.b,
+            0.8
+        );
+    }
+
+    function handle()
+    {
+        def hover = gui.rectangle_mouse_collide(this.rect);
+
+        if(hover)
+        {
+            if(gui.mouse_pressed(0) and !this.clicked)
+            {
+                this.clicked = true;
+                this.state = !this.state;
+            }
+
+            if(gui.mouse_released(0))
+            {
+                this.clicked = false;
+            }
+
+            this.draw(true);
+        }
+        else
+        {
+            this.draw(false);
+        }
+    }
+
+    function get_state()
+    {
+        return this.state;
+    }
+
+    function set_state(value)
+    {
+        this.state = value;
+    }
+}

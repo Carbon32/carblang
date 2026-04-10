@@ -36,6 +36,14 @@
         break;                   \
     }
 
+#define NATIVE_GUI_DELTA_TIME          \
+    case NativeMethod::GUI_DELTA_TIME: \
+    {                                  \
+        float dt = GetFrameTime();     \
+        push((double)dt);              \
+        break;                         \
+    }
+
 #define NATIVE_GUI_IS_RUNNING          \
     case NativeMethod::GUI_IS_RUNNING: \
     {                                  \
@@ -87,6 +95,27 @@
                                                                                                                    \
         push(nullptr);                                                                                             \
         break;                                                                                                     \
+    }
+
+#define NATIVE_GUI_MEASURE_TEXT                                                                                  \
+    case NativeMethod::GUI_MEASURE_TEXT:                                                                         \
+    {                                                                                                            \
+        if (args.size() != 2)                                                                                    \
+            throw std::runtime_error("Use the correct arguments, measure_text(text, size) expects 2 arguments"); \
+                                                                                                                 \
+        if (!std::holds_alternative<std::string>(args[0]))                                                       \
+            throw std::runtime_error("First argument must be string");                                           \
+                                                                                                                 \
+        if (!std::holds_alternative<double>(args[1]))                                                            \
+            throw std::runtime_error("Second argument must be number");                                          \
+                                                                                                                 \
+        const std::string &text = std::get<std::string>(args[0]);                                                \
+        int size = (int)std::get<double>(args[1]);                                                               \
+                                                                                                                 \
+        int width = MeasureText(text.c_str(), size);                                                             \
+                                                                                                                 \
+        push((double)width);                                                                                     \
+        break;                                                                                                   \
     }
 
 #define NATIVE_GUI_DRAW_RECT                                                                  \
@@ -290,6 +319,36 @@
                                                                                      \
         push(pressed);                                                               \
         break;                                                                       \
+    }
+
+#define NATIVE_GUI_GET_CHAR            \
+    case NativeMethod::GUI_GET_CHAR:   \
+    {                                  \
+        int c = GetCharPressed();      \
+                                       \
+        if (c > 0)                     \
+        {                              \
+            std::string s(1, (char)c); \
+            push(s);                   \
+        }                              \
+        else                           \
+        {                              \
+            push(nullptr);             \
+        }                              \
+                                       \
+        break;                         \
+    }
+
+#define NATIVE_GUI_KEY_DOWN                                                                          \
+    case NativeMethod::GUI_KEY_DOWN:                                                                 \
+    {                                                                                                \
+        if (args.size() != 1)                                                                        \
+            throw std::runtime_error("Use the correct arguments, key_down(key) expects 1 argument"); \
+                                                                                                     \
+        int key = (int)std::get<double>(args[0]);                                                    \
+                                                                                                     \
+        push(IsKeyDown(key));                                                                        \
+        break;                                                                                       \
     }
 
 #define NATIVE_GUI_KEY_RELEASED                                                       \

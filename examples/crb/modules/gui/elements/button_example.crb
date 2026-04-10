@@ -1,7 +1,7 @@
 gui.init("Button", 800, 600);
 gui.start();
 
-#include "sixui/button.crb"
+#include "../sixui/button.crb"
 
 def button = Button(100, 100, 200, 60, "Button", 32);
 

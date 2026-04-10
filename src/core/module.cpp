@@ -174,6 +174,10 @@ std::shared_ptr<Instance> init_gui()
     gui.set_method("draw_flipped_texture", make_native_method(nullptr, NativeMethod::GUI_DRAW_TEXTURE_FLIPPED));
     gui.set_method("key_pressed", make_native_method(nullptr, NativeMethod::GUI_KEY_PRESSED));
     gui.set_method("key_released", make_native_method(nullptr, NativeMethod::GUI_KEY_RELEASED));
+    gui.set_method("key_down", make_native_method(nullptr, NativeMethod::GUI_KEY_DOWN));
+    gui.set_method("measure_text", make_native_method(nullptr, NativeMethod::GUI_MEASURE_TEXT));
+    gui.set_method("delta", make_native_method(nullptr, NativeMethod::GUI_DELTA_TIME));
+    gui.set_method("get_character", make_native_method(nullptr, NativeMethod::GUI_GET_CHAR));
     gui.set_method("mouse_pressed", make_native_method(nullptr, NativeMethod::GUI_MOUSE_PRESSED));
     gui.set_method("mouse_released", make_native_method(nullptr, NativeMethod::GUI_MOUSE_RELEASED));
     gui.set_method("mouse_position", make_native_method(nullptr, NativeMethod::GUI_MOUSE_POS));

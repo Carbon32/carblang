@@ -1,0 +1,17 @@
+gui.init("Slider", 800, 600);
+gui.start();
+
+#include "../sixui/slider.crb"
+
+def slider = Slider(100, 100, 300, 20, 0, 100, 50);
+
+while(gui.is_running())
+{
+    slider.handle();
+    if(gui.key_pressed(257))
+    {
+        println(slider.get_value());
+    }
+
+    gui.tick();
+}
