@@ -5,7 +5,7 @@ void VM::init_globals()
     globals["os"] = init_os();
     globals["math"] = init_math();
     globals["regex"] = init_regex();
-    globals["time"] = init_time();
+    globals["timing"] = init_time();
     globals["encode"] = init_encode();
     globals["text"] = init_text();
     globals["random"] = init_random();
@@ -18,7 +18,7 @@ void VM::init_globals()
     const_variables.insert("os");
     const_variables.insert("math");
     const_variables.insert("regex");
-    const_variables.insert("time");
+    const_variables.insert("timing");
     const_variables.insert("encode");
     const_variables.insert("text");
     const_variables.insert("random");
@@ -898,6 +898,10 @@ void VM::run()
                     NATIVE_GUI_DELTA_TIME
                     NATIVE_GUI_CREATE_RECTANGLE
                     NATIVE_GUI_CLEAR_TASKS
+                    NATIVE_GUI_SET_BACKGROUND_COLOR
+                    NATIVE_GUI_DRAW_TEXT_ELEMENT
+                    NATIVE_GUI_CREATE_TEXT
+                    NATIVE_GUI_SET_TEXT
 
                 default:
                     throw std::runtime_error("Unrecognized method");
@@ -1796,6 +1800,11 @@ std::string VM::stringify(const Value &value)
     else if (std::holds_alternative<std::shared_ptr<Texture2D>>(value))
     {
         out << "2d texture>";
+    }
+
+    else if (std::holds_alternative<std::shared_ptr<TextElement>>(value))
+    {
+        out << "<text element>";
     }
 
     else if (std::holds_alternative<IgnoreReturnValue>(value))

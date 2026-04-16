@@ -1,0 +1,29 @@
+class Text
+{
+	function init(text, x, y, size, color)
+	{
+		this.text = text;
+		this.x = x;
+		this.y = y; 
+		this.size = size;
+
+		class Color
+        {
+            function init(r, g, b)
+            {
+                this.r = r;
+                this.g = g;
+                this.b = b;
+            }
+        }
+
+        this.color = Color(color[0], color[1], color[2]);
+	}
+
+	function handle()
+	{
+		gui.draw_text_advanced(this.text, this.x, this.y, this.size, this.color.r, this.color.g, this.color.b);
+	}
+
+	
+}

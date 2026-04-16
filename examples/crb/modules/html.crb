@@ -1,10 +1,14 @@
-def some_tag = div()
-				+ h1("Testing here").attr("style", "color: red;")
-				+ p("Whatever").attr("style", "color: green;")
-				+ h4("Ehhh").attr("style", "color: blue;");
+def content = ul();
+const arr = ["Brush teeth", "Eat breakfast", "Go for a walk"];
+
+def i;
+for(i = 0; i < arr.length(); i = i + 1)
+{
+	content = content + li(arr[i]).attr("style", "color: white;");
+}
 
 body(
-	some_tag
+	div(content).attr("style", "background: rgb(48, 48, 48);")
 );
 
 print(builder.construct());

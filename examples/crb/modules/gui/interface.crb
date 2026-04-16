@@ -1,29 +1,90 @@
+const KEY_ENTER = 257;
+
 gui.init("Interface", 800, 600);
 gui.start();
 
 #include "sixui/input.crb"
 #include "sixui/switch.crb"
+#include "sixui/slider.crb"
+#include "sixui/text.crb"
+#include "sixui/button.crb"
 
-def name_input = InputField(150, 20, 300, 30, "");
-def email_input = InputField(150, 70, 300, 30, "");
-def toggle = ToggleSwitch(150, 120, 60, 25, false);
+class Interface
+{
+	function init()
+	{
+		this.name_input = InputField(250, 80, 300, 30, "", false);
+		this.email_input = InputField(250, 130, 300, 30, "", false);
+		this.password = InputField(250, 180, 300, 30, "", true);
+		this.confirm = InputField(250, 230, 300, 30, "", true);
+		this.toggle = ToggleSwitch(250, 280, 60, 25, false);
+		this.slider = Slider(250, 330, 300, 20, 0, 100, 50);
+
+		this.title = Text("Programming Survey", 20, 10, 32, [244, 244, 244]);
+		this.username_text = Text("Username", 25, 85, 20, [244, 244, 244]);
+		this.email_text = Text("E-mail ", 25, 135, 20, [244, 244, 244]);
+		this.password_text = Text("Password", 25, 185, 20, [244, 244, 244]);
+		this.confirm_text = Text("Confirm Password", 25, 235, 20, [244, 244, 244]);
+		this.student_text = Text("Student", 25, 285, 20, [244, 244, 244]);
+		this.programmer_text = Text("Experience", 25, 335, 20, [244, 244, 244]);
+
+		this.send = Button(325, 400, 150, 50, "Send", 24);
+
+		this.send.set_button_color(0, 200, 200);
+		this.send.set_button_hover_color(0, 230, 230);
+		this.send.set_button_clicked_color(0, 150, 150);
+
+		this.send.set_text_color(20, 20, 20);
+		this.send.set_text_hover_color(255, 255, 255);
+		this.send.set_text_clicked_color(255, 255, 255);
+	}
+
+	function run()
+	{
+		this.title.handle();
+		this.username_text.handle();
+		this.name_input.handle();
+
+		this.email_text.handle();
+		this.email_input.handle();
+
+		this.password_text.handle();
+		this.password.handle();
+
+		this.confirm_text.handle();
+		this.confirm.handle();
+
+		this.student_text.handle();
+		this.toggle.handle();
+
+		this.programmer_text.handle();
+		this.slider.handle();
+
+		this.send.handle();
+	}
+
+	function get_state()
+	{
+		return {
+			"name": this.name_input.get_text(),
+			"email": this.email_input.get_text(),
+			"password": this.password.get_text(),
+			"confirm": this.confirm.get_text(),
+			"student": this.toggle.get_state(),
+			"slider": this.slider.get_value()
+		};
+	}
+}
+
+def ui = Interface();
+gui.set_background(48, 48, 48);
 
 while(gui.is_running())
 {
-	gui.draw_text("Username: ", 25, 25, 20);
-	name_input.handle();
-
-	gui.draw_text("E-mail: ", 25, 75, 20);
-	email_input.handle();
-
-	gui.draw_text("Student: ", 25, 125, 20);
-	toggle.handle();
-
-    if(gui.key_pressed(257))
+	ui.run();
+    if(gui.key_pressed(KEY_ENTER) or ui.send.clicked_once())
     {
-        println(name_input.get_text());
-        println(email_input.get_text());
-        println(toggle.get_state());
+        println(ui.get_state());
     }
 	gui.tick();
 }

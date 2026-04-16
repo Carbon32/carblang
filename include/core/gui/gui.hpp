@@ -3,11 +3,20 @@
 #include "raylib.h"
 #undef PI
 
+struct TextElement
+{
+    std::string text;
+    int x, y;
+    int size;
+    Color color;
+};
+
 #include "deps.hpp"
 
 class CarbGUI
 {
 public:
+    std::vector<std::shared_ptr<TextElement>> text_elements;
     std::vector<std::function<void()>> draw_tasks;
     std::vector<std::function<void()>> update_tasks;
 
@@ -19,6 +28,10 @@ public:
 
     bool init = false;
     bool running = false;
+
+    unsigned char r = 244;
+    unsigned char g = 244;
+    unsigned char b = 244;
 
     template <typename F, typename... Args>
     void add_draw_task(F &&f, Args &&...args)
@@ -81,7 +94,7 @@ public:
             task();
 
         BeginDrawing();
-        ClearBackground(RAYWHITE);
+        ClearBackground(Color{r, g, b, 255});
 
         for (auto &task : draw_tasks)
             task();

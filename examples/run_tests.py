@@ -1,5 +1,6 @@
+# Currently out of service
+
 import subprocess
-import difflib
 
 from colorama import init, Fore, Style
 from results import *
@@ -23,22 +24,20 @@ test_files = {
     "classes-return": classes_return_result,
     "classes-inherit": classes_inherit_result,
     "nested-classes": nested_classes,
-    "nested-classes-functions": nested_classes_functions_result
+    "nested-classes-functions": nested_classes_functions_result,
 }
 
 
 def run_carblang(file_name):
     try:
         result = subprocess.run(
-            ["carblang", file_name],
-            capture_output=True,
-            text=True,
-            check=True
+            ["carblang", file_name], capture_output=True, text=True, check=True
         )
         return result.stdout.strip()
     except subprocess.CalledProcessError as exception:
         print(f"Error running carblang: {exception.stderr}")
         exit()
+
 
 def normalize(text):
     lines = [line.strip() for line in text.splitlines() if line.strip()]
@@ -47,13 +46,14 @@ def normalize(text):
 
 def compare_output(file_name, expected_output):
     actual_output = run_carblang(file_name)
-    if(actual_output is None):
+    if actual_output is None:
         return False
     return normalize(actual_output) == normalize(expected_output)
 
+
 if __name__ == "__main__":
     for file in test_files:
-        if(compare_output(f"crb/{file}.crb", test_files[file])):
+        if compare_output(f"crb/{file}.crb", test_files[file]):
             print(f"{file}.crb - {GREEN}passed{RESET}")
         else:
             print(f"{file}.crb - {RED}failed{RESET}")

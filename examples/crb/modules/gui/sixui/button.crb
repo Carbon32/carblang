@@ -48,12 +48,12 @@ class Button
 
     function set_text_hover_color(r, g, b)
     {
-        this.button_color = Color(r, g, b);
+        this.text_hover_color = Color(r, g, b);
     }
 
     function set_button_hover_color(r, g, b)
     {
-        this.button_color = Color(r, g, b);
+        this.button_hover_color = Color(r, g, b);
     }
 
     function set_text_color(r, g, b)

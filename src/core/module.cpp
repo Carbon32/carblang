@@ -42,7 +42,7 @@ std::shared_ptr<Instance> init_time()
     time.set_method("hour_to_day", make_native_method(nullptr, NativeMethod::HOUR_TO_DAY));
     time.set_method("leap_year", make_native_method(nullptr, NativeMethod::LEAP_YEAR));
     time.set_method("today", make_native_method(nullptr, NativeMethod::TODAY));
-    return create_module_instance(std::move(time), "time");
+    return create_module_instance(std::move(time), "timing");
 }
 
 std::shared_ptr<Instance> init_encode()
@@ -184,6 +184,10 @@ std::shared_ptr<Instance> init_gui()
     gui.set_method("create_rectangle", make_native_method(nullptr, NativeMethod::GUI_CREATE_RECTANGLE));
     gui.set_method("rectangle_collide", make_native_method(nullptr, NativeMethod::GUI_RECTANGLE_COLLISION));
     gui.set_method("rectangle_mouse_collide", make_native_method(nullptr, NativeMethod::GUI_RECTANGLE_MOUSE_COLLISION));
+    gui.set_method("set_background", make_native_method(nullptr, NativeMethod::GUI_SET_BACKGROUND_COLOR));
+    gui.set_method("create_text_element", make_native_method(nullptr, NativeMethod::GUI_CREATE_TEXT));
+    gui.set_method("set_text_element", make_native_method(nullptr, NativeMethod::GUI_SET_TEXT));
+    gui.set_method("draw_text_element", make_native_method(nullptr, NativeMethod::GUI_DRAW_TEXT_ELEMENT));
     gui.set_method("clear", make_native_method(nullptr, NativeMethod::GUI_CLEAR));
 
     return create_module_instance(std::move(gui), "gui");

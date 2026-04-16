@@ -1,0 +1,33 @@
+gui.init("Interface", 800, 600);
+gui.start();
+
+#include "sixui/input.crb"
+#include "sixui/text.crb"
+#include "sixui/button.crb"
+
+def name_text = Text("Username", 200, 200, 20, [244, 244, 244]);
+def name_input = InputField(200, 230, 400, 35, "", false);
+def send = Button(325, 300, 150, 50, "Send", 24);
+
+send.set_button_color(0, 200, 200);
+send.set_button_hover_color(0, 230, 230);
+send.set_button_clicked_color(0, 150, 150);
+
+send.set_text_color(233, 233, 233);
+send.set_text_hover_color(255, 255, 255);
+send.set_text_clicked_color(255, 255, 255);
+
+gui.set_background(48, 48, 48);
+
+while(gui.is_running())
+{
+	name_text.handle();
+	name_input.handle();
+	send.handle();
+
+    if(send.clicked_once())
+    {
+        println(name_input.get_text());
+    }
+	gui.tick();
+}

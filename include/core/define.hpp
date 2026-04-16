@@ -19,6 +19,7 @@ using Value = std::variant<
     std::shared_ptr<Dict>,
     std::shared_ptr<Tag>,
     std::shared_ptr<Texture2D>,
+    std::shared_ptr<TextElement>,
     IgnoreReturnValue>;
 
 struct Chunk

@@ -1,13 +1,23 @@
 class InputField
 {
-    function init(x, y, width, height, initial_text)
+    function init(x, y, width, height, initial_text, hidden)
     {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
+        this.hidden = hidden;
 
         this.text = initial_text;
+        if(hidden)
+        {
+            this.hidden_text = "*" * initial_text.length();
+        }
+        else
+        {
+            this.hidden_text = "";
+        }
+
         this.active = false;
         this.clicked = false;
 
@@ -43,7 +53,7 @@ class InputField
 
         this.delay = 0;
         this.backspace_timer = 0;
-        this.backspace_delay = 0.4;  
+        this.backspace_delay = 0.2;  
         this.backspace_repeat = 0.05;
         this.backspace_held = false;
     }
@@ -59,8 +69,16 @@ class InputField
             bg = this.bg_color;
         }
 
-        this.text_width = gui.measure_text(this.text, this.font_size);
-        this.inner_width = this.width - (this.padding * 2);
+        if(!this.hidden)
+        {
+            this.text_width = gui.measure_text(this.text, this.font_size);
+            this.inner_width = this.width - (this.padding * 2);
+        }
+        else
+        {
+            this.text_width = gui.measure_text(this.hidden_text, this.font_size);
+            this.inner_width = this.width - (this.padding * 2);
+        }   
 
         if(this.text_width > this.inner_width)
         {
@@ -82,15 +100,31 @@ class InputField
             0.2
         );
 
-        gui.draw_text_advanced(
-            this.text,
-            this.x + this.padding - this.scroll_x,
-            this.y + this.height / 2 - this.font_size / 2,
-            this.font_size,
-            this.text_color.r,
-            this.text_color.g,
-            this.text_color.b
-        );
+        if(this.hidden)
+        {
+            gui.draw_text_advanced(
+                this.hidden_text,
+                this.x + this.padding - this.scroll_x,
+                this.y + this.height / 2 - this.font_size / 2,
+                this.font_size,
+                this.text_color.r,
+                this.text_color.g,
+                this.text_color.b
+            );
+        }
+        else
+        {
+            gui.draw_text_advanced(
+                this.text,
+                this.x + this.padding - this.scroll_x,
+                this.y + this.height / 2 - this.font_size / 2,
+                this.font_size,
+                this.text_color.r,
+                this.text_color.g,
+                this.text_color.b
+            );
+        }
+        
 
 
         if(this.active)
@@ -160,42 +194,54 @@ class InputField
             if(!(char == null))
             {
                 this.text = this.text + char;
+                if(this.hidden)
+                {
+                    this.hidden_text = this.hidden_text + "*";
+                }
             }
 
             if(gui.key_down(259))
             {
-                this.backspace_held = true;
-
-                this.backspace_timer = this.backspace_timer + gui.delta();
-
-                if(this.backspace_held)
+                if(!this.backspace_held)
                 {
-                    this.delay = this.backspace_delay;
-                }
+                    this.backspace_held = true;
+                    this.backspace_timer = 0;
 
-                else
-                {
-                    this.delay = 0;
-                }
-
-                if(this.backspace_timer > this.delay)
-                {
                     if(this.text.length() > 0)
                     {
                         this.text = this.text.slice(0, this.text.length() - 1);
                     }
 
-                    this.backspace_delay = this.backspace_repeat;
-                    this.backspace_timer = 0;
+                    if(this.hidden and this.hidden_text.length() > 0)
+                    {
+                        this.hidden_text = this.hidden_text.slice(0, this.hidden_text.length() - 1);
+                    }
+                }
+                else
+                {
+                    this.backspace_timer = this.backspace_timer + gui.delta();
+
+                    if(this.backspace_timer > this.backspace_delay)
+                    {
+                        if(this.text.length() > 0)
+                        {
+                            this.text = this.text.slice(0, this.text.length() - 1);
+                        }
+
+                        if(this.hidden and this.hidden_text.length() > 0)
+                        {
+                            this.hidden_text = this.hidden_text.slice(0, this.hidden_text.length() - 1);
+                        }
+
+                        this.backspace_timer = this.backspace_delay - this.backspace_repeat;
+                    }
                 }
             }
             else
             {
                 this.backspace_held = false;
                 this.backspace_timer = 0;
-                this.backspace_delay = 0.4;
             }
-
         }
 
         this.draw(hover);
