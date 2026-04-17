@@ -2,7 +2,6 @@
 
 void VM::init_globals()
 {
-    globals["os"] = init_os();
     globals["math"] = init_math();
     globals["regex"] = init_regex();
     globals["timing"] = init_time();
@@ -10,12 +9,20 @@ void VM::init_globals()
     globals["text"] = init_text();
     globals["random"] = init_random();
     globals["array"] = init_array();
-    globals["file"] = init_file();
-    globals["profiler"] = init_profiler();
     globals["builder"] = init_builder();
-    globals["gui"] = init_gui();
 
+#ifndef WEB_MODE
+    globals["os"] = init_os();
+    globals["gui"] = init_gui();
+    globals["profiler"] = init_profiler();
+    globals["file"] = init_file();
+
+    const_variables.insert("file");
+    const_variables.insert("profiler");
     const_variables.insert("os");
+    const_variables.insert("gui");
+#endif
+
     const_variables.insert("math");
     const_variables.insert("regex");
     const_variables.insert("timing");
@@ -23,10 +30,16 @@ void VM::init_globals()
     const_variables.insert("text");
     const_variables.insert("random");
     const_variables.insert("array");
-    const_variables.insert("file");
-    const_variables.insert("profiler");
+
     const_variables.insert("builder");
-    const_variables.insert("gui");
+
+    const_variables.insert("scan");
+    const_variables.insert("format");
+    const_variables.insert("printf");
+    const_variables.insert("print");
+    const_variables.insert("println");
+    const_variables.insert("exit");
+    const_variables.insert("methods");
 
     globals["scan"] = make_native_method(nullptr, NativeMethod::INPUT);
     globals["format"] = make_native_method(nullptr, NativeMethod::FORMAT);
@@ -132,6 +145,94 @@ void VM::init_globals()
     const_variables.insert("println");
     const_variables.insert("exit");
     const_variables.insert("methods");
+    const_variables.insert("a");
+    const_variables.insert("address");
+    const_variables.insert("area");
+    const_variables.insert("article");
+    const_variables.insert("aside");
+    const_variables.insert("audio");
+    // const_variables.insert("base");
+    const_variables.insert("blockquote");
+    const_variables.insert("body");
+    const_variables.insert("br");
+    const_variables.insert("button");
+    const_variables.insert("canvas");
+    const_variables.insert("caption");
+    const_variables.insert("cite");
+    const_variables.insert("code");
+    const_variables.insert("col");
+    const_variables.insert("colgroup");
+    const_variables.insert("construct");
+    const_variables.insert("datalist");
+    const_variables.insert("dd");
+    const_variables.insert("del");
+    const_variables.insert("div");
+    const_variables.insert("dl");
+    const_variables.insert("dt");
+    const_variables.insert("em");
+    // const_variables.insert("embed");
+    const_variables.insert("fieldset");
+    const_variables.insert("figcaption");
+    const_variables.insert("figure");
+    const_variables.insert("footer");
+    const_variables.insert("form");
+    const_variables.insert("h1");
+    const_variables.insert("h2");
+    const_variables.insert("h3");
+    const_variables.insert("h4");
+    const_variables.insert("h5");
+    const_variables.insert("h6");
+    const_variables.insert("head");
+    const_variables.insert("header");
+    const_variables.insert("hr");
+    const_variables.insert("iframe");
+    const_variables.insert("img");
+    const_variables.insert("input");
+    const_variables.insert("ins");
+    const_variables.insert("label");
+    const_variables.insert("legend");
+    const_variables.insert("li");
+    const_variables.insert("link");
+    const_variables.insert("main");
+    const_variables.insert("map");
+    const_variables.insert("mark");
+    const_variables.insert("meta");
+    const_variables.insert("meter");
+    const_variables.insert("nav");
+    const_variables.insert("object");
+    const_variables.insert("ol");
+    const_variables.insert("optgroup");
+    const_variables.insert("option");
+    const_variables.insert("output");
+    const_variables.insert("p");
+    const_variables.insert("param");
+    const_variables.insert("picture");
+    const_variables.insert("pre");
+    const_variables.insert("progress");
+    const_variables.insert("q");
+    const_variables.insert("section");
+    const_variables.insert("select");
+    const_variables.insert("small");
+    const_variables.insert("source");
+    const_variables.insert("span");
+    const_variables.insert("strong");
+    const_variables.insert("style");
+    const_variables.insert("sub");
+    const_variables.insert("sup");
+    const_variables.insert("table");
+    const_variables.insert("tbody");
+    const_variables.insert("td");
+    const_variables.insert("textarea");
+    const_variables.insert("tfoot");
+    const_variables.insert("th");
+    const_variables.insert("thead");
+    const_variables.insert("time");
+    const_variables.insert("title");
+    const_variables.insert("tr");
+    const_variables.insert("track");
+    const_variables.insert("ul");
+    const_variables.insert("video");
+    const_variables.insert("wbr");
 }
 
 void VM::interpret(Chunk &new_chunk)

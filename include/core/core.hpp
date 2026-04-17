@@ -8,6 +8,9 @@
 inline bool error_trigger = false;
 inline bool runtime_error_trigger = false;
 
+// #define IGNORE_INCLUDE
+// #define WEB_MODE
+
 #include "forward.hpp"
 #include "ang.hpp"
 #include "html/cml.hpp"

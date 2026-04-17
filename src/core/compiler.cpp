@@ -1,7 +1,5 @@
 #include "core/core.hpp"
 
-std::unordered_set<std::string> protected_names = {"os", "this", "super"}; // Make this better later
-
 Chunk Compiler::compile(const std::vector<std::shared_ptr<Stmt>> &statements)
 {
     for (auto &stmt : statements)
@@ -202,10 +200,6 @@ Value Compiler::visit_expression_stmt(std::shared_ptr<ExprStmt> stmt)
 
 Value Compiler::visit_var_stmt(std::shared_ptr<VarStmt> stmt)
 {
-    if (protected_names.find(stmt->name.lexeme) != protected_names.end())
-    {
-        throw std::runtime_error("Cannot declare variable with protected name: " + stmt->name.lexeme);
-    }
 
     if (scope_depth > 0)
     {
@@ -302,9 +296,6 @@ Value Compiler::visit_logical_expression(std::shared_ptr<Logical> expr)
 
 Value Compiler::visit_assign_expression(std::shared_ptr<Assign> expr)
 {
-    if (protected_names.find(expr->name.lexeme) != protected_names.end())
-        throw std::runtime_error("Cannot reassign protected variable: " + expr->name.lexeme);
-
     expr->value->accept(*this);
     int slot = resolve_local(expr->name.lexeme);
 
@@ -442,6 +433,7 @@ Value Compiler::visit_set_expression(std::shared_ptr<Set> expr)
 
 Value Compiler::visit_include_stmt(std::shared_ptr<IncludeStmt> stmt)
 {
+#ifndef IGNORE_INCLUDE
     if (included_files.find(stmt->file_name) != included_files.end())
     {
         throw std::runtime_error("File already included: " + stmt->file_name);
@@ -466,6 +458,11 @@ Value Compiler::visit_include_stmt(std::shared_ptr<IncludeStmt> stmt)
     {
         s->accept(*this);
     }
+#endif
+
+#ifdef IGNORE_INCLUDE
+    throw std::runtime_error("#include is disabled in this mode");
+#endif
 
     return {};
 }
