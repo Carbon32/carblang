@@ -1,0 +1,131 @@
+class List
+{
+    function init(x, y, width, height, items, visible_items)
+    {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.items = items;
+        this.visible_items = visible_items;
+
+        this.item_height = this.height / visible_items;
+        this.selected_index = -1;
+        this.hover_index = -1;
+
+        this.rects = [];
+
+        class Color
+        {
+            function init(r, g, b)
+            {
+                this.r = r;
+                this.g = g;
+                this.b = b;
+            }
+        }
+
+        this.bg_color = Color(40, 40, 40);
+        this.hover_color = Color(60, 60, 60);
+        this.selected_color = Color(80, 160, 240);
+        this.text_color = Color(220, 220, 220);
+
+        this.font_size = this.item_height * 0.4;
+        this.scroll_index = 0;
+    }
+
+    function draw()
+    {
+        this.hover_index = -1;
+        this.rects = [];
+
+        def i;
+        for(i = 0; i < this.visible_items; i = i + 1)
+        {
+            def item_index = i + this.scroll_index;
+            if(item_index == this.items.length() or item_index > this.items.length())
+            {
+                break;
+            }
+
+            def item_y = this.y + i * this.item_height;
+            def item_rect = [this.x, item_y, this.width, this.item_height];
+
+            this.rects.push(item_rect);
+
+            def hover = gui.rectangle_mouse_collide(item_rect);
+            if(hover)
+            {
+                this.hover_index = item_index;
+            }
+
+            def bg;
+            if(item_index == this.selected_index)
+            {
+                bg = this.selected_color;
+            }
+            else if(hover)
+            {
+                bg = this.hover_color;
+            }
+            else
+            {
+                bg = this.bg_color;
+            }
+
+            gui.draw_rect_advanced(
+                this.x,
+                item_y,
+                this.width,
+                this.item_height,
+                bg.r,
+                bg.g,
+                bg.b,
+                0.0
+            );
+
+            def text = this.items[item_index];
+            def text_width = gui.measure_text(text, this.font_size);
+            def text_x = this.x + (this.width - text_width) / 2;
+            def text_y = item_y + (this.item_height - this.font_size) / 2;
+
+            gui.draw_text_advanced(
+                text,
+                text_x,
+                text_y,
+                this.font_size,
+                this.text_color.r,
+                this.text_color.g,
+                this.text_color.b
+            );
+        }
+    }
+
+    function handle()
+    {
+        this.draw();
+
+        def i;
+        for(i = 0; i < this.rects.length(); i = i + 1)
+        {
+            if(!(this.rects[i] == null) and gui.rectangle_mouse_collide(this.rects[i]) and gui.mouse_pressed(0))
+            {
+                this.selected_index = i + this.scroll_index;
+            }
+        }
+    }
+
+    function get_selected()
+    {
+        if((this.selected_index == 0 or this.selected_index > 0) and this.selected_index < this.items.length())
+        {
+            return this.items[this.selected_index];
+        }
+        return null;
+    }
+
+    function get_index()
+    {
+        return this.selected_index;
+    }
+}

@@ -98,6 +98,8 @@ std::shared_ptr<Instance> init_text()
     text.set_method("to_json", make_native_method(nullptr, NativeMethod::TO_JSON));
     text.set_method("parse_csv", make_native_method(nullptr, NativeMethod::PARSE_CSV));
     text.set_method("to_csv", make_native_method(nullptr, NativeMethod::TO_CSV));
+    text.set_method("json_to_html", make_native_method(nullptr, NativeMethod::JSON_TO_HTML));
+    text.set_method("csv_to_html", make_native_method(nullptr, NativeMethod::CSV_TO_HTML));
     return create_module_instance(std::move(text), "text");
 }
 
@@ -169,6 +171,7 @@ std::shared_ptr<Instance> init_gui()
     gui.set_method("draw_rect_advanced", make_native_method(nullptr, NativeMethod::GUI_DRAW_RECT_ADV));
     gui.set_method("draw_circle", make_native_method(nullptr, NativeMethod::GUI_DRAW_CIRCLE));
     gui.set_method("load_texture", make_native_method(nullptr, NativeMethod::GUI_LOAD_TEXTURE));
+    gui.set_method("unload_texture", make_native_method(nullptr, NativeMethod::GUI_UNLOAD_TEXTURE));
     gui.set_method("draw_texture", make_native_method(nullptr, NativeMethod::GUI_DRAW_TEXTURE));
     gui.set_method("draw_sized_texture", make_native_method(nullptr, NativeMethod::GUI_DRAW_TEXTURE_SIZED));
     gui.set_method("draw_flipped_texture", make_native_method(nullptr, NativeMethod::GUI_DRAW_TEXTURE_FLIPPED));

@@ -1,0 +1,21 @@
+#include "../sixui/progress_bar.crb"
+
+
+gui.init("Progress Bar", 800, 600);
+gui.start();
+
+def bar = ProgressBar(190, 250, 400, 40, 0, 100);
+bar.set_value(0);
+
+while(gui.is_running())
+{
+    bar.set_value(bar.value + 0.2);
+    if(bar.value > 100 or bar.value == 100)
+    {
+        bar.set_value(0);
+    }
+
+    bar.handle();
+
+    gui.tick();
+}

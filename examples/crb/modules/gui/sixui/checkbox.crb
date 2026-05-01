@@ -1,0 +1,122 @@
+class Checkbox
+{
+    function init(x, y, size, checked)
+    {
+        this.x = x;
+        this.y = y;
+        this.size = size;
+
+        this.checked = checked;
+        this.clicked = false;
+
+        this.rect = [x, y, size, size];
+
+        class Color
+        {
+            function init(r, g, b)
+            {
+                this.r = r;
+                this.g = g;
+                this.b = b;
+            }
+        }
+
+        this.box_color = Color(50, 50, 50);
+        this.hover_color = Color(70, 70, 70);
+        this.checked_color = Color(80, 160, 240);
+
+        this.checkmark_color = Color(240, 240, 240);
+
+        this.border_color = Color(120, 120, 120);
+    }
+
+    function is_hovered()
+    {
+        return gui.rectangle_mouse_collide(this.rect);
+    }
+
+    function toggle()
+    {
+        this.checked = !this.checked;
+    }
+
+    function draw()
+{
+    def hover = this.is_hovered();
+
+    def bg;
+
+    if(this.checked)
+    {
+        bg = this.checked_color;
+    }
+    else if(hover)
+    {
+        bg = this.hover_color;
+    }
+    else
+    {
+        bg = this.box_color;
+    }
+
+    gui.draw_rect_advanced(
+        this.x,
+        this.y,
+        this.size,
+        this.size,
+        bg.r,
+        bg.g,
+        bg.b,
+        0.4
+    );
+
+    if(this.checked)
+    {
+        def check_size = this.size * 0.8; // font size
+        def text = "x";
+
+        def text_width = gui.measure_text(text, check_size);
+        def text_x = this.x + (this.size - text_width) / 2;
+        def text_y = this.y + (this.size - check_size) / 2;
+
+        gui.draw_text_advanced(
+            text,
+            text_x,
+            text_y,
+            check_size,
+            this.checkmark_color.r,
+            this.checkmark_color.g,
+            this.checkmark_color.b
+        );
+    }
+}
+
+    function handle()
+    {
+        if(this.is_hovered())
+        {
+            if(gui.mouse_pressed(0) and !this.clicked)
+            {
+                this.clicked = true;
+                this.toggle();
+            }
+        }
+
+        if(gui.mouse_released(0))
+        {
+            this.clicked = false;
+        }
+
+        this.draw();
+    }
+
+    function get_state()
+    {
+        return this.checked;
+    }
+
+    function set_state(value)
+    {
+        this.checked = value;
+    }
+}

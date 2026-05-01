@@ -1,7 +1,16 @@
 class JsonParser
 {
 public:
-    JsonParser(const std::string &src) : src(src) {}
+    JsonParser(const std::string &src) : src(src)
+    {
+        if (this->src.size() >= 3 &&
+            (unsigned char)this->src[0] == 0xEF &&
+            (unsigned char)this->src[1] == 0xBB &&
+            (unsigned char)this->src[2] == 0xBF)
+        {
+            pos = 3;
+        }
+    }
 
     Value parse()
     {
@@ -31,7 +40,7 @@ private:
 
     void skip_whitespace()
     {
-        while (std::isspace(peek()))
+        while (std::isspace(static_cast<unsigned char>(peek())))
             advance();
     }
 
@@ -39,6 +48,7 @@ private:
     {
         skip_whitespace();
 
+        // std::cout << "peek=" << (int)(unsigned char)peek() << "\n";
         if (peek() == '"')
             return parse_string();
         if (peek() == '{')
@@ -132,13 +142,13 @@ private:
 
         if (peek() == '-')
             advance();
-        while (std::isdigit(peek()))
+        while (std::isdigit(static_cast<unsigned char>(peek())))
             advance();
 
         if (peek() == '.')
         {
             advance();
-            while (std::isdigit(peek()))
+            while (std::isdigit(static_cast<unsigned char>(peek())))
                 advance();
         }
 
@@ -193,18 +203,22 @@ private:
 
         while (true)
         {
+            skip_whitespace();
+
             if (peek() != '"')
                 throw std::runtime_error("Expected string key in JSON object");
 
             std::string key = std::get<std::string>(parse_string());
 
             skip_whitespace();
+
             if (peek() != ':')
                 throw std::runtime_error("Expected \":\" in JSON object");
 
             advance();
 
             dict->entries[key] = parse_value();
+
             skip_whitespace();
 
             if (peek() == '}')

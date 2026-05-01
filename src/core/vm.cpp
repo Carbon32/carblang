@@ -1,5 +1,29 @@
 #include "core/core.hpp"
 
+bool compare_values(const Value &a, const Value &b, TokenType op)
+{
+    // Numeric comparisons only
+    if (!std::holds_alternative<double>(a) || !std::holds_alternative<double>(b))
+        throw std::runtime_error("Comparison operators <, <=, >, >= can only be used with numbers");
+
+    double x = std::get<double>(a);
+    double y = std::get<double>(b);
+
+    switch (op)
+    {
+    case GREATER:
+        return x > y;
+    case GREATER_EQUAL:
+        return x >= y;
+    case LESS:
+        return x < y;
+    case LESS_EQUAL:
+        return x <= y;
+    default:
+        throw std::runtime_error("Invalid numeric comparison operator");
+    }
+}
+
 void VM::init_globals()
 {
     globals["math"] = init_math();
@@ -9,7 +33,7 @@ void VM::init_globals()
     globals["text"] = init_text();
     globals["random"] = init_random();
     globals["array"] = init_array();
-    globals["builder"] = init_builder();
+    globals["html"] = init_builder();
 
 #ifndef WEB_MODE
     globals["os"] = init_os();
@@ -445,6 +469,29 @@ void VM::run()
             break;
         }
 
+        case OpCode::PERCENT:
+        {
+            Value b = pop();
+            Value a = pop();
+
+            if (std::holds_alternative<double>(a) && std::holds_alternative<double>(b))
+            {
+                double x = std::get<double>(a);
+                double y = std::get<double>(b);
+                if (y == 0.0)
+                {
+                    throw std::runtime_error("Division by zero");
+                }
+                stack.push_back(std::fmod(x, y));
+            }
+
+            else
+            {
+                throw std::runtime_error("Operands must be numbers");
+            }
+            break;
+        }
+
         case OpCode::NOT:
         {
             Value v = pop();
@@ -466,6 +513,30 @@ void VM::run()
             Value b = pop();
             Value a = pop();
             stack.push_back(a == b);
+            break;
+        }
+
+        case OpCode::GREATER_EQUAL:
+        {
+            auto b = pop();
+            auto a = pop();
+            push(compare_values(a, b, GREATER_EQUAL));
+            break;
+        }
+
+        case OpCode::LESS_EQUAL:
+        {
+            auto b = pop();
+            auto a = pop();
+            push(compare_values(a, b, LESS_EQUAL));
+            break;
+        }
+
+        case OpCode::NOT_EQUAL:
+        {
+            auto b = pop();
+            auto a = pop();
+            push(a != b);
             break;
         }
 
@@ -750,6 +821,8 @@ void VM::run()
                     NATIVE_GLOBALS_STRINGIFY
                     NATIVE_GLOBALS_ERASE_FILE
                     NATIVE_GLOBALS_INSTANCE_METHODS
+                    NATIVE_GLOBALS_JSON_TO_HTML
+                    NATIVE_GLOBALS_CSV_TO_HTML
 
                     NATIVE_GLOBALS_POW
                     NATIVE_GLOBALS_SQRT
@@ -1003,6 +1076,7 @@ void VM::run()
                     NATIVE_GUI_DRAW_TEXT_ELEMENT
                     NATIVE_GUI_CREATE_TEXT
                     NATIVE_GUI_SET_TEXT
+                    NATIVE_GUI_UNLOAD_TEXTURE
 
                 default:
                     throw std::runtime_error("Unrecognized method");
@@ -1900,7 +1974,7 @@ std::string VM::stringify(const Value &value)
 
     else if (std::holds_alternative<std::shared_ptr<Texture2D>>(value))
     {
-        out << "2d texture>";
+        out << "<2d texture>";
     }
 
     else if (std::holds_alternative<std::shared_ptr<TextElement>>(value))

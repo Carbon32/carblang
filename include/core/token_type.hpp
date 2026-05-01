@@ -24,6 +24,8 @@ enum TokenType
     LESS,
     LESS_EQUAL,
 
+    PERCENT,
+
     IDENTIFIER,
     STRING,
     NUMBER,

@@ -10,6 +10,7 @@ enum class OpCode : uint8_t
     SUBTRACT,
     MULTIPLY,
     DIVIDE,
+    PERCENT,
 
     NOT,
     NEGATE,
@@ -17,6 +18,10 @@ enum class OpCode : uint8_t
     EQUAL,
     GREATER,
     LESS,
+
+    GREATER_EQUAL,
+    LESS_EQUAL,
+    NOT_EQUAL,
 
     POP,
 

@@ -78,6 +78,9 @@ void Scanner::scan_single_token()
     case '*':
         this->add_token(STAR);
         break;
+    case '%':
+        this->add_token(PERCENT);
+        break;
     case '!':
         this->add_token(this->match('=') ? BANG_EQUAL : BANG);
         break;

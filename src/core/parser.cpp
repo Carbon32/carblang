@@ -339,7 +339,7 @@ std::shared_ptr<Expression> Parser::term()
 std::shared_ptr<Expression> Parser::factor()
 {
     std::shared_ptr<Expression> expr = unary();
-    while (this->match(SLASH, STAR))
+    while (this->match(SLASH, STAR, PERCENT))
     {
         Token op = previous();
         std::shared_ptr<Expression> right = unary();

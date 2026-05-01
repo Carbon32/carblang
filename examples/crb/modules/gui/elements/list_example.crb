@@ -1,0 +1,22 @@
+#include "../sixui/list.crb"
+
+gui.init("List", 800, 600);
+gui.start();
+
+def items = ["Apple", "Banana", "Cherry", "Date", "Elderberry", "Fig", "Grape", "Honeydew"];
+def my_list = List(300, 100, 200, 240, items, 5); 
+
+def selected = my_list.get_selected();
+
+while(gui.is_running())
+{
+    my_list.handle();
+
+    selected = my_list.get_selected();
+    if(!(selected == null))
+    {
+        println("Selected: " + selected);
+    }
+
+    gui.tick();
+}

@@ -1,0 +1,20 @@
+#include "../sixui/button.crb"
+#include "../sixui/dialog.crb"
+
+gui.init("Dialog", 800, 600);
+gui.start();
+
+def dlg = Dialog(200, 150, 400, 250, "Confirm Action", "Do you want to continue?", ["Yes", "No"]);
+
+while(gui.is_running())
+{
+    dlg.handle();
+
+    def clicked = dlg.get_clicked();
+    if(!(clicked == null))
+    {
+        println("Button clicked: " + clicked);
+    }
+
+    gui.tick();
+}

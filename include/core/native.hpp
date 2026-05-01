@@ -132,6 +132,8 @@ enum class NativeMethod
     PARSE_JSON,
     TO_JSON,
     STRINGIFY,
+    JSON_TO_HTML,
+    CSV_TO_HTML,
 
     PROFILE_START,
     PROFILE_END,
@@ -277,7 +279,8 @@ enum class NativeMethod
     GUI_DRAW_TEXT_ELEMENT,
     GUI_CREATE_TEXT,
     GUI_SET_TEXT,
-    GUI_CLEAR
+    GUI_CLEAR,
+    GUI_UNLOAD_TEXTURE
 };
 
 #include "native/array.hpp"

@@ -1,0 +1,113 @@
+class ProgressBar
+{
+    function init(x, y, width, height, min_value, max_value)
+    {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+
+        this.min_value = min_value;
+        this.max_value = max_value;
+        this.value = min_value;
+
+        this.rect = [x, y, width, height];
+
+        class Color
+        {
+            function init(r, g, b)
+            {
+                this.r = r;
+                this.g = g;
+                this.b = b;
+            }
+        }
+
+        this.bg_color = Color(40, 40, 40);
+        this.fill_color = Color(80, 160, 240);
+        this.border_color = Color(120, 120, 120);
+        this.text_color = Color(220, 220, 220);
+
+        this.font_size = height * 0.6;
+        this.show_text = true;
+    }
+
+    function set_value(value)
+    {
+        this.value = value;
+
+        if(this.value < this.min_value)
+        {
+            this.value = this.min_value;
+        }
+
+        if(this.value > this.max_value)
+        {
+            this.value = this.max_value;
+        }
+    }
+
+    function get_percent()
+    {
+        return (this.value - this.min_value) / (this.max_value - this.min_value);
+    }
+
+    function draw()
+    {
+        def percent = this.get_percent();
+        def fill_width = this.width * percent;
+
+        gui.draw_rect_advanced(
+            this.x,
+            this.y,
+            this.width,
+            this.height,
+            this.bg_color.r,
+            this.bg_color.g,
+            this.bg_color.b,
+            0.25
+        );
+
+        gui.draw_rect_advanced(
+            this.x,
+            this.y,
+            fill_width,
+            this.height,
+            this.fill_color.r,
+            this.fill_color.g,
+            this.fill_color.b,
+            0.25
+        );
+
+        if(this.show_text)
+        {
+            def percent_text = (percent * 100).to_int() + "%";
+
+            gui.draw_text_advanced(
+                percent_text,
+                this.x + this.width / 2 - (percent_text.length() * this.font_size * 0.25),
+                this.y + this.height / 2 - this.font_size / 2,
+                this.font_size,
+                this.text_color.r,
+                this.text_color.g,
+                this.text_color.b
+            );
+        }
+    }
+    
+    function handle()
+    {
+        this.draw();
+    }
+
+    function set_colors(bg_r, bg_g, bg_b, fill_r, fill_g, fill_b)
+    {
+        this.bg_color = Color(bg_r, bg_g, bg_b);
+        this.fill_color = Color(fill_r, fill_g, fill_b);
+    }
+
+    function set_show_text(value)
+    {
+        this.show_text = value;
+    }
+}

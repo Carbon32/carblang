@@ -11,4 +11,4 @@ body(
 	div(content).attr("style", "background: rgb(48, 48, 48);")
 );
 
-print(builder.construct());
+print(html.construct());

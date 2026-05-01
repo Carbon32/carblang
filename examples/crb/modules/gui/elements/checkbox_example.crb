@@ -1,0 +1,13 @@
+#include "../sixui/checkbox.crb"
+
+
+gui.init("Checkbox", 800, 600);
+gui.start();
+
+def box = Checkbox(250, 250, 25, false);
+
+while(gui.is_running())
+{
+    box.handle();
+    gui.tick();
+}

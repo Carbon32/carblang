@@ -11,6 +11,7 @@ class Compiler : public ExpressionVisitor, public StmtVisitor
     std::vector<Local> locals;
     std::set<std::string> included_files;
     int scope_depth = 0;
+    bool in_function = false;
 
 public:
     Chunk compile(const std::vector<std::shared_ptr<Stmt>> &statements);

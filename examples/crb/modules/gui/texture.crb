@@ -1,6 +1,8 @@
 gui.init("Hen", 800, 600);
 gui.start();
 
+def texture = gui.load_texture("textures/test/hen.png");
+
 const KEY_UP = 265;
 const KEY_DOWN = 264;
 const KEY_LEFT = 263;
@@ -104,7 +106,7 @@ class Chicken {
     }
 }
 
-def chicken = Chicken(gui.load_texture("textures/test/hen.png"), 150, 50, 128, 128);
+def chicken = Chicken(texture, 150, 50, 128, 128);
 
 while(gui.is_running()) {
     chicken.update();

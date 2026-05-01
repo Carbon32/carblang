@@ -65,18 +65,19 @@ int Compiler::emit_jump(OpCode op)
     return offset_index;
 }
 
-std::shared_ptr<Function> Compiler::compile_function(FunctionStmt &stmt, bool is_constructor = false, bool is_method = false)
+std::shared_ptr<Function> Compiler::compile_function(FunctionStmt &stmt, bool is_constructor, bool is_method)
 {
     Compiler function_compiler;
+    function_compiler.in_function = true;
     function_compiler.begin_scope();
 
     if (is_method)
-        function_compiler.locals.push_back({"this", 0});
+        function_compiler.locals.push_back({"this", 0, true});
 
-    int slot = 1;
+    int slot = function_compiler.locals.size();
     for (auto &param : stmt.params)
     {
-        function_compiler.locals.push_back({param.lexeme, 0});
+        function_compiler.locals.push_back({param.lexeme, 0, false});
         slot++;
     }
 
@@ -87,6 +88,7 @@ std::shared_ptr<Function> Compiler::compile_function(FunctionStmt &stmt, bool is
         function_compiler.emit(OpCode::NULL);
     else
         function_compiler.emit_constant(IgnoreReturnValue{});
+
     function_compiler.emit(OpCode::RETURN);
 
     return std::make_shared<Function>(
@@ -171,15 +173,27 @@ Value Compiler::visit_binary_expression(std::shared_ptr<Binary> expr)
     case SLASH:
         emit(OpCode::DIVIDE);
         break;
+    case PERCENT:
+        emit(OpCode::PERCENT);
+        break;
 
     case EQUAL_EQUAL:
         emit(OpCode::EQUAL);
         break;
+    case BANG_EQUAL:
+        emit(OpCode::NOT_EQUAL);
+        break;
     case GREATER:
         emit(OpCode::GREATER);
         break;
+    case GREATER_EQUAL:
+        emit(OpCode::GREATER_EQUAL);
+        break;
     case LESS:
         emit(OpCode::LESS);
+        break;
+    case LESS_EQUAL:
+        emit(OpCode::LESS_EQUAL);
         break;
 
     default:
@@ -200,15 +214,18 @@ Value Compiler::visit_expression_stmt(std::shared_ptr<ExprStmt> stmt)
 
 Value Compiler::visit_var_stmt(std::shared_ptr<VarStmt> stmt)
 {
-
-    if (scope_depth > 0)
+    if (scope_depth > 0 && in_function)
     {
+        int slot_index = locals.size();
+        locals.push_back({stmt->name.lexeme, scope_depth, stmt->is_const});
+
         if (stmt->initializer)
             stmt->initializer->accept(*this);
         else
             emit(OpCode::NULL);
 
-        locals.push_back({stmt->name.lexeme, scope_depth, stmt->is_const});
+        emit(OpCode::SET_LOCAL);
+        emit_byte(slot_index);
     }
     else
     {
@@ -224,6 +241,7 @@ Value Compiler::visit_var_stmt(std::shared_ptr<VarStmt> stmt)
             emit(OpCode::DEFINE_GLOBAL);
         emit_byte(name);
     }
+
     return {};
 }
 
@@ -297,7 +315,7 @@ Value Compiler::visit_logical_expression(std::shared_ptr<Logical> expr)
 Value Compiler::visit_assign_expression(std::shared_ptr<Assign> expr)
 {
     expr->value->accept(*this);
-    int slot = resolve_local(expr->name.lexeme);
+    int slot = in_function ? resolve_local(expr->name.lexeme) : -1;
 
     if (slot != -1)
     {
@@ -319,7 +337,7 @@ Value Compiler::visit_assign_expression(std::shared_ptr<Assign> expr)
 
 Value Compiler::visit_variable_expression(std::shared_ptr<Variable> expr)
 {
-    int slot = resolve_local(expr->name.lexeme);
+    int slot = in_function ? resolve_local(expr->name.lexeme) : -1;
     if (slot != -1)
     {
         emit(OpCode::GET_LOCAL);
@@ -345,7 +363,7 @@ Value Compiler::visit_block_stmt(std::shared_ptr<BlockStmt> stmt)
 
 Value Compiler::visit_function_stmt(std::shared_ptr<FunctionStmt> stmt)
 {
-    auto fn = compile_function(*stmt);
+    auto fn = compile_function(*stmt, false, false);
 
     uint8_t fn_index = chunk.add_constant(fn);
     emit(OpCode::CLOSURE);
