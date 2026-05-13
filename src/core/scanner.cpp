@@ -67,19 +67,26 @@ void Scanner::scan_single_token()
         this->add_token(DOT);
         break;
     case '-':
-        this->add_token(MINUS);
+        this->add_token(match('=') ? MINUS_EQUAL : MINUS);
         break;
     case '+':
-        this->add_token(PLUS);
+        this->add_token(match('=') ? PLUS_EQUAL : PLUS);
         break;
     case ';':
         this->add_token(SEMICOLON);
         break;
     case '*':
-        this->add_token(STAR);
+        if (match('*'))
+        {
+            add_token(match('=') ? STAR_STAR_EQUAL : STAR_STAR);
+        }
+        else
+        {
+            add_token(match('=') ? STAR_EQUAL : STAR);
+        }
         break;
     case '%':
-        this->add_token(PERCENT);
+        this->add_token(match('=') ? PERCENT_EQUAL : PERCENT);
         break;
     case '!':
         this->add_token(this->match('=') ? BANG_EQUAL : BANG);
@@ -125,7 +132,7 @@ void Scanner::scan_single_token()
         }
         else
         {
-            this->add_token(SLASH);
+            this->add_token(match('=') ? SLASH_EQUAL : SLASH);
         }
         break;
 

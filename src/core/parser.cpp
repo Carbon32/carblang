@@ -249,15 +249,64 @@ std::shared_ptr<Expression> Parser::assignment()
 {
     std::shared_ptr<Expression> expr = or_expression();
 
-    if (this->match(EQUAL))
+    if (match(EQUAL,
+              PLUS_EQUAL,
+              MINUS_EQUAL,
+              STAR_EQUAL,
+              SLASH_EQUAL,
+              PERCENT_EQUAL,
+              STAR_STAR_EQUAL))
     {
-        Token equals = this->previous();
+        Token op = this->previous();
         std::shared_ptr<Expression> value = assignment();
 
         if (auto var = dynamic_cast<Variable *>(expr.get()))
         {
             Token name = var->name;
-            return ANG<Assign>(std::move(name), value);
+
+            if (op.type == EQUAL)
+                return ANG<Assign>(name, value);
+
+            TokenType binary_type;
+
+            switch (op.type)
+            {
+            case PLUS_EQUAL:
+                binary_type = PLUS;
+                break;
+
+            case MINUS_EQUAL:
+                binary_type = MINUS;
+                break;
+
+            case STAR_EQUAL:
+                binary_type = STAR;
+                break;
+
+            case SLASH_EQUAL:
+                binary_type = SLASH;
+                break;
+
+            case PERCENT_EQUAL:
+                binary_type = PERCENT;
+                break;
+
+            case STAR_STAR_EQUAL:
+                binary_type = STAR_STAR;
+                break;
+
+            default:
+                throw error(op, "Invalid compound assignment");
+            }
+
+            Token binary_op(binary_type, op.lexeme, nullptr, op.line);
+
+            auto left = ANG<Variable>(name);
+
+            auto binary =
+                ANG<Binary>(left, binary_op, value);
+
+            return ANG<Assign>(name, binary);
         }
 
         if (auto idx = dynamic_cast<IndexExpr *>(expr.get()))
@@ -270,7 +319,7 @@ std::shared_ptr<Expression> Parser::assignment()
             return ANG<Set>(get->object, get->name, value);
         }
 
-        error(std::move(equals), "Invalid assignment target");
+        error(std::move(op), "Invalid assignment target");
     }
 
     return expr;
@@ -312,6 +361,21 @@ std::shared_ptr<Expression> Parser::equality()
     return expr;
 }
 
+std::shared_ptr<Expression> Parser::power()
+{
+    auto expr = unary();
+
+    if (match(STAR_STAR))
+    {
+        Token op = previous();
+        auto right = power();
+
+        expr = ANG<Binary>(expr, op, right);
+    }
+
+    return expr;
+}
+
 std::shared_ptr<Expression> Parser::comparison()
 {
     std::shared_ptr<Expression> expr = term();
@@ -338,11 +402,11 @@ std::shared_ptr<Expression> Parser::term()
 
 std::shared_ptr<Expression> Parser::factor()
 {
-    std::shared_ptr<Expression> expr = unary();
+    std::shared_ptr<Expression> expr = power();
     while (this->match(SLASH, STAR, PERCENT))
     {
         Token op = previous();
-        std::shared_ptr<Expression> right = unary();
+        std::shared_ptr<Expression> right = power();
         expr = ANG<Binary>(expr, std::move(op), right);
     }
     return expr;

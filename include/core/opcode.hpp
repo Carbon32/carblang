@@ -23,6 +23,8 @@ enum class OpCode : uint8_t
     LESS_EQUAL,
     NOT_EQUAL,
 
+    POWER,
+
     POP,
 
     DEFINE_CONST,

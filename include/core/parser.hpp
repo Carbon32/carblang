@@ -37,6 +37,7 @@ private:
     std::shared_ptr<Expression> or_expression();
     std::shared_ptr<Expression> equality();
     std::shared_ptr<Expression> comparison();
+    std::shared_ptr<Expression> power();
     std::shared_ptr<Expression> term();
     std::shared_ptr<Expression> factor();
     std::shared_ptr<Expression> unary();

@@ -8,7 +8,7 @@ std::string to_string(TokenType type)
         "BANG", "BANG_EQUAL",
         "EQUAL", "EQUAL_EQUAL",
         "GREATER", "GREATER_EQUAL",
-        "LESS", "LESS_EQUAL, PERCENT",
+        "LESS", "LESS_EQUAL, PERCENT", "PLUS_EQUAL", "MINUS_EQUAL", "STAR_EQUAL", "SLASH_EQUAL", "PERCENT_EQUAL", "STAR_STAR", "STAR_STAR_EQUAL",
         "IDENTIFIER", "STRING", "NUMBER",
         "AND", "CLASS", "ELSE", "FALSE", "FUNCTION", "FOR", "IF", "NULL", "OR",
         "PRINT", "PRINTLN", "RETURN", "SUPER", "THIS", "TRUE", "VAR", "WHILE",

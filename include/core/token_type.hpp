@@ -26,6 +26,15 @@ enum TokenType
 
     PERCENT,
 
+    PLUS_EQUAL,
+    MINUS_EQUAL,
+    STAR_EQUAL,
+    SLASH_EQUAL,
+    PERCENT_EQUAL,
+
+    STAR_STAR,
+    STAR_STAR_EQUAL,
+
     IDENTIFIER,
     STRING,
     NUMBER,

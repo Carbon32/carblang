@@ -296,6 +296,7 @@ void VM::run()
         case OpCode::SUBTRACT:
         case OpCode::MULTIPLY:
         case OpCode::DIVIDE:
+        case OpCode::POWER:
         {
             Value b = pop();
             Value a = pop();
@@ -454,6 +455,10 @@ void VM::run()
 
             case OpCode::MULTIPLY:
                 stack.push_back(x * y);
+                break;
+
+            case OpCode::POWER:
+                stack.push_back(std::pow(x, y));
                 break;
 
             case OpCode::DIVIDE:

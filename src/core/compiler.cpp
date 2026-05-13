@@ -170,6 +170,9 @@ Value Compiler::visit_binary_expression(std::shared_ptr<Binary> expr)
     case STAR:
         emit(OpCode::MULTIPLY);
         break;
+    case STAR_STAR:
+        emit(OpCode::POWER);
+        break;
     case SLASH:
         emit(OpCode::DIVIDE);
         break;
