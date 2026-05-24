@@ -110,24 +110,24 @@
         break;                                                                         \
     }
 
-#define NATIVE_GLOBALS_INPUT                                                 \
-    case NativeMethod::INPUT:                                                \
-    {                                                                        \
-        std::string prompt;                                                  \
-                                                                             \
-        if (!args.empty())                                                   \
-        {                                                                    \
-            if (!std::holds_alternative<std::string>(args[0]))               \
-                throw std::runtime_error("input() prompt must be a string"); \
-            prompt = std::get<std::string>(args[0]);                         \
-        }                                                                    \
-                                                                             \
-        std::cout << prompt;                                                 \
-        std::string line;                                                    \
-        std::getline(std::cin, line);                                        \
-                                                                             \
-        push(line);                                                          \
-        break;                                                               \
+#define NATIVE_GLOBALS_INPUT                                                \
+    case NativeMethod::INPUT:                                               \
+    {                                                                       \
+        std::string prompt;                                                 \
+                                                                            \
+        if (!args.empty())                                                  \
+        {                                                                   \
+            if (!std::holds_alternative<std::string>(args[0]))              \
+                throw std::runtime_error("scan() prompt must be a string"); \
+            prompt = std::get<std::string>(args[0]);                        \
+        }                                                                   \
+                                                                            \
+        std::cout << prompt;                                                \
+        std::string line;                                                   \
+        std::getline(std::cin, line);                                       \
+                                                                            \
+        push(line);                                                         \
+        break;                                                              \
     }
 
 #define NATIVE_GLOBALS_PARSE_JSON                                              \

@@ -1,2 +1,3 @@
 println("Hello World");
-print("Hello"); print(" World");
+print("Hello"); print(" World\n");
+print("Hello " + "World");

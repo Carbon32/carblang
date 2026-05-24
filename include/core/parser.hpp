@@ -14,6 +14,7 @@ public:
     std::vector<std::shared_ptr<Stmt>> parse();
 
 private:
+    bool is_valid_type(const std::string &type);
     std::shared_ptr<Expression> expression();
     std::shared_ptr<Stmt> declaration();
     std::shared_ptr<Stmt> statement();

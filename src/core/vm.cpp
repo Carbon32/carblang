@@ -55,7 +55,7 @@ void VM::init_globals()
     const_variables.insert("random");
     const_variables.insert("array");
 
-    const_variables.insert("builder");
+    const_variables.insert("html");
 
     const_variables.insert("scan");
     const_variables.insert("format");

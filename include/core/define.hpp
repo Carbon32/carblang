@@ -51,8 +51,21 @@ struct Function
     std::string name;
     size_t arity;
     Chunk chunk;
+    std::vector<std::optional<std::string>> param_types;
+    std::optional<std::string> return_type;
 
-    Function(std::string name, size_t arity, Chunk chunk) : name(std::move(name)), arity(arity), chunk(std::move(chunk)) {}
+    Function(std::string name,
+             size_t arity,
+             Chunk chunk,
+             std::vector<std::optional<std::string>> param_types,
+             std::optional<std::string> return_type = std::nullopt)
+        : name(std::move(name)),
+          arity(arity),
+          chunk(std::move(chunk)),
+          param_types(std::move(param_types)),
+          return_type(std::move(return_type))
+    {
+    }
 };
 
 struct BoundMethod

@@ -1,17 +1,19 @@
-def i = 0;
+// This example uses the partially implemented type checking system
+
+def i: number = 0;
 while(i < 6) {
 	if((i + 1) == 6) { println(i + "\n"); }
 	else { println(i); }
-	i = i + 1;
+	i += 1;
 }
 
-def x = 0;
-def cond = true;
+def x: number = 0;
+def cond: bool = true;
 while(cond) {
 	if(x == 5) {
 		cond = false;
 	}
 
 	println(x);
-	x = x + 1;
+	x += 1;
 }

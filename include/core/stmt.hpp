@@ -110,8 +110,15 @@ struct WhileStmt : Stmt, public std::enable_shared_from_this<WhileStmt>
 
 struct VarStmt : Stmt, public std::enable_shared_from_this<VarStmt>
 {
-    VarStmt(Token name, std::shared_ptr<Expression> initializer, bool is_const = false)
-        : name(std::move(name)), initializer(std::move(initializer)), is_const(is_const)
+    VarStmt(
+        Token name,
+        std::shared_ptr<Expression> initializer,
+        bool is_const = false,
+        std::optional<std::string> type_name = std::nullopt)
+        : name(std::move(name)),
+          initializer(std::move(initializer)),
+          is_const(is_const),
+          type_name(std::move(type_name))
     {
     }
 
@@ -122,18 +129,37 @@ struct VarStmt : Stmt, public std::enable_shared_from_this<VarStmt>
 
     const Token name;
     const std::shared_ptr<Expression> initializer;
+
     bool is_const;
+
+    std::optional<std::string> type_name;
+};
+
+struct Parameter
+{
+    Token name;
+    std::optional<std::string> type_name;
 };
 
 struct FunctionStmt : Stmt, public std::enable_shared_from_this<FunctionStmt>
 {
     Token name;
-    std::vector<Token> params;
+    std::vector<Parameter> params;
     std::vector<std::shared_ptr<Stmt>> body;
+    std::optional<std::string> return_type;
     bool is_method = false;
 
-    FunctionStmt(Token name, std::vector<Token> params, std::vector<std::shared_ptr<Stmt>> body)
-        : name(std::move(name)), params(std::move(params)), body(std::move(body)) {}
+    FunctionStmt(
+        Token name,
+        std::vector<Parameter> params,
+        std::vector<std::shared_ptr<Stmt>> body,
+        std::optional<std::string> return_type)
+        : name(std::move(name)),
+          params(std::move(params)),
+          body(std::move(body)),
+          return_type(std::move(return_type))
+    {
+    }
 
     Value accept(StmtVisitor &visitor) override
     {

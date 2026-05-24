@@ -1,0 +1,69 @@
+#include "sixui/input.crb"
+#include "sixui/text.crb"
+#include "sixui/button.crb"
+#include "sixui/list.crb"
+
+const KEY_ENTER = 257;
+
+gui.init("Interface", 800, 600);
+gui.start();
+
+class Interface
+{
+	function init()
+	{
+        this.items = ["Apple", "Orange"];
+
+		this.name_field = InputField(125, 80, 300, 30, "", false);
+        this.items_list = List(460, 80, 300, 50 * this.items.length(), this.items, this.items.length());
+
+		this.title = Text("Inventory", 20, 10, 32, [244, 244, 244]);
+		this.name_text = Text("Name", 25, 85, 20, [244, 244, 244]);
+
+		this.save = Button(125, 120, 150, 40, "Save", 20);
+
+		this.save.set_button_color(0, 200, 200);
+		this.save.set_button_hover_color(0, 230, 230);
+		this.save.set_button_clicked_color(0, 150, 150);
+
+		this.save.set_text_color(20, 20, 20);
+		this.save.set_text_hover_color(255, 255, 255);
+		this.save.set_text_clicked_color(255, 255, 255);
+	}
+
+	function run()
+	{
+		this.title.handle();
+
+		this.name_field.handle();
+		this.name_text.handle();
+
+        this.items_list.handle();
+
+		this.save.handle();
+	}
+
+	function get_state()
+	{
+        this.items.push(this.name_field.get_text());
+        this.items_list = List(460, 80, 300, 50 * this.items.length(), this.items, this.items.length());
+		return {
+			"name": this.name_field.get_text()
+		};
+	}
+}
+
+def ui = Interface();
+gui.set_background(48, 48, 48);
+
+while(gui.tick())
+{
+	ui.run();
+    if(gui.key_pressed(KEY_ENTER) or ui.save.clicked_once())
+    {
+        println(ui.get_state());
+    }
+}
+
+
+

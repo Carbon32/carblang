@@ -1,5 +1,7 @@
+// This example uses the partially implemented type checking system
+
 class Person {
-	function init(name, age, job) {
+	function init(name, age, job): instance {
 		this.name = name;
 		this.age = age;
 		this.job = job;

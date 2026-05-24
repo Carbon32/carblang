@@ -1,11 +1,13 @@
+// This example uses the partially implemented type checking system
+
 class Person {
-	function init(name, age, job) {
+	function init(name, age, job): instance {
 		this.name = name;
 		this.age = age;
 		this.job = job;
 	}
 
-	function print_person() {
+	function print_person(): nothing {
 		printf("Name: %, Age: %, Job: %\n", this.name, this.age, this.job);
 	}
 }

@@ -6,9 +6,14 @@ class Compiler : public ExpressionVisitor, public StmtVisitor
         std::string name;
         int depth;
         bool is_const = false;
+        std::optional<std::string> type_name;
     };
 
     std::vector<Local> locals;
+    std::unordered_map<std::string, std::string> global_types;
+    std::unordered_map<std::string, std::shared_ptr<Function>> function_signatures;
+
+    std::optional<std::string> current_return_type;
     std::set<std::string> included_files;
     int scope_depth = 0;
     bool in_function = false;
@@ -45,6 +50,8 @@ public:
     Value visit_return_stmt(std::shared_ptr<ReturnStmt> stmt) override;
     Value visit_include_stmt(std::shared_ptr<IncludeStmt> stmt) override;
     Value visit_class_stmt(std::shared_ptr<ClassStmt> stmt) override;
+
+    std::optional<std::string> infer_expression_type(std::shared_ptr<Expression> expr);
 
 private:
     void emit(OpCode op);

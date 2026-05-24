@@ -65,19 +65,183 @@ int Compiler::emit_jump(OpCode op)
     return offset_index;
 }
 
+std::optional<std::string> Compiler::infer_expression_type(std::shared_ptr<Expression> expr)
+{
+    if (auto lit = std::dynamic_pointer_cast<Literal>(expr))
+    {
+        const auto &v = lit->value;
+
+        if (std::holds_alternative<double>(v))
+            return "number";
+
+        if (std::holds_alternative<std::string>(v))
+            return "string";
+
+        if (std::holds_alternative<bool>(v))
+            return "bool";
+
+        if (std::holds_alternative<std::nullptr_t>(v))
+            return "null";
+
+        if (std::holds_alternative<std::shared_ptr<Function>>(v))
+            return "function";
+
+        if (std::holds_alternative<std::shared_ptr<Class>>(v))
+            return "class";
+
+        if (std::holds_alternative<std::shared_ptr<Instance>>(v))
+            return "instance";
+
+        if (std::holds_alternative<std::shared_ptr<UserBoundMethod>>(v))
+            return "bound_method";
+
+        if (std::holds_alternative<std::shared_ptr<BoundMethod>>(v))
+            return "native_method";
+
+        if (std::holds_alternative<std::shared_ptr<Tag>>(v))
+            return "tag";
+
+        if (std::holds_alternative<std::shared_ptr<Texture2D>>(v))
+            return "texture2d";
+
+        if (std::holds_alternative<std::shared_ptr<TextElement>>(v))
+            return "text_element";
+
+        if (std::holds_alternative<std::shared_ptr<Dict>>(v))
+            return "dict";
+
+        if (std::holds_alternative<std::shared_ptr<Array>>(v))
+            return "array";
+    }
+
+    if (auto call = std::dynamic_pointer_cast<Call>(expr))
+    {
+        if (auto get =
+                std::dynamic_pointer_cast<Get>(call->callee))
+        {
+            // I will fix this later
+        }
+    }
+
+    if (std::dynamic_pointer_cast<ArrayExpr>(expr))
+        return "array";
+
+    if (std::dynamic_pointer_cast<DictExpr>(expr))
+        return "dict";
+
+    if (auto var = std::dynamic_pointer_cast<Variable>(expr))
+    {
+        int slot = resolve_local(var->name.lexeme);
+
+        if (slot != -1)
+        {
+            auto &local = locals[slot];
+
+            if (local.type_name)
+                return local.type_name;
+        }
+
+        auto it = global_types.find(var->name.lexeme);
+
+        if (it != global_types.end())
+            return it->second;
+    }
+
+    if (auto unary = std::dynamic_pointer_cast<Unary>(expr))
+    {
+        switch (unary->operator_token.type)
+        {
+        case MINUS:
+            return "number";
+
+        case BANG:
+            return "bool";
+
+        default:
+            break;
+        }
+    }
+
+    if (auto binary = std::dynamic_pointer_cast<Binary>(expr))
+    {
+        auto left = infer_expression_type(binary->left);
+        auto right = infer_expression_type(binary->right);
+
+        switch (binary->operator_token.type)
+        {
+        case PLUS:
+            if (!left || !right)
+                return std::nullopt;
+
+            if (*left == "string" && *right == "string")
+                return "string";
+            if (*left == "array" && *right == "array")
+                return "array";
+            if (*left == "number" && *right == "number")
+                return "number";
+
+            return std::nullopt;
+
+        case MINUS:
+        case STAR:
+        case SLASH:
+        case PERCENT:
+        case STAR_STAR:
+            return "number";
+
+        case GREATER:
+        case GREATER_EQUAL:
+        case LESS:
+        case LESS_EQUAL:
+        case EQUAL_EQUAL:
+        case BANG_EQUAL:
+            return "bool";
+
+        default:
+            break;
+        }
+    }
+
+    if (auto call =
+            std::dynamic_pointer_cast<Call>(expr))
+    {
+        if (auto var =
+                std::dynamic_pointer_cast<Variable>(
+                    call->callee))
+        {
+            auto it =
+                function_signatures.find(
+                    var->name.lexeme);
+
+            if (it != function_signatures.end())
+            {
+                return it->second->return_type;
+            }
+        }
+    }
+
+    return std::nullopt;
+}
+
 std::shared_ptr<Function> Compiler::compile_function(FunctionStmt &stmt, bool is_constructor, bool is_method)
 {
     Compiler function_compiler;
     function_compiler.in_function = true;
+    function_compiler.current_return_type = stmt.return_type;
     function_compiler.begin_scope();
 
     if (is_method)
         function_compiler.locals.push_back({"this", 0, true});
 
+    std::vector<std::optional<std::string>> param_types;
     int slot = function_compiler.locals.size();
     for (auto &param : stmt.params)
     {
-        function_compiler.locals.push_back({param.lexeme, 0, false});
+        function_compiler.locals.push_back({param.name.lexeme,
+                                            0,
+                                            false,
+                                            param.type_name});
+        param_types.push_back(param.type_name);
         slot++;
     }
 
@@ -94,7 +258,9 @@ std::shared_ptr<Function> Compiler::compile_function(FunctionStmt &stmt, bool is
     return std::make_shared<Function>(
         stmt.name.lexeme,
         stmt.params.size(),
-        function_compiler.chunk);
+        function_compiler.chunk,
+        param_types,
+        stmt.return_type);
 }
 
 void Compiler::patch_jump(int offset)
@@ -217,10 +383,33 @@ Value Compiler::visit_expression_stmt(std::shared_ptr<ExprStmt> stmt)
 
 Value Compiler::visit_var_stmt(std::shared_ptr<VarStmt> stmt)
 {
+    auto initializer_type = stmt->initializer ? infer_expression_type(stmt->initializer) : std::nullopt;
+
     if (scope_depth > 0 && in_function)
     {
         int slot_index = locals.size();
-        locals.push_back({stmt->name.lexeme, scope_depth, stmt->is_const});
+        locals.push_back({stmt->name.lexeme,
+                          scope_depth,
+                          stmt->is_const,
+                          stmt->type_name});
+
+        if (stmt->type_name && stmt->initializer)
+        {
+            if (!initializer_type)
+            {
+                throw std::runtime_error(
+                    "Cannot infer type for initializer of \"" +
+                    stmt->name.lexeme + "\"");
+            }
+
+            if (*initializer_type != *stmt->type_name)
+            {
+                throw std::runtime_error(
+                    "Type mismatch for variable '" + stmt->name.lexeme +
+                    "': declared '" + *stmt->type_name +
+                    "', but initializer is '" + *initializer_type + "'");
+            }
+        }
 
         if (stmt->initializer)
             stmt->initializer->accept(*this);
@@ -233,15 +422,38 @@ Value Compiler::visit_var_stmt(std::shared_ptr<VarStmt> stmt)
     else
     {
         if (stmt->initializer)
+        {
+            if (stmt->type_name)
+            {
+                if (!initializer_type)
+                    throw std::runtime_error(
+                        "Cannot infer type for initializer of global \"" +
+                        stmt->name.lexeme + "\"");
+
+                if (*initializer_type != *stmt->type_name)
+                    throw std::runtime_error(
+                        "Type mismatch for global variable '" + stmt->name.lexeme +
+                        "': declared '" + *stmt->type_name +
+                        "', but initializer is '" + *initializer_type + "'");
+            }
+
             stmt->initializer->accept(*this);
+        }
         else
+        {
             emit(OpCode::NULL);
+        }
 
         uint8_t name = chunk.add_constant(stmt->name.lexeme);
+
         if (stmt->is_const)
             emit(OpCode::DEFINE_CONST);
         else
+        {
+            if (stmt->type_name)
+                global_types[stmt->name.lexeme] = *stmt->type_name;
             emit(OpCode::DEFINE_GLOBAL);
+        }
         emit_byte(name);
     }
 
@@ -317,23 +529,65 @@ Value Compiler::visit_logical_expression(std::shared_ptr<Logical> expr)
 
 Value Compiler::visit_assign_expression(std::shared_ptr<Assign> expr)
 {
-    expr->value->accept(*this);
+    auto inferred = infer_expression_type(expr->value);
+
     int slot = in_function ? resolve_local(expr->name.lexeme) : -1;
 
     if (slot != -1)
     {
-        if (locals[slot].is_const)
-            throw std::runtime_error("Cannot reassign const variable \"" + expr->name.lexeme + "\"");
+        auto &local = locals[slot];
+
+        if (local.is_const)
+        {
+            throw std::runtime_error(
+                "Cannot reassign const variable \"" +
+                expr->name.lexeme + "\"");
+        }
+
+        if (local.type_name && inferred)
+        {
+            if (*local.type_name != *inferred)
+            {
+                throw std::runtime_error(
+                    "Cannot assign " +
+                    *inferred +
+                    " to variable \"" +
+                    expr->name.lexeme +
+                    "\" of type " +
+                    *local.type_name);
+            }
+        }
+
+        expr->value->accept(*this);
 
         emit(OpCode::SET_LOCAL);
         emit_byte(slot);
+
+        return {};
     }
-    else
+
+    auto it = global_types.find(expr->name.lexeme);
+
+    if (it != global_types.end() && inferred)
     {
-        uint8_t name = chunk.add_constant(expr->name.lexeme);
-        emit(OpCode::SET_GLOBAL);
-        emit_byte(name);
+        if (it->second != *inferred)
+        {
+            throw std::runtime_error(
+                "Cannot assign " +
+                *inferred +
+                " to variable \"" +
+                expr->name.lexeme +
+                "\" of type " +
+                it->second);
+        }
     }
+
+    expr->value->accept(*this);
+
+    uint8_t name = chunk.add_constant(expr->name.lexeme);
+
+    emit(OpCode::SET_GLOBAL);
+    emit_byte(name);
 
     return {};
 }
@@ -376,12 +630,52 @@ Value Compiler::visit_function_stmt(std::shared_ptr<FunctionStmt> stmt)
     emit(OpCode::DEFINE_GLOBAL);
     emit_byte(name_index);
 
+    fn->param_types.clear();
+    for (auto &param : stmt->params)
+        fn->param_types.push_back(param.type_name ? *param.type_name : "any");
+
+    fn->return_type = stmt->return_type;
+    function_signatures[stmt->name.lexeme] = fn;
+
     return {};
 }
 
 Value Compiler::visit_call_expression(std::shared_ptr<Call> expr)
 {
     expr->callee->accept(*this);
+
+    std::shared_ptr<Function> callee_fn = nullptr;
+
+    if (auto var = std::dynamic_pointer_cast<Variable>(expr->callee))
+    {
+        auto it = function_signatures.find(var->name.lexeme);
+        if (it != function_signatures.end())
+            callee_fn = it->second;
+    }
+
+    if (callee_fn)
+    {
+        if (expr->arguments.size() != callee_fn->arity)
+        {
+            throw std::runtime_error(
+                "Expected " + std::to_string(callee_fn->arity) +
+                " arguments but got " + std::to_string(expr->arguments.size()));
+        }
+
+        for (size_t i = 0; i < expr->arguments.size(); i++)
+        {
+            auto arg_type = infer_expression_type(expr->arguments[i]);
+            const auto &param_type = callee_fn->param_types[i];
+
+            if (param_type != "any" && arg_type && *arg_type != param_type)
+            {
+                throw std::runtime_error(
+                    "Argument " + std::to_string(i + 1) +
+                    " expected type \"" + (param_type ? *param_type : "any") + "\"" +
+                    ", got \"" + (arg_type ? *arg_type : "unknown") + "\"");
+            }
+        }
+    }
 
     for (auto &arg : expr->arguments)
         arg->accept(*this);
@@ -394,12 +688,39 @@ Value Compiler::visit_call_expression(std::shared_ptr<Call> expr)
 
 Value Compiler::visit_return_stmt(std::shared_ptr<ReturnStmt> stmt)
 {
+    std::optional<std::string> actual_type;
+
     if (stmt->value)
+    {
         stmt->value->accept(*this);
+        actual_type = infer_expression_type(stmt->value);
+    }
     else
+    {
         emit(OpCode::NULL);
+        actual_type = "nothing";
+    }
+
+    if (current_return_type)
+    {
+        if (!actual_type)
+        {
+            throw std::runtime_error("Cannot infer return type");
+        }
+
+        if (*current_return_type != "any" &&
+            *actual_type != *current_return_type)
+        {
+            throw std::runtime_error(
+                "Expected return type \"" +
+                *current_return_type +
+                "\", got \"" +
+                *actual_type + "\"");
+        }
+    }
 
     emit(OpCode::RETURN);
+
     return {};
 }
 

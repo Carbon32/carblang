@@ -1,12 +1,14 @@
+// This example uses the partially implemented type checking system
+
 class Person {
-	function init(name, age) {
+	function init(name, age): instance {
 		class Human {
-			function init(name, age) {
+			function init(name, age): instance {
 				this.name = name;
 				this.age = age;
 			}
 
-			function print_values() {
+			function print_values(): nothing {
 				printf("Name: %\nAge: %", this.name, this.age);
 			}
 		}
@@ -15,5 +17,5 @@ class Person {
 	}
 }
 
-def p = Person("John", 28);
-p.human.print_values();
+def person = Person("John", 28);
+person.human.print_values();

@@ -1,5 +1,7 @@
+// This example uses the partially implemented type checking system
+
 class Member {
-    function init(name, role) {
+    function init(name, role): instance {
         this.name = name;
         this.role = role;
     }
@@ -15,28 +17,26 @@ class Team {
         this.members = [];
     }
 
-    function add_member(member) {
+    function add_member(member: instance) {
         this.members.push(member);
     }
 
-    function remove_member(index) {
+    function remove_member(index: number) {
         return this.members.remove(index);
     }
 
-    function get_member_names() {
-        def names = [];
-        def i;
-        for(i = 0; i < this.members.length(); i = i + 1) {
+    function get_member_names(): array {
+        def names: array = [];
+        for(def i: number = 0; i < this.members.length(); i = i + 1) {
             names.push(this.members[i].name);
         }
         return names;
     }
 
-    function print_team() {
+    function print_team(): nothing {
         println("Team: " + this.team_name);
         println("Members:");
-        def i;
-        for(i = 0; i < this.members.length(); i = i + 1) {
+        for(def i: number = 0; i < this.members.length(); i = i + 1) {
             println("- " + this.members[i].get_information());
         }
     }

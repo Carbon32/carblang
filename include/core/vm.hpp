@@ -1,3 +1,5 @@
+bool compare_values(const Value &a, const Value &b, TokenType op);
+
 class VM
 {
     Chunk *chunk = nullptr;

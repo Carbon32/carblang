@@ -12,6 +12,27 @@ std::vector<std::shared_ptr<Stmt>> Parser::parse()
     return statements;
 }
 
+bool Parser::is_valid_type(const std::string &type)
+{
+    static const std::unordered_set<std::string> valid_types = {
+        "number",
+        "string",
+        "bool",
+        "null",
+        "array",
+        "dict",
+        "function",
+        "class",
+        "instance",
+        "bound_method",
+        "native_method",
+        "tag",
+        "texture2d",
+        "text_element"};
+
+    return valid_types.contains(type);
+}
+
 std::shared_ptr<Expression> Parser::expression()
 {
     return assignment();
@@ -178,27 +199,61 @@ std::shared_ptr<Stmt> Parser::while_statement()
 
 std::shared_ptr<Stmt> Parser::var_declaration()
 {
-    Token name = this->consume(IDENTIFIER, "Expected a variable name");
+    Token name = consume(IDENTIFIER, "Expected a variable name");
+
+    std::optional<std::string> type_name = std::nullopt;
+
+    if (match(COLON))
+    {
+        Token type = consume(IDENTIFIER, "Expected type name after \":\"");
+        if (!is_valid_type(type.lexeme))
+        {
+            throw error(type, "Unknown type \"" + type.lexeme + "\"");
+        }
+        type_name = type.lexeme;
+    }
 
     std::shared_ptr<Expression> initializer = nullptr;
+
     if (match(EQUAL))
         initializer = expression();
 
-    this->consume(SEMICOLON, "Expected \";\" after variable declaration");
-    return ANG<VarStmt>(std::move(name), initializer);
+    consume(SEMICOLON, "Expected \";\" after variable declaration");
+
+    return ANG<VarStmt>(
+        std::move(name),
+        initializer,
+        false,
+        type_name);
 }
 
 std::shared_ptr<Stmt> Parser::const_declaration()
 {
     Token name = consume(IDENTIFIER, "Expected a variable name");
 
-    consume(EQUAL, "Const variables must be initialized");
+    std::optional<std::string> type_name = std::nullopt;
+
+    if (match(COLON))
+    {
+        Token type = consume(IDENTIFIER, "Expected type name after \":\"");
+        if (!is_valid_type(type.lexeme))
+        {
+            throw error(type, "Unknown type \"" + type.lexeme + "\"");
+        }
+        type_name = type.lexeme;
+    }
+
+    consume(EQUAL, "Constant variables must be initialized");
 
     std::shared_ptr<Expression> initializer = expression();
 
-    consume(SEMICOLON, "Expected \";\" after const declaration");
+    consume(SEMICOLON, "Expected \";\" after constant declaration");
 
-    return ANG<VarStmt>(std::move(name), initializer, true);
+    return ANG<VarStmt>(
+        std::move(name),
+        initializer,
+        true,
+        type_name);
 }
 
 std::shared_ptr<Stmt> Parser::function_declaration()
@@ -206,23 +261,61 @@ std::shared_ptr<Stmt> Parser::function_declaration()
     Token name = consume(IDENTIFIER, "Expected function name");
     consume(LEFT_PAREN, "Expected \"(\" after function name");
 
-    std::vector<Token> parameters;
+    std::vector<Parameter> parameters;
     if (!check(RIGHT_PAREN))
     {
         do
         {
             if (parameters.size() >= 255)
                 error(peek(), "Can\"t have more than 255 parameters");
-            parameters.push_back(consume(IDENTIFIER, "Expected parameter name"));
+            Token param_name =
+                consume(IDENTIFIER, "Expected parameter name");
+
+            std::optional<std::string> type_name = std::nullopt;
+
+            if (match(COLON))
+            {
+                Token type =
+                    consume(IDENTIFIER, "Expected parameter type");
+
+                if (!is_valid_type(type.lexeme) &&
+                    type.lexeme != "any")
+                {
+                    throw error(type,
+                                "Unknown type \"" + type.lexeme + "\"");
+                }
+
+                type_name = type.lexeme;
+            }
+
+            parameters.push_back({param_name,
+                                  type_name});
         } while (match(COMMA));
     }
 
     consume(RIGHT_PAREN, "Expected \")\" after parameters");
+    std::optional<std::string> return_type = std::nullopt;
+
+    if (match(COLON))
+    {
+        Token type =
+            consume(IDENTIFIER, "Expected return type");
+
+        if (!is_valid_type(type.lexeme) &&
+            type.lexeme != "any" && type.lexeme != "nothing")
+        {
+            throw error(type,
+                        "Unknown return type \"" +
+                            type.lexeme + "\"");
+        }
+
+        return_type = type.lexeme;
+    }
     consume(LEFT_BRACE, "Expected \"{\" before function body");
 
     std::vector<std::shared_ptr<Stmt>> body = block();
 
-    return ANG<FunctionStmt>(std::move(name), std::move(parameters), std::move(body));
+    return ANG<FunctionStmt>(std::move(name), std::move(parameters), std::move(body), return_type);
 }
 
 std::shared_ptr<Stmt> Parser::expression_statement()

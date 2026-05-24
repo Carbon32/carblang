@@ -1,13 +1,15 @@
+// This example uses the partially implemented type checking system
+
 class Person {
-	function get_name() {
+	function get_name(): string {
 		return "Name: John";
 	}
 
-	function get_age() {
+	function get_age(): string {
 		return "Age: 28";
 	}
 
-	function get_job() {
+	function get_job(): string {
 		return "Job: Miner";
 	}
 }

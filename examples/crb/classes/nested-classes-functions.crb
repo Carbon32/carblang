@@ -1,7 +1,9 @@
+// This example uses the partially implemented type checking system
+
 class Vehicle {
-	function init(horse_power, color) {
+	function init(horse_power, color): instance {
 		class Engine {
-			function init(horse_power) {
+			function init(horse_power): any {
 				if(horse_power > 5000)
 				{
 					println("Too much horse power was given");
@@ -14,7 +16,7 @@ class Vehicle {
 		}
 
 		class Color {
-			function init(r, g, b) {
+			function init(r: number, g: number, b: number): any {
 				if((r > 255 or r < 0) or (g > 255 or g < 0) or (b > 255 or b < 0)) {
 					println("Invalid colors");
 					return;
@@ -30,9 +32,9 @@ class Vehicle {
 		this.color = Color(color[0], color[1], color[2]);
 	}
 
-	function print_information(type) {
+	function print_information(type: string): nothing {
 		if(type == "raw") {
-			function vehicle_information_raw(obj) {
+			function vehicle_information_raw(obj: instance): nothing {
 				printf("\nRaw Data:\nThe Engine: %\nColor: %\n", obj.engine, obj.color);
 			}
 			vehicle_information_raw(this);
@@ -40,9 +42,9 @@ class Vehicle {
 		}
 
 		if(type == "clean") {
-			function vehicle_information_clean(obj) {
-				def local_engine = "No engine";
-				def local_color = "No color";
+			function vehicle_information_clean(obj: instance): nothing {
+				def local_engine: string = "No engine";
+				def local_color: string = "No color";
 				if(!(obj.engine == null)) {
 					local_engine = obj.engine.horse_power;
 				}

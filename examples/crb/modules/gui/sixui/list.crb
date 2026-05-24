@@ -40,13 +40,9 @@ class List
         this.rects = [];
 
         def i;
-        for(i = 0; i < this.visible_items; i = i + 1)
+        for(i = 0; i < this.visible_items and (i + this.scroll_index) < this.items.length(); i = i + 1)
         {
             def item_index = i + this.scroll_index;
-            if(item_index == this.items.length() or item_index > this.items.length())
-            {
-                break;
-            }
 
             def item_y = this.y + i * this.item_height;
             def item_rect = [this.x, item_y, this.width, this.item_height];
