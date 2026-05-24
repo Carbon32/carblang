@@ -1,0 +1,34 @@
+{
+    "name": "carblang",
+    "displayName": "Carblang",
+    "description": "",
+    "version": "1.0.0",
+    "engines": {
+        "vscode": "^1.120.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [
+            {
+                "id": "carblang",
+                "aliases": [
+                    "Carblang",
+                    "carblang"
+                ],
+                "extensions": [
+                    ".crb"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "carblang",
+                "scopeName": "source.carblang",
+                "path": "./syntaxes/carblang.tmLanguage.json"
+            }
+        ]
+    }
+}
