@@ -1,12 +1,10 @@
-// This example uses the partially implemented type checking system
-
 class Person {
-	function init(name): instance {
+	function init(name: string): Person {
 		this.name = name;
 	}
 
 	function get_name(): string {
-		return "Name: John";
+		return "Name: " + this.name;
 	}
 
 	function get_age(): string {
@@ -19,12 +17,16 @@ class Person {
 }
 
 class Worker : Person {
-	function print_name(): nothing {
-		printf("The name is %\n", this.name);
-  
+    function init(name: string, work_status: bool): Worker {
+         super.init(name);
+        this.work_status = work_status;
+    }
+
+	function print_information(): nothing {
+		printf("%, %, %, Working?: %", super.get_name(), super.get_age(), super.get_job(), this.work_status);
 	}
 }
 
-def john = Worker("John");
+def john: Worker = Worker("John", true);
 printf("%, %, %\n", john.get_name(), john.get_age(), john.get_job());
-john.print_name();
+john.print_information();

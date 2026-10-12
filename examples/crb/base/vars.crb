@@ -1,5 +1,3 @@
-// This example uses the partially implemented type checking system
-
 def x: number= 4;
 def y: number = 5;
 

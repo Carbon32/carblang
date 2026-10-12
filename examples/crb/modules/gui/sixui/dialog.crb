@@ -1,48 +1,39 @@
+#include "button.crb";
+
 class Dialog
 {
-    function init(x, y, width, height, title, message, button_texts)
+    function init(x: number, y: number, width: number, height: number, title: string, message: string, button_texts: array[string]): Dialog
     {
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
+        this.x: number = x;
+        this.y: number = y;
+        this.width: number = width;
+        this.height: number = height;
 
-        this.title = title;
-        this.message = message;
-        this.buttons = [];
+        this.title: string = title;
+        this.message: string = message;
+        this.buttons: array[Button] = [];
 
-        this.rect = [x, y, width, height];
+        this.rect: array[number] = [x, y, width, height];
 
-        class Color
+        this.bg_color: Color = Color(50, 50, 50);
+        this.border_color: Color = Color(200, 200, 200);
+        this.title_color: Color = Color(220, 220, 220);
+        this.message_color: Color = Color(200, 200, 200);
+
+        this.font_size_title: number = 24;
+        this.font_size_message: number = 18;
+
+        def btn_width: number = 100;
+        def btn_height: number = 40;
+        def spacing: number = 20;
+        def total_width: number = button_texts.length() * btn_width + (button_texts.length() - 1) * spacing;
+        def start_x: number = this.x + (this.width - total_width) / 2;
+        def btn_y: number = this.y + this.height - btn_height - 20;
+
+        for(def i = 0; i < button_texts.length(); i++)
         {
-            function init(r, g, b)
-            {
-                this.r = r;
-                this.g = g;
-                this.b = b;
-            }
-        }
-
-        this.bg_color = Color(50, 50, 50);
-        this.border_color = Color(200, 200, 200);
-        this.title_color = Color(220, 220, 220);
-        this.message_color = Color(200, 200, 200);
-
-        this.font_size_title = 24;
-        this.font_size_message = 18;
-
-        def btn_width = 100;
-        def btn_height = 40;
-        def spacing = 20;
-        def total_width = button_texts.length() * btn_width + (button_texts.length() - 1) * spacing;
-        def start_x = this.x + (this.width - total_width) / 2;
-        def btn_y = this.y + this.height - btn_height - 20;
-
-        def i;
-        for(i = 0; i < button_texts.length(); i = i + 1)
-        {
-            def btn_x = start_x + i * (btn_width + spacing);
-            def btn = Button(btn_x, btn_y, btn_width, btn_height, button_texts[i], 20);
+            def btn_x: number = start_x + i * (btn_width + spacing);
+            def btn: Button = Button(btn_x, btn_y, btn_width, btn_height, button_texts[i], 20);
 
             btn.set_button_color(0, 200, 200);
             btn.set_button_hover_color(0, 230, 230);
@@ -56,7 +47,7 @@ class Dialog
         }
     }
 
-    function draw()
+    function draw(): nothing
     {
         gui.draw_rect_advanced(
             this.x,
@@ -79,17 +70,17 @@ class Dialog
             this.title_color.b
         );
 
-        def line_height = this.font_size_message + 5;
-        def current_y = this.y + 60;
+        def line_height: number = this.font_size_message + 5;
+        def current_y: number = this.y + 60;
 
-        def i = 0;
-        def start = 0;
-        def msg_len = this.message.length();
+        def i: number = 0;
+        def start: number = 0;
+        def msg_len: number = this.message.length();
         while(i < msg_len or i == msg_len)
         {
             if(i == msg_len or this.message[i] == "\n")
             {
-                def line = this.message.slice(start, i);
+                def line: string = this.message.slice(start, i);
                 gui.draw_text_advanced(
                     line,
                     this.x + 20,
@@ -102,31 +93,29 @@ class Dialog
                 current_y = current_y + line_height;
                 start = i + 1;
             }
-            i = i + 1;
+            i++;
         }
 
-        def j;
-        for(j = 0; j < this.buttons.length(); j = j + 1)
+        for(def j = 0; j < this.buttons.length(); j++)
         {
             this.buttons[j].handle();
         }
     }
 
-    function handle()
+    function handle(): nothing
     {
         this.draw();
     }
 
-    function get_clicked()
+    function get_clicked(): string
     {
-        def j;
-        for(j = 0; j < this.buttons.length(); j = j + 1)
+        for(def j = 0; j < this.buttons.length(); j++)
         {
             if(this.buttons[j].clicked_once())
             {
                 return this.buttons[j].button_text;
             }
         }
-        return null;
+        return "";
     }
 }

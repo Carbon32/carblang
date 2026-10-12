@@ -7,8 +7,7 @@ file.append("hello.txt", "\nHere is more text");
 x = file.read("hello.txt");
 println(x);
 
-def i;
-for(i = 0; i < 5; i = i + 1) {
+for(def i = 0; i < 5; i = i + 1) {
 	file.append("hello.txt", "\nText: " + i);
 }
 

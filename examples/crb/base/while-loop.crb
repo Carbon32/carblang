@@ -1,10 +1,7 @@
-// This example uses the partially implemented type checking system
-
-def i: number = 0;
-while(i < 6) {
+while(def i: number = 0; i < 6) {
 	if((i + 1) == 6) { println(i + "\n"); }
 	else { println(i); }
-	i += 1;
+	i++;
 }
 
 def x: number = 0;
@@ -15,5 +12,5 @@ while(cond) {
 	}
 
 	println(x);
-	x += 1;
+	x++;
 }

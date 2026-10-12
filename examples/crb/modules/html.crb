@@ -1,8 +1,7 @@
-def content = ul();
-const arr = ["Brush teeth", "Eat breakfast", "Go for a walk"];
+def content: tag = ul();
+const arr: array[string] = ["Brush teeth", "Eat breakfast", "Go for a walk"];
 
-def i;
-for(i = 0; i < arr.length(); i = i + 1)
+for(def i = 0; i < arr.length(); i++)
 {
 	content = content + li(arr[i]).attr("style", "color: white;");
 }

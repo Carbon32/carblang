@@ -1,5 +1,3 @@
-// This example uses the partially implemented type checking system
-
 class Person {
 	function get_name(): string {
 		return "Name: John";
@@ -14,5 +12,5 @@ class Person {
 	}
 }
 
-def john = Person();
+def john: Person = Person();
 printf("%, %, %\n", john.get_name(), john.get_age(), john.get_job());

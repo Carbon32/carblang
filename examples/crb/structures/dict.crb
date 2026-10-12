@@ -1,4 +1,4 @@
-def d = {
+def d: dict[string, any] = {
 			"first_name": "James",
 			"last_name": "Bond",
 			"age": 24,
@@ -22,7 +22,7 @@ println("Removed (first_name): " + d);
 println("Pop: " + d.pop("age"));
 println("After pop: " + d);
 
-def new_d = d.copy();
+def new_d: dict = d.copy();
 new_d["test"] = 6;
 println("new_d (copy): " + new_d);
 println("d (original): " + d);

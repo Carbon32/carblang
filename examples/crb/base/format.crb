@@ -1,5 +1,3 @@
-// This example uses the partially implemented type checking system
-
 def first_name: string = "Eric";
 def last_name: string = "Peterson";
 def age: number = 24;

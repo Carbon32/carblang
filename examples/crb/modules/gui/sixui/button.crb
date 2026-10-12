@@ -1,72 +1,62 @@
+#include "color.crb";
+
 class Button
 {
-    function init(x, y, width, height, button_text, font_size)
+    function init(x: number, y: number, width: number, height: number, button_text: string, font_size: number): Button
     {
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
+        this.x: number = x;
+        this.y: number = y;
+        this.width: number = width;
+        this.height: number = height;
 
-        this.font_size = font_size;
-        this.button_text = button_text;
-        this.clicked = false;
+        this.font_size: number = font_size;
+        this.button_text: string = button_text;
+        this.clicked: bool = false;
 
-        this.text_x = this.x + (this.width - (button_text.length() * font_size * 0.6)) / 2;
-        this.text_y = this.y + (this.height - this.font_size) / 2;
+        this.text_x: number = this.x + (this.width - (button_text.length() * font_size * 0.6)) / 2;
+        this.text_y: number = this.y + (this.height - this.font_size) / 2;
 
-        this.rect = [x, y, width, height];
+        this.rect: array[number] = [x, y, width, height];
 
-        class Color
-        {
-            function init(r, g, b)
-            {
-                this.r = r;
-                this.g = g;
-                this.b = b;
-            }
-        }
-
-        this.text_color = Color(200, 200, 200);
-        this.button_color = Color(48, 48, 48);
-
-        this.text_hover_color = Color(255, 255, 255);
-        this.button_hover_color = Color(56, 56, 56);
-
-        this.text_clicked_color = Color(255, 255, 255);
-        this.button_clicked_color = Color(80, 80, 80);
+        this.text_color: Color = Color(200, 200, 200);
+        this.button_color: Color = Color(48, 48, 48);
+        this.text_hover_color: Color = Color(255, 255, 255);
+        this.button_hover_color: Color = Color(56, 56, 56);
+        this.text_clicked_color: Color = Color(255, 255, 255);
+        this.button_clicked_color: Color = Color(80, 80, 80);
     }
 
-    function set_text_clicked_color(r, g, b)
+    function set_text_clicked_color(r: number, g: number, b: number): nothing
     {
         this.text_clicked_color = Color(r, g, b);
     }
 
-    function set_button_clicked_color(r, g, b)
+    function set_button_clicked_color(r: number, g: number, b: number): nothing
     {
         this.button_clicked_color = Color(r, g, b);
     }
 
-    function set_text_hover_color(r, g, b)
+    function set_text_hover_color(r: number, g: number, b: number): nothing
     {
         this.text_hover_color = Color(r, g, b);
     }
 
-    function set_button_hover_color(r, g, b)
+    function set_button_hover_color(r: number, g: number, b: number): nothing
     {
         this.button_hover_color = Color(r, g, b);
     }
 
-    function set_text_color(r, g, b)
+    function set_text_color(r: number, g: number, b: number): nothing
     {
         this.text_color = Color(r, g, b);
     }
 
-    function set_button_color(r, g, b)
+    function set_button_color(r: number, g: number, b: number): nothing
     {
         this.button_color = Color(r, g, b);
     }
 
-    function draw(hover)
+    function draw(hover: bool): nothing
     {
         if(!hover)
         {
@@ -117,7 +107,7 @@ class Button
         }
     }
 
-    function draw_clicked()
+    function draw_clicked(): nothing
     {
         gui.draw_rect_advanced(
             this.x,
@@ -141,7 +131,7 @@ class Button
         );
     }
 
-    function handle()
+    function handle(): nothing
     {
         if(gui.rectangle_mouse_collide(this.rect)) {
             if(gui.mouse_pressed(0)) {
@@ -169,7 +159,7 @@ class Button
         }
     }
 
-    function clicked_once()
+    function clicked_once(): nothing
     {
         return gui.rectangle_mouse_collide(this.rect) and gui.mouse_pressed(0);
     }

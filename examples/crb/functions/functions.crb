@@ -1,37 +1,37 @@
-function add(a, b) {
+function add(a: number, b: number): number {
 	return a + b;
 }
 
-function sub(a, b) {
+function subtract(a: number, b: number): number {
 	return a - b;
 }
 
-function mul(a, b) {
+function multiply(a: number, b: number): number {
 	return a * b;
 }
 
-function div(a, b) {
+function divide(a: number, b: number): number {
 	return a / b;
 }
 
-function repetition_print(count, text) {
+function repetition_print(count: number, text: string): nothing {
 	if(!(count == 5)) {
 		println(text);
-		count = count + 1;
+		count++;
 	}
 }
 
-function recursion_text(count, text) {
+function recursion_text(count: number, text: string): string {
 	if(!(count == 5)) {
-		return (text + recursion_text(count + 1, text));
+		return (text + recursion_text(++count, text));
 	}
 
 	return text;
 }
 
 println(add(4, 6));
-println(sub(8, 7));
-println(mul(4, 5));
-println(div(16, 4));
+println(subtract(8, 7));
+println(multiply(4, 5));
+println(divide(16, 4));
 repetition_print(0, "Hello");
 println(recursion_text(0, "Test"));

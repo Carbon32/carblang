@@ -1,18 +1,17 @@
+#include "../sixui/input.crb"
+
 gui.init("Input", 800, 600);
 gui.start();
 
-#include "../sixui/input.crb"
+def my_input: InputField = InputField(100, 100, 300, 50, "", false);
+const enter_key: number = 257;
 
-def input = InputField(100, 100, 300, 50, "");
-
-while(gui.is_running())
+while(gui.tick())
 {
-    input.handle();
+    my_input.handle();
 
-    if(gui.key_pressed(257))
+    if(gui.key_pressed(enter_key))
     {
-        println(input.get_text());
+        println(my_input.get_text());
     }
-
-    gui.tick();
 }

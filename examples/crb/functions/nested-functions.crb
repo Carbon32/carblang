@@ -1,6 +1,6 @@
-function first_function() {
-	function second_function() {
-		function third_function() {
+function first_function(): number {
+	function second_function(): number {
+		function third_function(): number {
 			return 1;
 		}
 		return 1 + third_function();
