@@ -17,3 +17,5 @@ def peter: Person = Person("Peter", 31, "Police Officer");
 john.print_person();
 eric.print_person();
 peter.print_person();
+
+println("valid execution");

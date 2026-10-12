@@ -24,3 +24,5 @@ my_table = text.parse_csv(file.read("my_csv_data.csv"));
 printf("Results after write/read:\n%\n", text.to_csv(my_table));
 
 file.erase("my_csv_data.csv");
+
+println("valid execution");

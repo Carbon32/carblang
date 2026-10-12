@@ -25,3 +25,5 @@ def peter: Person = Person("Peter", 31, "Police Officer");
 printf("%, %, %\n", john.get_name(), john.get_age(), john.get_job());
 printf("%, %, %\n", eric.get_name(), eric.get_age(), eric.get_job());
 printf("%, %, %\n", peter.get_name(), peter.get_age(), peter.get_job());
+
+println("valid execution");

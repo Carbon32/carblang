@@ -5,7 +5,13 @@ gui.start();
 
 def box: Checkbox = Checkbox(250, 250, 25, false);
 
-while(gui.tick())
+// Disable this if you don't want the application to close after 2 seconds
+def elapsed: number = 0;
+
+while(gui.tick() and elapsed < 2)
 {
     box.handle();
+    elapsed += gui.delta();
 }
+
+println("valid execution");

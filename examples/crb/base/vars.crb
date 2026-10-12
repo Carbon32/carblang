@@ -12,3 +12,5 @@ println("a / b: " + (x / y) + "\n");
 
 println("a + c: " + (x + str));
 println("a + d: " + (x + logic.to_int()));
+
+println("valid execution");

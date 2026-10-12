@@ -6,3 +6,5 @@ for(def i: number = 0; i < 5; i++) {
 for(def j: number = 5; j < 10; j++) {
 	println("j: " + j);
 }
+
+println("valid execution");

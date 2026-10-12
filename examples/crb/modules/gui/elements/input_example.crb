@@ -6,7 +6,10 @@ gui.start();
 def my_input: InputField = InputField(100, 100, 300, 50, "", false);
 const enter_key: number = 257;
 
-while(gui.tick())
+// Disable this if you don't want the application to close after 2 seconds
+def elapsed: number = 0;
+
+while(gui.tick() and elapsed < 2)
 {
     my_input.handle();
 
@@ -14,4 +17,7 @@ while(gui.tick())
     {
         println(my_input.get_text());
     }
+    elapsed += gui.delta();
 }
+
+println("valid execution");

@@ -11,3 +11,5 @@ println(timing.minute_to_day(2880));
 println(timing.hour_to_second(2));
 println(timing.hour_to_minute(1.5));
 println(timing.hour_to_day(48));
+
+println("valid execution");

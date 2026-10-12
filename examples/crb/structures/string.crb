@@ -29,3 +29,5 @@ println("is_empty: " + "".is_empty());
 println("length: " + str.length());
 println("count \"l\": " + str.count("l") + "\n");
 printf("slice 2 to 5: \"%\"", str.slice(2, 5));
+
+println("valid execution");

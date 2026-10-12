@@ -15,3 +15,5 @@ x = file.read("hello.txt");
 println(x);
 
 file.erase("hello.txt");
+
+println("valid execution");

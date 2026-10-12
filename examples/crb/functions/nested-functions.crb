@@ -9,3 +9,5 @@ function first_function(): number {
 }
 
 println(first_function());
+
+println("valid execution");

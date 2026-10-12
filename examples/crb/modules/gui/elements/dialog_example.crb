@@ -5,13 +5,20 @@ gui.start();
 
 def dlg: Dialog = Dialog(200, 150, 400, 250, "Confirm Action", "Do you want to continue?", ["Yes", "No"]);
 
-while(gui.tick())
+// Disable this if you don't want the application to close after 2 seconds
+def elapsed: number = 0;
+def clicked: string;
+
+while(gui.tick() and elapsed < 2)
 {
     dlg.handle();
 
-    def clicked: string = dlg.get_clicked();
+    clicked = dlg.get_clicked();
     if(!(clicked == ""))
     {
         println("Button clicked: " + clicked);
     }
+    elapsed += gui.delta();
 }
+
+println("valid execution");

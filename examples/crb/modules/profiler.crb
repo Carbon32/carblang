@@ -21,3 +21,5 @@ while(j < 50000) { j++; }
 
 profiler.end("testing_two_loops");
 printf("Second run - %", profiler.report());
+
+println("valid execution");

@@ -37,3 +37,5 @@ def all_numbers: array = numbers.concat([70, 80]);
 println("After concat [70, 80]: " + all_numbers);
 numbers.clear();
 println("After clear: " + numbers);
+
+println("valid execution");

@@ -16,3 +16,5 @@ file.write("my_json_data.json", text.to_json(x));
 x = text.parse_json(file.read("my_json_data.json"));
 printf("Results after write/read: \n%\n", text.to_json(x));
 file.erase("my_json_data.json");
+
+println("valid execution");

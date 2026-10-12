@@ -31,3 +31,5 @@ else {
 if(!false) {
 	println("Negation works fine");
 }
+
+println("valid execution");

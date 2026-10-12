@@ -37,3 +37,5 @@ println("fibonacci(10) = " + math.fibonacci(10)); // 55
 
 println("palindrome(12321) = " + math.palindrome(12321)); // true
 println("palindrome(12345) = " + math.palindrome(12345)); // false
+
+println("valid execution");

@@ -6,3 +6,5 @@ def complete_string: string = format("% % %", first_name, last_name, age);
 println(complete_string);
 
 printf("Or you can do this: % % %", first_name, last_name, age);
+
+println("valid execution");

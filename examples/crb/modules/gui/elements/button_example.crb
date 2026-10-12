@@ -5,11 +5,17 @@ gui.start();
 
 def my_button: Button = Button(100, 100, 200, 60, "Button", 32);
 
-while(gui.tick())
+// Disable this if you don't want the application to close after 2 seconds
+def elapsed: number = 0;
+
+while(gui.tick() and elapsed < 2)
 {
     my_button.handle();
     if(my_button.clicked_once())
     {
         println("Clicked");
     }
+    elapsed += gui.delta();
 }
+
+println("valid execution");

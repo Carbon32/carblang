@@ -30,3 +30,5 @@ class Worker : Person {
 def john: Worker = Worker("John", true);
 printf("%, %, %\n", john.get_name(), john.get_age(), john.get_job());
 john.print_information();
+
+println("valid execution");
