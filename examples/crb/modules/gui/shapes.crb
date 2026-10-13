@@ -1,0 +1,15 @@
+gui.init("Shapes", 800, 600);
+gui.start();
+
+// Disable this if you don't want the application to close after 2 seconds
+def elapsed: number = 0;
+
+while(gui.tick() and elapsed < 2)
+{
+	gui.draw_text("Shapes", 20, 20, 20);
+	gui.draw_rect(100, 100, 200, 150);
+	gui.draw_circle(500, 300, 60);
+    elapsed += gui.delta();
+}
+
+println("valid execution");

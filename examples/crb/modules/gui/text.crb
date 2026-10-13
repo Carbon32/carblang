@@ -1,0 +1,13 @@
+gui.init("Test", 800, 600);
+gui.start();
+
+// Disable this if you don't want the application to close after 2 seconds
+def elapsed: number = 0;
+
+while(gui.tick() and elapsed < 2)
+{
+	gui.draw_text("Hello world", 280, 100, 40);
+    elapsed += gui.delta();
+}
+
+println("valid execution");

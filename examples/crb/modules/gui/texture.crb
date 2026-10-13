@@ -1,0 +1,122 @@
+gui.init("Hen", 800, 600);
+gui.start();
+
+// Chicken photo created by Magnific - Flaticon
+def texture: texture2d = gui.load_texture("textures/test/hen.png");
+
+const KEY_UP: number = 265;
+const KEY_DOWN: number = 264;
+const KEY_LEFT: number = 263;
+const KEY_RIGHT: number = 262;
+
+class Chicken {
+    function init(texture: texture2d, x: number, y: number, w: number, h: number): Chicken {
+        this.texture = texture;
+        this.x: number = x;
+        this.y: number = y;
+        this.w: number = w;
+        this.h: number = h;
+
+        this.x_direction: number = 0;
+        this.y_direction: number = 0;
+
+        this.speed: number = 200;
+
+        this.up: bool = false;
+        this.down: bool = false;
+        this.left: bool = false;
+        this.right: bool = false;
+
+        this.flip_x: bool = true;
+    }
+
+    function draw(): nothing {
+        gui.draw_flipped_texture(this.texture, this.x, this.y, this.w, this.h, this.flip_x, false);
+    }
+
+    function handle_input(): nothing {
+        if(gui.key_pressed(KEY_UP)) {
+            this.up = true;
+        }
+
+        if(gui.key_released(KEY_UP)) {
+            this.up = false;
+        }
+
+        if(gui.key_pressed(KEY_DOWN)) {
+            this.down = true;
+        }
+
+        if(gui.key_released(KEY_DOWN)) {
+            this.down = false;
+        }
+
+        if(gui.key_pressed(KEY_LEFT)) {
+            this.left = true;
+            this.flip_x = false;
+        }
+
+        if(gui.key_released(KEY_LEFT)) {
+            this.left = false;
+        }
+
+        if(gui.key_pressed(KEY_RIGHT)) {
+            this.right = true;
+            this.flip_x = true;
+        }
+
+        if(gui.key_released(KEY_RIGHT)) {
+            this.right = false;
+        }
+
+        this.x_direction = 0;
+        this.y_direction = 0;
+
+        if(this.up) {
+            this.y_direction = this.y_direction - 1;
+        }
+
+        if(this.down) {
+            this.y_direction = this.y_direction + 1;
+        }
+
+        if(this.left) {
+            this.x_direction = this.x_direction - 1;
+        }
+
+        if(this.right) {
+            this.x_direction = this.x_direction + 1;
+        }
+
+        if(!(this.x_direction == 0) and !(this.y_direction == 0)) {
+            this.x_direction = this.x_direction * 0.707;
+            this.y_direction = this.y_direction * 0.707;
+        }
+    }
+
+    function update(): nothing {
+        this.handle_input();
+
+        this.x = this.x + this.x_direction * this.speed * gui.delta();
+        this.y = this.y + this.y_direction * this.speed * gui.delta();
+
+        if(gui.mouse_pressed(0))
+        {
+            this.flip_x = !this.flip_x;
+        }
+    }
+}
+
+def chicken: Chicken = Chicken(texture, 150, 50, 128, 128);
+gui.set_background(48, 48, 48);
+
+// Disable this if you don't want the application to close after 2 seconds
+def elapsed: number = 0;
+
+while(gui.tick() and elapsed < 2) {
+    chicken.update();
+    chicken.draw();
+    elapsed += gui.delta();
+}
+
+println("valid execution");
