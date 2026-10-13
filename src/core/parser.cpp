@@ -112,7 +112,7 @@ std::string Parser::type_annotation()
             return "array[" + first_type + "]";
         }
 
-        consume(COMMA, "Expected \"",\" between dictionary key and value types");
+        consume(COMMA, "Expected \",\" between dictionary key and value types");
         std::string second_type = type_annotation();
         consume(RIGHT_BRACKET, "Expected \"]\" after dictionary types");
         return "dict[" + first_type + "," + second_type + "]";
@@ -212,6 +212,8 @@ std::shared_ptr<Stmt> Parser::class_declaration()
         auto method = std::dynamic_pointer_cast<FunctionStmt>(function_declaration());
         in_class_method = previous_in_class_method;
         in_init_method = previous_in_init_method;
+        if (method->name.lexeme == "init" && !is_public)
+            throw error(method->name, "The init() method cannot be private");
         method->is_method = true;
         method->is_public = is_public;
         methods.push_back(method);
