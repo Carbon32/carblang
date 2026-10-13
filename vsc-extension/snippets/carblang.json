@@ -1,0 +1,67 @@
+{
+  "Typed variable": {
+    "prefix": "def",
+    "body": "def ${1:name}: ${2:number} = ${3:value};$0",
+    "description": "Declare a variable with an explicit type"
+  },
+  "Typed array variable": {
+    "prefix": "defarr",
+    "body": "def ${1:items}: array[${2:string}] = [];$0",
+    "description": "Declare an array with an element type"
+  },
+  "Typed dictionary variable": {
+    "prefix": "defdict",
+    "body": "def ${1:items}: dict[${2:string}, ${3:number}] = {};$0",
+    "description": "Declare a dictionary with key and value types"
+  },
+  "Function": {
+    "prefix": "function",
+    "body": "function ${1:name}(${2:argument}: ${3:number}): ${4:nothing} {\n\t$0\n}",
+    "description": "Declare a function with typed parameter and return value"
+  },
+  "Class with initializer": {
+    "prefix": "class",
+    "body": "class ${1:ClassName} {\n\tpublic function init(${2:value}: ${3:number}) {\n\t\tpublic this.${4:value}: ${3:number} = ${2:value};\n\t}\n\n\tpublic function ${5:method}(): ${6:nothing} {\n\t\t$0\n\t}\n}",
+    "description": "Declare a class with an initializer and public member"
+  },
+  "Private class method": {
+    "prefix": "privatefn",
+    "body": "private function ${1:name}(${2}): ${3:nothing} {\n\t$0\n}",
+    "description": "Declare a private class method"
+  },
+  "If / else": {
+    "prefix": "if",
+    "body": "if (${1:condition}) {\n\t$0\n} else {\n\t\n}",
+    "description": "If/else block"
+  },
+  "For loop": {
+    "prefix": "for",
+    "body": "for (def ${1:i}: number = 0; ${1:i} < ${2:length}; ${1:i}++) {\n\t$0\n}",
+    "description": "For loop with an inline variable declaration"
+  },
+  "While loop": {
+    "prefix": "while",
+    "body": "while (${1:condition}) {\n\t$0\n}",
+    "description": "While loop"
+  },
+  "Ternary expression": {
+    "prefix": "ternary",
+    "body": "${1:condition} ? ${2:value_if_true} : ${3:value_if_false}$0",
+    "description": "Conditional expression"
+  },
+  "Include file": {
+    "prefix": "include",
+    "body": "#include \"${1:relative/path.crb}\";$0",
+    "description": "Include another Carblang source file"
+  },
+  "Read console input": {
+    "prefix": "scan",
+    "body": "def ${1:value}: ${2:string} = scan(\"${3:Prompt: }\");$0",
+    "description": "Read a value from standard input"
+  },
+  "GUI application loop": {
+    "prefix": "guiloop",
+    "body": "gui.init(${1:800}, ${2:600}, \"${3:Carblang}\");\nwhile (gui.is_running()) {\n\tgui.tick();\n\t$0\n}",
+    "description": "Initialize and run a GUI frame loop"
+  }
+}

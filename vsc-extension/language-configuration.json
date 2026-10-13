@@ -55,5 +55,19 @@
             "open": "\"",
             "close": "\""
         }
+    ],
+    "indentationRules": {
+        "increaseIndentPattern": "^.*\\{[^}]*$",
+        "decreaseIndentPattern": "^\\s*}"
+    },
+    "onEnterRules": [
+        {
+            "beforeText": "^\\s*.*\\{\\s*$",
+            "afterText": "^\\s*}\\s*$",
+            "action": {
+                "indent": "indentOutdent",
+                "appendText": ""
+            }
+        }
     ]
 }

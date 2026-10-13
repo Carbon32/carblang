@@ -1,7 +1,7 @@
 {
     "name": "carblang",
     "displayName": "Carblang",
-    "description": "",
+    "description": "Language support for Carblang source files.",
     "version": "1.0.0",
     "engines": {
         "vscode": "^1.120.0"
@@ -28,6 +28,12 @@
                 "language": "carblang",
                 "scopeName": "source.carblang",
                 "path": "./syntaxes/carblang.tmLanguage.json"
+            }
+        ],
+        "snippets": [
+            {
+                "language": "carblang",
+                "path": "./snippets/carblang.json"
             }
         ]
     }

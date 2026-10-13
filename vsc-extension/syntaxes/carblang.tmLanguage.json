@@ -1,178 +1,98 @@
 {
-    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-    "name": "Carblang",
-    "scopeName": "source.carblang",
-    "patterns": [
-        {
-            "include": "#comments"
-        },
-        {
-            "include": "#preprocessor"
-        },
-        {
-            "include": "#keywords"
-        },
-        {
-            "include": "#types"
-        },
-        {
-            "include": "#functions"
-        },
-        {
-            "include": "#builtins"
-        },
-        {
-            "include": "#constructors"
-        },
-        {
-            "include": "#strings"
-        },
-        {
-            "include": "#numbers"
-        }
-    ],
-    "repository": {
-        "comments": {
-            "patterns": [
-                {
-                    "name": "comment.line.double-slash.carblang",
-                    "match": "//.*$"
-                },
-                {
-                    "name": "comment.block.carblang",
-                    "begin": "/\\*",
-                    "end": "\\*/"
-                }
-            ]
-        },
-        "preprocessor": {
-            "patterns": [
-                {
-                    "name": "keyword.control.directive.include.carblang",
-                    "match": "^\\s*#include\\b"
-                }
-            ]
-        },
-        "keywords": {
-            "patterns": [
-                {
-                    "name": "keyword.control.carblang",
-                    "match": "\\b(if|else|while|for|return|def|function)\\b"
-                },
-                {
-                    "name": "storage.modifier.carblang",
-                    "match": "\\b(const)\\b"
-                },
-                {
-                    "name": "constant.language.carblang",
-                    "match": "\\b(true|false|null|this)\\b"
-                },
-                {
-                    "name": "keyword.operator.logical.carblang",
-                    "match": "\\b(and|or)\\b"
-                },
-                {
-                    "name": "keyword.operator.comparison.carblang",
-                    "match": "(==|!=|<=|>=|<|>)"
-                },
-                {
-                    "name": "keyword.operator.assignment.carblang",
-                    "match": "(=|\\+=|-=|\\*=|/=)"
-                },
-                {
-                    "name": "keyword.operator.arithmetic.carblang",
-                    "match": "(\\+|\\-|\\*|/|%)"
-                }
-            ]
-        },
-        "types": {
-            "patterns": [
-                {
-                    "name": "support.type.builtin.carblang",
-                    "match": "\\b(number|string|bool|array|dict|class|instance|nothing|any)\\b"
-                }
-            ]
-        },
-        "functions": {
-            "patterns": [
-                {
-                    "name": "meta.function.definition.carblang",
-                    "begin": "\\b(function|def)\\b\\s+([A-Za-z_][A-Za-z0-9_]*)",
-                    "beginCaptures": {
-                        "1": {
-                            "name": "keyword.control.carblang"
-                        },
-                        "2": {
-                            "name": "entity.name.function.definition.carblang"
-                        }
-                    },
-                    "end": "(?=\\s*\\{)|(?=\\s*$)",
-                    "patterns": [
-                        {
-                            "include": "#arguments"
-                        }
-                    ]
-                },
-                {
-                    "name": "entity.name.function.call.carblang",
-                    "match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\b(?=\\s*\\()"
-                }
-            ]
-        },
-        "builtins": {
-            "patterns": [
-                {
-                    "name": "support.function.builtin.carblang",
-                    "match": "\\b(scan|format|printf|print|println|exit|methods)\\b"
-                }
-            ]
-        },
-        "constructors": {
-            "patterns": [
-                {
-                    "name": "entity.name.type.constructor.carblang",
-                    "match": "\\b[A-Z][A-Za-z0-9_]*(?=\\s*\\()"
-                }
-            ]
-        },
-        "strings": {
-            "name": "string.quoted.double.carblang",
-            "begin": "\"",
-            "end": "\"",
-            "patterns": [
-                {
-                    "name": "constant.character.escape.carblang",
-                    "match": "\\\\."
-                }
-            ]
-        },
-        "numbers": {
-            "patterns": [
-                {
-                    "name": "constant.numeric.carblang",
-                    "match": "\\b\\d+(\\.\\d+)?\\b"
-                }
-            ]
-        },
-        "arguments": {
-            "name": "meta.group.arguments.carblang",
-            "begin": "\\(",
-            "end": "\\)",
-            "patterns": [
-                {
-                    "include": "#strings"
-                },
-                {
-                    "include": "#numbers"
-                },
-                {
-                    "include": "#keywords"
-                },
-                {
-                    "name": "variable.parameter.carblang",
-                    "match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b"
-                }
-            ]
-        }
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Carblang",
+  "scopeName": "source.carblang",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#include" },
+    { "include": "#class-definition" },
+    { "include": "#function-definition" },
+    { "include": "#keywords" },
+    { "include": "#types" },
+    { "include": "#builtins" },
+    { "include": "#function-calls" },
+    { "include": "#numbers" },
+    { "include": "#operators" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        { "name": "comment.line.double-slash.carblang", "match": "//.*$" },
+        { "name": "comment.block.carblang", "begin": "/\\*", "end": "\\*/" }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.carblang",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [{ "name": "constant.character.escape.carblang", "match": "\\\\." }]
+    },
+    "include": {
+      "name": "meta.preprocessor.include.carblang",
+      "begin": "^\\s*(#include)\\b",
+      "beginCaptures": { "1": { "name": "keyword.control.directive.include.carblang" } },
+      "end": ";|$",
+      "patterns": [{ "include": "#strings" }]
+    },
+    "class-definition": {
+      "name": "meta.class.carblang",
+      "match": "\\b(class)\\s+([A-Za-z_][A-Za-z0-9_]*)(?:\\s*:\\s*([A-Za-z_][A-Za-z0-9_]*))?",
+      "captures": {
+        "1": { "name": "storage.type.class.carblang" },
+        "2": { "name": "entity.name.type.class.carblang" },
+        "3": { "name": "entity.other.inherited-class.carblang" }
+      }
+    },
+    "function-definition": {
+      "name": "meta.function.carblang",
+      "match": "\\b(function)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+      "captures": {
+        "1": { "name": "storage.type.function.carblang" },
+        "2": { "name": "entity.name.function.carblang" }
+      }
+    },
+    "keywords": {
+      "patterns": [
+        { "name": "storage.modifier.access.carblang", "match": "\\b(public|private)\\b" },
+        { "name": "storage.modifier.carblang", "match": "\\b(const)\\b" },
+        { "name": "keyword.control.carblang", "match": "\\b(if|else|while|for|return|def|function|class|include)\\b" },
+        { "name": "keyword.control.flow.carblang", "match": "\\b(super)\\b" },
+        { "name": "constant.language.carblang", "match": "\\b(true|false|null|this)\\b" },
+        { "name": "keyword.operator.logical.carblang", "match": "\\b(and|or)\\b" }
+      ]
+    },
+    "types": {
+      "patterns": [
+        { "name": "support.type.carblang", "match": "\\b(number|string|bool|null|array|dict|function|class|bound_method|native_method|tag|texture2d|text_element|any|nothing)\\b" },
+        { "match": ":(\\s*)([A-Z][A-Za-z0-9_]*)(?=\\s*(?:\\[|=|,|\\)|;))", "captures": { "2": { "name": "entity.name.type.carblang" } } },
+        { "name": "entity.name.type.constructor.carblang", "match": "\\b[A-Z][A-Za-z0-9_]*(?=\\s*\\()" }
+      ]
+    },
+    "builtins": {
+      "patterns": [
+        { "name": "support.function.builtin.carblang", "match": "\\b(scan|format|printf|print|println|exit|methods)\\b(?=\\s*\\()" }
+      ]
+    },
+    "function-calls": {
+      "patterns": [
+        { "name": "entity.name.function.call.carblang", "match": "\\b[A-Za-z_][A-Za-z0-9_]*(?=\\s*\\()" }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        { "name": "constant.numeric.carblang", "match": "\\b(?:0[xX][0-9A-Fa-f]+|\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?)\\b" }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        { "name": "keyword.operator.assignment.compound.carblang", "match": "\\*\\*=|\\+=|-=|\\*=|/=|%=|\\+\\+|--" },
+        { "name": "keyword.operator.ternary.carblang", "match": "[?:]" },
+        { "name": "keyword.operator.comparison.carblang", "match": "==|!=|<=|>=|<|>" },
+        { "name": "keyword.operator.assignment.carblang", "match": "=" },
+        { "name": "keyword.operator.arithmetic.carblang", "match": "\\*\\*|[+*/%\\-]" },
+        { "name": "punctuation.separator.carblang", "match": ";|," }
+      ]
     }
+  }
 }
