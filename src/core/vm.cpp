@@ -2,7 +2,6 @@
 
 bool compare_values(const Value &a, const Value &b, TokenType op)
 {
-    // Numeric comparisons only
     if (!std::holds_alternative<double>(a) || !std::holds_alternative<double>(b))
         throw std::runtime_error("Comparison operators <, <=, >, >= can only be used with numbers");
 
@@ -24,8 +23,152 @@ bool compare_values(const Value &a, const Value &b, TokenType op)
     }
 }
 
+static size_t checked_sequence_index(const Value &value, size_t length, const char *kind)
+{
+    const auto *number = std::get_if<double>(&value);
+    if (!number || !std::isfinite(*number))
+        throw std::runtime_error(std::string(kind) + " index must be a finite number");
+
+    const double index = std::trunc(*number);
+    if (index < 0 || index >= static_cast<double>(length))
+        throw std::runtime_error(std::string(kind) + " index out of bounds");
+
+    return static_cast<size_t>(index);
+}
+
+static size_t checked_size_count(const Value &value, size_t maximum, const char *kind)
+{
+    const auto *number = std::get_if<double>(&value);
+    if (!number || !std::isfinite(*number))
+        throw std::runtime_error(std::string(kind) + " must be a finite number");
+    const double count = std::trunc(*number);
+    if (count < 0 || static_cast<long double>(count) > static_cast<long double>(maximum))
+        throw std::runtime_error(std::string(kind) + " is out of range");
+    return static_cast<size_t>(count);
+}
+
+static size_t checked_combined_size(size_t left, size_t right, size_t maximum, const char *kind)
+{
+    if (right > maximum - left)
+        throw std::runtime_error(std::string(kind) + " is too large");
+    return left + right;
+}
+
+static std::vector<std::string> runtime_type_arguments(const std::string &type)
+{
+    const size_t open = type.find('[');
+    if (open == std::string::npos || type.back() != ']')
+        return {};
+
+    std::vector<std::string> arguments;
+    size_t start = open + 1;
+    int depth = 0;
+    for (size_t i = start; i < type.size() - 1; ++i)
+    {
+        if (type[i] == '[')
+            ++depth;
+        else if (type[i] == ']')
+            --depth;
+        else if (type[i] == ',' && depth == 0)
+        {
+            arguments.push_back(type.substr(start, i - start));
+            start = i + 1;
+        }
+    }
+    arguments.push_back(type.substr(start, type.size() - 1 - start));
+    return arguments;
+}
+
+static bool runtime_type_matches(const Value &value, const std::string &type)
+{
+    if (type == "any" || type == "mixed")
+        return true;
+
+    const size_t open = type.find('[');
+    const std::string base = open == std::string::npos ? type : type.substr(0, open);
+    const auto arguments = runtime_type_arguments(type);
+    if (base == "number") return std::holds_alternative<double>(value);
+    if (base == "string") return std::holds_alternative<std::string>(value);
+    if (base == "bool") return std::holds_alternative<bool>(value);
+    if (base == "null" || base == "nothing") return std::holds_alternative<std::nullptr_t>(value);
+    if (base == "function") return std::holds_alternative<std::shared_ptr<Function>>(value);
+    if (base == "class") return std::holds_alternative<std::shared_ptr<Class>>(value);
+    if (base == "bound_method") return std::holds_alternative<std::shared_ptr<UserBoundMethod>>(value);
+    if (base == "native_method") return std::holds_alternative<std::shared_ptr<BoundMethod>>(value);
+    if (base == "tag") return std::holds_alternative<std::shared_ptr<Tag>>(value);
+    if (base == "texture2d") return std::holds_alternative<std::shared_ptr<Texture2D>>(value);
+    if (base == "text_element") return std::holds_alternative<std::shared_ptr<TextElement>>(value);
+
+    if (base == "array")
+    {
+        const auto *array = std::get_if<std::shared_ptr<Array>>(&value);
+        if (!array || !*array)
+            return false;
+        if (arguments.size() == 1)
+            for (const auto &element : (*array)->elements)
+                if (!runtime_type_matches(element, arguments.front()))
+                    return false;
+        return true;
+    }
+
+    if (base == "dict")
+    {
+        const auto *dict = std::get_if<std::shared_ptr<Dict>>(&value);
+        if (!dict || !*dict)
+            return false;
+        if (arguments.size() == 2)
+            for (const auto &[key, element] : (*dict)->entries)
+                if (!runtime_type_matches(Value{key}, arguments.front()) ||
+                    !runtime_type_matches(element, arguments.back()))
+                    return false;
+        return true;
+    }
+
+    const auto *instance = std::get_if<std::shared_ptr<Instance>>(&value);
+    if (!instance || !*instance)
+        return false;
+    for (auto klass = (*instance)->klass; klass; klass = klass->super_class)
+        if (klass->name == base)
+            return true;
+    return false;
+}
+
+static size_t clamped_sequence_index(const Value &value, size_t length, const char *kind)
+{
+    const auto *number = std::get_if<double>(&value);
+    if (!number || !std::isfinite(*number))
+        throw std::runtime_error(std::string(kind) + " must be a finite number");
+    const double index = std::trunc(*number);
+    if (index <= 0)
+        return 0;
+    if (index >= static_cast<double>(length))
+        return length;
+    return static_cast<size_t>(index);
+}
+
+static std::string repeat_string(const std::string &value, double count)
+{
+    if (!std::isfinite(count) || std::floor(count) != count)
+        throw std::runtime_error("Cannot multiply string by non-integer number");
+    if (count <= 0 || value.empty())
+        return {};
+
+    std::string result;
+    const size_t max_repetitions = result.max_size() / value.size();
+    if (static_cast<long double>(count) > static_cast<long double>(max_repetitions))
+        throw std::runtime_error("String repetition result is too large");
+
+    const size_t repetitions = static_cast<size_t>(count);
+    result.reserve(value.size() * repetitions);
+    for (size_t i = 0; i < repetitions; ++i)
+        result.append(value);
+    return result;
+}
+
 void VM::init_globals()
 {
+    globals.reserve(256);
+    const_variables.reserve(16);
     globals["math"] = init_math();
     globals["regex"] = init_regex();
     globals["timing"] = init_time();
@@ -261,6 +404,19 @@ void VM::init_globals()
 
 void VM::interpret(Chunk &new_chunk)
 {
+    stack.clear();
+    frames.clear();
+    global_cache.clear();
+    method_cache.clear();
+    native_args.clear();
+    if (new_chunk.code.empty())
+        throw std::runtime_error("Cannot interpret an empty chunk");
+
+    stack.reserve(std::max(stack.capacity(), std::min(new_chunk.code.size(), size_t{1024})));
+    frames.reserve(64);
+    global_cache.reserve(std::max(global_cache.bucket_count(), size_t{64}));
+    method_cache.reserve(std::max(method_cache.bucket_count(), size_t{32}));
+    native_args.reserve(std::max(native_args.capacity(), size_t{8}));
     chunk = &new_chunk;
     ip = chunk->code.data();
     run();
@@ -271,7 +427,8 @@ void VM::run()
 
     for (;;)
     {
-        OpCode opcode = static_cast<OpCode>(*ip++);
+        const uint8_t *instruction = ip;
+        OpCode opcode = static_cast<OpCode>(read_byte());
 
         // I use this to track opcode executions, I will leave it here for now
         /* std::cout << "[DEBUG] Executing opcode: " << static_cast<int>(opcode) << ", stack: [";
@@ -287,8 +444,13 @@ void VM::run()
         {
         case OpCode::CONSTANT:
         {
-            uint8_t index = *ip++;
-            stack.push_back(chunk->constants[index]);
+            stack.push_back(chunk->constants.at(read_short()));
+            break;
+        }
+
+        case OpCode::CONSTANT_SHORT:
+        {
+            stack.push_back(chunk->constants.at(read_byte()));
             break;
         }
 
@@ -300,6 +462,36 @@ void VM::run()
         {
             Value b = pop();
             Value a = pop();
+
+            if (const double *x = std::get_if<double>(&a))
+            {
+                if (const double *y = std::get_if<double>(&b))
+                {
+                    switch (opcode)
+                    {
+                    case OpCode::ADD:
+                        push(*x + *y);
+                        break;
+                    case OpCode::SUBTRACT:
+                        push(*x - *y);
+                        break;
+                    case OpCode::MULTIPLY:
+                        push(*x * *y);
+                        break;
+                    case OpCode::POWER:
+                        push(std::pow(*x, *y));
+                        break;
+                    case OpCode::DIVIDE:
+                        if (*y == 0)
+                            throw std::runtime_error("Division by zero");
+                        push(*x / *y);
+                        break;
+                    default:
+                        break;
+                    }
+                    break;
+                }
+            }
 
             if (opcode == OpCode::ADD &&
                 (std::holds_alternative<std::string>(a) ||
@@ -317,8 +509,9 @@ void VM::run()
                 auto right = std::get<std::shared_ptr<Array>>(b);
 
                 auto result = std::make_shared<Array>();
-                result->elements.reserve(
-                    left->elements.size() + right->elements.size());
+                const size_t combined_size = checked_combined_size(
+                    left->elements.size(), right->elements.size(), result->elements.max_size(), "Array concatenation");
+                result->elements.reserve(combined_size);
 
                 result->elements.insert(
                     result->elements.end(),
@@ -338,20 +531,7 @@ void VM::run()
             {
                 if (opcode == OpCode::MULTIPLY)
                 {
-                    auto s = std::get<std::string>(a);
-                    double n = std::get<double>(b);
-
-                    if (std::floor(n) != n)
-                        throw std::runtime_error("Cannot multiply string by non-integer number");
-
-                    if (n < 0)
-                        n = 0;
-                    std::string result;
-                    result.reserve(s.size() * static_cast<size_t>(n));
-                    for (int i = 0; i < (int)n; ++i)
-                        result += s;
-
-                    stack.push_back(result);
+                    stack.push_back(repeat_string(std::get<std::string>(a), std::get<double>(b)));
                     break;
                 }
             }
@@ -360,20 +540,7 @@ void VM::run()
             {
                 if (opcode == OpCode::MULTIPLY)
                 {
-                    double n = std::get<double>(a);
-                    auto s = std::get<std::string>(b);
-
-                    if (std::floor(n) != n)
-                        throw std::runtime_error("Cannot multiply string by non-integer number");
-
-                    if (n < 0)
-                        n = 0;
-                    std::string result;
-                    result.reserve(s.size() * static_cast<size_t>(n));
-                    for (int i = 0; i < (int)n; ++i)
-                        result += s;
-
-                    stack.push_back(result);
+                    stack.push_back(repeat_string(std::get<std::string>(b), std::get<double>(a)));
                     break;
                 }
             }
@@ -434,44 +601,7 @@ void VM::run()
                 break;
             }
 
-            if (!std::holds_alternative<double>(a) ||
-                !std::holds_alternative<double>(b))
-            {
-                throw std::runtime_error("Operands must be numbers: " + stringify(a) + " " + stringify(b));
-            }
-
-            double x = std::get<double>(a);
-            double y = std::get<double>(b);
-
-            switch (opcode)
-            {
-            case OpCode::ADD:
-                stack.push_back(x + y);
-                break;
-
-            case OpCode::SUBTRACT:
-                stack.push_back(x - y);
-                break;
-
-            case OpCode::MULTIPLY:
-                stack.push_back(x * y);
-                break;
-
-            case OpCode::POWER:
-                stack.push_back(std::pow(x, y));
-                break;
-
-            case OpCode::DIVIDE:
-                if (y == 0)
-                    throw std::runtime_error("Division by zero");
-                stack.push_back(x / y);
-                break;
-
-            default:
-                break;
-            }
-
-            break;
+            throw std::runtime_error("Operands must be numbers: " + stringify(a) + " " + stringify(b));
         }
 
         case OpCode::PERCENT:
@@ -571,9 +701,9 @@ void VM::run()
 
         case OpCode::DEFINE_CONST:
         {
-            uint8_t name_index = *ip++;
+            uint16_t name_index = read_short();
             const std::string &name =
-                std::get<std::string>(chunk->constants[name_index]);
+                std::get<std::string>(chunk->constants.at(name_index));
 
             if (globals.contains(name))
                 throw std::runtime_error("Cannot redefine constant \"" + name + "\"");
@@ -585,9 +715,9 @@ void VM::run()
 
         case OpCode::DEFINE_GLOBAL:
         {
-            uint8_t name_index = *ip++;
+            uint16_t name_index = read_short();
             const std::string &name =
-                std::get<std::string>(chunk->constants[name_index]);
+                std::get<std::string>(chunk->constants.at(name_index));
 
             if (const_variables.contains(name))
                 throw std::runtime_error("Cannot redefine constant \"" + name + "\"");
@@ -598,35 +728,510 @@ void VM::run()
 
         case OpCode::GET_GLOBAL:
         {
-            uint8_t name_index = *ip++;
-            const std::string &name = std::get<std::string>(chunk->constants[name_index]);
+            uint16_t name_index = read_short();
+            auto cached = global_cache.find(instruction);
+            if (cached != global_cache.end())
+            {
+                stack.push_back(*cached->second.value);
+                break;
+            }
+
+            const std::string &name = std::get<std::string>(chunk->constants.at(name_index));
             auto it = globals.find(name);
             if (it == globals.end())
                 throw std::runtime_error("Undefined variable \"" + name + "\"");
+
+            global_cache.emplace(instruction, GlobalCacheEntry{&it->second, const_variables.contains(name)});
             stack.push_back(it->second);
             break;
         }
 
         case OpCode::SET_GLOBAL:
         {
-            uint8_t name_index = *ip++;
-            const std::string &name =
-                std::get<std::string>(chunk->constants[name_index]);
+            uint16_t name_index = read_short();
+            auto cached = global_cache.find(instruction);
+            if (cached != global_cache.end())
+            {
+                if (cached->second.is_const)
+                {
+                    const std::string &name = std::get<std::string>(chunk->constants.at(name_index));
+                    throw std::runtime_error("Cannot reassign constant \"" + name + "\"");
+                }
 
+                *cached->second.value = stack.back();
+                break;
+            }
+
+            const std::string &name = std::get<std::string>(chunk->constants.at(name_index));
             auto it = globals.find(name);
             if (it == globals.end())
                 throw std::runtime_error("Undefined variable \"" + name + "\"");
 
+            const bool is_const = const_variables.contains(name);
+            if (is_const)
+                throw std::runtime_error("Cannot reassign constant \"" + name + "\"");
+
+            global_cache.emplace(instruction, GlobalCacheEntry{&it->second, is_const});
+            it->second = stack.back();
+            break;
+        }
+
+        case OpCode::INCREMENT_GLOBAL:
+        {
+            uint16_t name_index = read_short();
+            const bool keep_result = read_byte() != 0;
+            auto cached = global_cache.find(instruction);
+            Value *target = nullptr;
+            bool is_const = false;
+
+            if (cached != global_cache.end())
+            {
+                target = cached->second.value;
+                is_const = cached->second.is_const;
+            }
+            else
+            {
+                const std::string &name = std::get<std::string>(chunk->constants.at(name_index));
+                auto it = globals.find(name);
+                if (it == globals.end())
+                    throw std::runtime_error("Undefined variable \"" + name + "\"");
+
+                is_const = const_variables.contains(name);
+                target = &it->second;
+                global_cache.emplace(instruction, GlobalCacheEntry{target, is_const});
+            }
+
+            if (is_const)
+            {
+                const std::string &name = std::get<std::string>(chunk->constants.at(name_index));
+                throw std::runtime_error("Cannot reassign constant \"" + name + "\"");
+            }
+
+            Value updated = add_one(*target);
+            *target = updated;
+            if (keep_result)
+                push(std::move(updated));
+            break;
+        }
+
+        case OpCode::INCREMENT_LOCAL:
+        {
+            const uint8_t slot = read_byte();
+            const bool keep_result = read_byte() != 0;
+            if (frames.empty())
+                throw std::runtime_error("INCREMENT_LOCAL called with no active frame");
+
+            const size_t index = frames.back().stack_start + slot;
+            if (index >= stack.size())
+                throw std::runtime_error("INCREMENT_LOCAL out of bounds");
+
+            Value updated = add_one(stack[index]);
+            stack[index] = updated;
+            if (keep_result)
+                push(std::move(updated));
+            break;
+        }
+
+        case OpCode::UPDATE_GLOBAL:
+        {
+            const uint16_t name_index = read_short();
+            const double delta = read_byte() == 1 ? 1.0 : -1.0;
+            const uint8_t result_mode = read_byte();
+            auto cached = global_cache.find(instruction);
+            Value *target = nullptr;
+            bool is_const = false;
+
+            if (cached != global_cache.end())
+            {
+                target = cached->second.value;
+                is_const = cached->second.is_const;
+            }
+            else
+            {
+                const std::string &name = std::get<std::string>(chunk->constants.at(name_index));
+                auto it = globals.find(name);
+                if (it == globals.end())
+                    throw std::runtime_error("Undefined variable \"" + name + "\"");
+                target = &it->second;
+                is_const = const_variables.contains(name);
+                global_cache.emplace(instruction, GlobalCacheEntry{target, is_const});
+            }
+
+            if (is_const)
+            {
+                const std::string &name = std::get<std::string>(chunk->constants.at(name_index));
+                throw std::runtime_error("Cannot reassign constant \"" + name + "\"");
+            }
+
+            const double *number = std::get_if<double>(target);
+            if (!number)
+                throw std::runtime_error("Increment and decrement require a number");
+            const double previous = *number;
+            *target = previous + delta;
+
+            if (result_mode == 1)
+                push(*target);
+            else if (result_mode == 2)
+                push(previous);
+            else if (result_mode != 0)
+                throw std::runtime_error("Invalid increment/decrement result mode");
+            break;
+        }
+
+        case OpCode::UPDATE_LOCAL:
+        {
+            const uint8_t slot = read_byte();
+            const double delta = read_byte() == 1 ? 1.0 : -1.0;
+            const uint8_t result_mode = read_byte();
+            if (frames.empty())
+                throw std::runtime_error("UPDATE_LOCAL called with no active frame");
+
+            const size_t index = frames.back().stack_start + slot;
+            if (index >= stack.size())
+                throw std::runtime_error("UPDATE_LOCAL out of bounds");
+
+            const double *number = std::get_if<double>(&stack[index]);
+            if (!number)
+                throw std::runtime_error("Increment and decrement require a number");
+            const double previous = *number;
+            stack[index] = previous + delta;
+
+            if (result_mode == 1)
+                push(stack[index]);
+            else if (result_mode == 2)
+                push(previous);
+            else if (result_mode != 0)
+                throw std::runtime_error("Invalid increment/decrement result mode");
+            break;
+        }
+
+        case OpCode::UPDATE_PROPERTY:
+        {
+            const uint16_t name_index = read_short();
+            const std::string &name = std::get<std::string>(chunk->constants.at(name_index));
+            const double delta = read_byte() == 1 ? 1.0 : -1.0;
+            const uint8_t result_mode = read_byte();
+            Value object = pop();
+            auto instance = std::get_if<std::shared_ptr<Instance>>(&object);
+            if (!instance || !*instance)
+                throw std::runtime_error("Only instance fields can be incremented or decremented");
+
+            auto field = (*instance)->fields.find(name);
+            if (field == (*instance)->fields.end())
+                throw std::runtime_error("Undefined property \"" + name + "\"");
+            const double *number = std::get_if<double>(&field->second);
+            if (!number)
+                throw std::runtime_error("Increment and decrement require a number");
+            const double previous = *number;
+            field->second = previous + delta;
+
+            if (result_mode == 1)
+                push(field->second);
+            else if (result_mode == 2)
+                push(previous);
+            else if (result_mode != 0)
+                throw std::runtime_error("Invalid increment/decrement result mode");
+            break;
+        }
+
+        case OpCode::UPDATE_INDEX:
+        {
+            const double delta = read_byte() == 1 ? 1.0 : -1.0;
+            const uint8_t result_mode = read_byte();
+            Value index_value = pop();
+            Value container_value = pop();
+            double previous;
+            double updated;
+
+            if (auto array = std::get_if<std::shared_ptr<Array>>(&container_value))
+            {
+                if (!*array)
+                    throw std::runtime_error("Cannot increment an uninitialized array");
+                const size_t index = checked_sequence_index(index_value, (*array)->elements.size(), "Array");
+                const double *number = std::get_if<double>(&(*array)->elements[index]);
+                if (!number)
+                    throw std::runtime_error("Increment and decrement require a number");
+                previous = *number;
+                updated = previous + delta;
+                (*array)->elements[index] = updated;
+            }
+            else if (auto dict = std::get_if<std::shared_ptr<Dict>>(&container_value))
+            {
+                if (!*dict)
+                    throw std::runtime_error("Cannot increment an uninitialized dictionary");
+                if (!std::holds_alternative<std::string>(index_value))
+                    throw std::runtime_error("Dictionary key must be string");
+                const std::string &key = std::get<std::string>(index_value);
+                Value current = (*dict)->get(key);
+                const double *number = std::get_if<double>(&current);
+                if (!number)
+                    throw std::runtime_error("Increment and decrement require a number");
+                previous = *number;
+                updated = previous + delta;
+                (*dict)->set(key, updated);
+            }
+            else
+                throw std::runtime_error("Only array and dictionary elements can be incremented or decremented");
+
+            if (result_mode == 1)
+                push(updated);
+            else if (result_mode == 2)
+                push(previous);
+            else if (result_mode != 0)
+                throw std::runtime_error("Invalid increment/decrement result mode");
+            break;
+        }
+
+        case OpCode::JUMP_IF_GLOBAL_COMPARE:
+        {
+            const uint16_t name_index = read_short();
+            const uint16_t limit_index = read_short();
+            const TokenType comparison = static_cast<TokenType>(read_byte());
+            const uint16_t offset = read_short();
+
+            auto cached = global_cache.find(instruction);
+            Value *target = nullptr;
+            if (cached != global_cache.end())
+            {
+                target = cached->second.value;
+            }
+            else
+            {
+                const std::string &name = std::get<std::string>(chunk->constants.at(name_index));
+                auto it = globals.find(name);
+                if (it == globals.end())
+                    throw std::runtime_error("Undefined variable \"" + name + "\"");
+
+                target = &it->second;
+                global_cache.emplace(instruction, GlobalCacheEntry{target, const_variables.contains(name)});
+            }
+
+            if (!compare_values(*target, chunk->constants.at(limit_index), comparison))
+                ip += offset;
+            break;
+        }
+
+        case OpCode::JUMP_IF_LOCAL_COMPARE:
+        {
+            const uint8_t slot = read_byte();
+            const uint16_t limit_index = read_short();
+            const TokenType comparison = static_cast<TokenType>(read_byte());
+            const uint16_t offset = read_short();
+
+            if (frames.empty())
+                throw std::runtime_error("JUMP_IF_LOCAL_COMPARE called with no active frame");
+
+            const size_t index = frames.back().stack_start + slot;
+            if (index >= stack.size())
+                throw std::runtime_error("JUMP_IF_LOCAL_COMPARE out of bounds");
+
+            if (!compare_values(stack[index], chunk->constants.at(limit_index), comparison))
+                ip += offset;
+            break;
+        }
+
+        case OpCode::LOOP_GLOBAL_INCREMENT_COMPARE:
+        {
+            const uint16_t name_index = read_short();
+            const uint16_t limit_index = read_short();
+            const TokenType comparison = static_cast<TokenType>(read_byte());
+            const uint8_t update_mode = read_byte();
+            const uint16_t offset = read_short();
+
+            auto cached = global_cache.find(instruction);
+            Value *target = nullptr;
+            bool is_const = false;
+            if (cached != global_cache.end())
+            {
+                target = cached->second.value;
+                is_const = cached->second.is_const;
+            }
+            else
+            {
+                const std::string &name = std::get<std::string>(chunk->constants.at(name_index));
+                auto it = globals.find(name);
+                if (it == globals.end())
+                    throw std::runtime_error("Undefined variable \"" + name + "\"");
+                target = &it->second;
+                is_const = const_variables.contains(name);
+                global_cache.emplace(instruction, GlobalCacheEntry{target, is_const});
+            }
+
+            if (is_const)
+                throw std::runtime_error("Cannot reassign constant \"" +
+                                         std::get<std::string>(chunk->constants.at(name_index)) + "\"");
+
+            if (update_mode == 0)
+                *target = add_one(*target);
+            else
+            {
+                const double *number = std::get_if<double>(target);
+                if (!number)
+                    throw std::runtime_error("Increment and decrement require a number");
+                *target = *number + (update_mode == 1 ? 1.0 : -1.0);
+            }
+            if (compare_values(*target, chunk->constants.at(limit_index), comparison))
+                ip -= offset;
+            break;
+        }
+
+        case OpCode::LOOP_LOCAL_INCREMENT_COMPARE:
+        {
+            const uint8_t slot = read_byte();
+            const uint16_t limit_index = read_short();
+            const TokenType comparison = static_cast<TokenType>(read_byte());
+            const uint8_t update_mode = read_byte();
+            const uint16_t offset = read_short();
+
+            if (frames.empty())
+                throw std::runtime_error("LOOP_LOCAL_INCREMENT_COMPARE called with no active frame");
+            const size_t index = frames.back().stack_start + slot;
+            if (index >= stack.size())
+                throw std::runtime_error("LOOP_LOCAL_INCREMENT_COMPARE out of bounds");
+
+            if (update_mode == 0)
+                stack[index] = add_one(stack[index]);
+            else
+            {
+                const double *number = std::get_if<double>(&stack[index]);
+                if (!number)
+                    throw std::runtime_error("Increment and decrement require a number");
+                stack[index] = *number + (update_mode == 1 ? 1.0 : -1.0);
+            }
+            if (compare_values(stack[index], chunk->constants.at(limit_index), comparison))
+                ip -= offset;
+            break;
+        }
+
+        case OpCode::FAST_FORWARD_GLOBAL_LOOP:
+        {
+            const uint16_t name_index = read_short();
+            const uint16_t limit_index = read_short();
+            const TokenType comparison = static_cast<TokenType>(read_byte());
+            const uint8_t update_mode = read_byte();
+
+            const std::string &name = std::get<std::string>(chunk->constants.at(name_index));
+            auto it = globals.find(name);
+            if (it == globals.end())
+                throw std::runtime_error("Undefined variable \"" + name + "\"");
+            Value &target = it->second;
+            const Value &limit = chunk->constants.at(limit_index);
+            const double *number = std::get_if<double>(&target);
+            if (!number)
+            {
+                if (!compare_values(target, limit, comparison))
+                    break;
+                throw std::runtime_error("Increment and decrement require a number");
+            }
+
+            const double initial = *number;
+            if (!compare_values(target, limit, comparison))
+                break;
             if (const_variables.contains(name))
                 throw std::runtime_error("Cannot reassign constant \"" + name + "\"");
 
-            it->second = stack.back();
+            const double bound = std::get<double>(limit);
+            const double direction = update_mode == 1 ? 1.0 : -1.0;
+            constexpr double max_exact_integer = 9007199254740992.0;
+            double count = -1.0;
+            if (std::isfinite(initial) && std::isfinite(bound) &&
+                std::trunc(initial) == initial && std::trunc(bound) == bound &&
+                std::abs(initial) <= max_exact_integer && std::abs(bound) <= max_exact_integer)
+            {
+                if (update_mode == 1 && comparison == LESS)
+                    count = bound - initial;
+                else if (update_mode == 1 && comparison == LESS_EQUAL)
+                    count = bound - initial + 1.0;
+                else if (update_mode == 2 && comparison == GREATER)
+                    count = initial - bound;
+                else if (update_mode == 2 && comparison == GREATER_EQUAL)
+                    count = initial - bound + 1.0;
+            }
+
+            if (count >= 0.0 && std::isfinite(count))
+            {
+                const double result = initial + direction * count;
+                if (std::isfinite(result) && std::abs(result) <= max_exact_integer &&
+                    !compare_values(Value(result), limit, comparison))
+                {
+                    target = result;
+                    break;
+                }
+            }
+
+            double current = initial;
+            while (compare_values(Value(current), limit, comparison))
+                current += direction;
+            target = current;
+            break;
+        }
+
+        case OpCode::FAST_FORWARD_LOCAL_LOOP:
+        {
+            const uint8_t slot = read_byte();
+            const uint16_t limit_index = read_short();
+            const TokenType comparison = static_cast<TokenType>(read_byte());
+            const uint8_t update_mode = read_byte();
+
+            if (frames.empty())
+                throw std::runtime_error("FAST_FORWARD_LOCAL_LOOP called with no active frame");
+            const size_t index = frames.back().stack_start + slot;
+            if (index >= stack.size())
+                throw std::runtime_error("FAST_FORWARD_LOCAL_LOOP out of bounds");
+
+            Value &target = stack[index];
+            const Value &limit = chunk->constants.at(limit_index);
+            const double *number = std::get_if<double>(&target);
+            if (!number)
+            {
+                if (!compare_values(target, limit, comparison))
+                    break;
+                throw std::runtime_error("Increment and decrement require a number");
+            }
+
+            const double initial = *number;
+            if (!compare_values(target, limit, comparison))
+                break;
+
+            const double bound = std::get<double>(limit);
+            const double direction = update_mode == 1 ? 1.0 : -1.0;
+            constexpr double max_exact_integer = 9007199254740992.0;
+            double count = -1.0;
+            if (std::isfinite(initial) && std::isfinite(bound) &&
+                std::trunc(initial) == initial && std::trunc(bound) == bound &&
+                std::abs(initial) <= max_exact_integer && std::abs(bound) <= max_exact_integer)
+            {
+                if (update_mode == 1 && comparison == LESS)
+                    count = bound - initial;
+                else if (update_mode == 1 && comparison == LESS_EQUAL)
+                    count = bound - initial + 1.0;
+                else if (update_mode == 2 && comparison == GREATER)
+                    count = initial - bound;
+                else if (update_mode == 2 && comparison == GREATER_EQUAL)
+                    count = initial - bound + 1.0;
+            }
+
+            if (count >= 0.0 && std::isfinite(count))
+            {
+                const double result = initial + direction * count;
+                if (std::isfinite(result) && std::abs(result) <= max_exact_integer &&
+                    !compare_values(Value(result), limit, comparison))
+                {
+                    target = result;
+                    break;
+                }
+            }
+
+            double current = initial;
+            while (compare_values(Value(current), limit, comparison))
+                current += direction;
+            target = current;
             break;
         }
 
         case OpCode::GET_LOCAL:
         {
-            uint8_t slot = *ip++;
+            uint8_t slot = read_byte();
 
             // Another debugging line, keep it here
             /* std::cout << "[DEBUG] GET_LOCAL slot=" << int(slot)
@@ -654,9 +1259,9 @@ void VM::run()
 
         case OpCode::SET_LOCAL:
         {
-            uint8_t slot = *ip++;
+            uint8_t slot = read_byte();
 
-            // Debugging line
+            // Keep this here for debug
             /* std::cout << "[DEBUG] SET_LOCAL slot=" << int(slot)
                       << ", stack.size=" << stack.size();
 
@@ -714,8 +1319,8 @@ void VM::run()
 
         case OpCode::CLOSURE:
         {
-            uint8_t constant_index = *ip++;
-            Value constant = chunk->constants[constant_index];
+            uint16_t constant_index = read_short();
+            Value constant = chunk->constants.at(constant_index);
 
             if (!std::holds_alternative<std::shared_ptr<Function>>(constant))
                 throw std::runtime_error("CLOSURE constant is not a function");
@@ -726,9 +1331,9 @@ void VM::run()
 
         case OpCode::CALL:
         {
-            uint8_t arg_count = *ip++;
+            uint8_t arg_count = read_byte();
 
-            // Debugging line
+            // For debugging calls
             // std::cout << "[DEBUG] CALL with " << int(arg_count) << " args" << std::endl;
 
             if (stack.size() < arg_count + 1)
@@ -758,10 +1363,7 @@ void VM::run()
                             std::to_string(arg_count));
                     }
 
-                    frames.push_back({chunk,
-                                      ip,
-                                      callee_index,
-                                      true});
+                    frames.push_back({chunk, ip, callee_index, true, init});
 
                     chunk = &init->chunk;
                     ip = chunk->code.data();
@@ -779,6 +1381,12 @@ void VM::run()
                 auto func = bound->method;
                 auto receiver = bound->receiver;
 
+                const std::string caller_class = !frames.empty() && frames.back().function
+                    ? frames.back().function->owner_class
+                    : std::string{};
+                if (!func->is_public && func->owner_class != caller_class)
+                    throw std::runtime_error("Cannot call private method \"" + func->name + "\"");
+
                 if (arg_count != func->arity)
                     throw std::runtime_error(
                         "Expected " + std::to_string(func->arity) +
@@ -788,9 +1396,7 @@ void VM::run()
 
                 stack[callee_index] = receiver;
 
-                frames.push_back({chunk,
-                                  ip,
-                                  callee_index});
+                frames.push_back({chunk, ip, callee_index, false, func});
 
                 chunk = &func->chunk;
                 ip = chunk->code.data();
@@ -801,8 +1407,12 @@ void VM::run()
             {
                 size_t local_index = stack.size() - 1 - arg_count;
                 auto method = std::get<std::shared_ptr<BoundMethod>>(stack[local_index]);
-                std::vector<Value> args(stack.begin() + local_index + 1, stack.begin() + local_index + 1 + arg_count);
-                stack.erase(stack.begin() + local_index, stack.begin() + local_index + 1 + arg_count);
+                auto &args = native_args;
+                args.clear();
+                args.reserve(arg_count);
+                for (size_t i = 0; i < arg_count; ++i)
+                    args.push_back(std::move(stack[local_index + 1 + i]));
+                stack.resize(local_index);
 
                 switch (method->method)
                 {
@@ -1087,6 +1697,7 @@ void VM::run()
                     throw std::runtime_error("Unrecognized method");
                 }
 
+                args.clear();
                 continue;
             }
 
@@ -1102,9 +1713,7 @@ void VM::run()
                     " arguments but got " + std::to_string(arg_count));
             }
 
-            frames.push_back({chunk,
-                              ip,
-                              callee_index});
+            frames.push_back({chunk, ip, callee_index, false, function});
 
             stack.erase(stack.begin() + callee_index);
             chunk = &function->chunk;
@@ -1147,7 +1756,7 @@ void VM::run()
                 }
 
                 return_value = stack[frame.stack_start];
-                stack.resize(frame.stack_start + 1);
+                stack.resize(frame.stack_start);
             }
 
             else
@@ -1164,7 +1773,7 @@ void VM::run()
 
         case OpCode::ARRAY:
         {
-            uint8_t count = *ip++;
+            uint8_t count = read_byte();
 
             auto array = std::make_shared<Array>();
             array->elements.resize(count);
@@ -1183,17 +1792,13 @@ void VM::run()
             if (std::holds_alternative<std::shared_ptr<Array>>(container_val))
             {
                 auto array = std::get<std::shared_ptr<Array>>(container_val);
-                int index = static_cast<int>(std::get<double>(index_val));
-                if (index < 0 || index >= (int)array->elements.size())
-                    throw std::runtime_error("Array index out of bounds");
+                size_t index = checked_sequence_index(index_val, array->elements.size(), "Array");
                 push(array->elements[index]);
             }
             else if (std::holds_alternative<std::string>(container_val))
             {
                 const auto &str = std::get<std::string>(container_val);
-                int index = static_cast<int>(std::get<double>(index_val));
-                if (index < 0 || index >= (int)str.size())
-                    throw std::runtime_error("String index out of bounds");
+                size_t index = checked_sequence_index(index_val, str.size(), "String");
                 push(std::string(1, str[index]));
             }
             else if (std::holds_alternative<std::shared_ptr<Dict>>(container_val))
@@ -1218,9 +1823,7 @@ void VM::run()
             if (std::holds_alternative<std::shared_ptr<Array>>(container_val))
             {
                 auto array = std::get<std::shared_ptr<Array>>(container_val);
-                int index = static_cast<int>(std::get<double>(index_val));
-                if (index < 0 || index >= (int)array->elements.size())
-                    throw std::runtime_error("Array index out of bounds");
+                size_t index = checked_sequence_index(index_val, array->elements.size(), "Array");
                 array->elements[index] = value;
                 push(value);
             }
@@ -1243,7 +1846,7 @@ void VM::run()
             std::string name = std::get<std::string>(read_constant());
             Value object = pop();
 
-            // Debugging line
+            // For properties stuff
             // std::cout << "[DEBUG] GET_PROPERTY name=" << name
             //    << ", object=" << stringify(object) << std::endl;
 
@@ -1599,6 +2202,13 @@ void VM::run()
             if (std::holds_alternative<std::shared_ptr<Instance>>(object))
             {
                 auto instance = std::get<std::shared_ptr<Instance>>(object);
+                const std::string caller_class = !frames.empty() && frames.back().function
+                    ? frames.back().function->owner_class
+                    : std::string{};
+                const PropertyInfo *property = instance->klass->find_property(name);
+                if (property && !property->is_public && property->owner_class != caller_class)
+                    throw std::runtime_error("Cannot access private property \"" + name + "\"");
+
                 auto it = instance->fields.find(name);
                 if (it != instance->fields.end())
                 {
@@ -1606,9 +2216,21 @@ void VM::run()
                     break;
                 }
 
-                auto method = instance->klass->find_method(name);
+                std::shared_ptr<Function> method;
+                auto cached = method_cache.find(instruction);
+                if (cached != method_cache.end() && cached->second.klass == instance->klass)
+                    method = cached->second.method;
+                else
+                {
+                    method = instance->klass->find_method(name);
+                    if (method)
+                        method_cache.insert_or_assign(
+                            instruction, MethodCacheEntry{instance->klass, method});
+                }
                 if (method)
                 {
+                    if (!method->is_public && method->owner_class != caller_class)
+                        throw std::runtime_error("Cannot access private method \"" + name + "\"");
                     push(std::make_shared<UserBoundMethod>(instance, method));
                     break;
                 }
@@ -1674,26 +2296,41 @@ void VM::run()
             std::string name = std::get<std::string>(name_val);
 
             Value value = pop();
-            std::shared_ptr<Instance> instance;
+            Value object = pop();
+            if (!std::holds_alternative<std::shared_ptr<Instance>>(object))
+                throw std::runtime_error("Only instances have fields");
+            auto instance = std::get<std::shared_ptr<Instance>>(std::move(object));
 
-            if (!stack.empty() && std::holds_alternative<std::shared_ptr<Instance>>(stack[frames.back().stack_start]))
+            const std::string caller_class = !frames.empty() && frames.back().function
+                ? frames.back().function->owner_class
+                : std::string{};
+            const PropertyInfo *property = instance->klass->find_property(name);
+            if (property && !property->is_public && property->owner_class != caller_class)
+                throw std::runtime_error("Cannot access private property \"" + name + "\"");
+
+            if (!property && instance->klass->is_user_defined)
             {
-                instance = current_instance();
+                const bool in_constructor = !frames.empty() && frames.back().function &&
+                    frames.back().function->name == "init" &&
+                    frames.back().function->owner_class == instance->klass->name;
+                if (!in_constructor)
+                    throw std::runtime_error("Property \"" + name +
+                                             "\" must be declared in init()");
             }
 
-            else
-            {
-                instance = pop_instance();
-            }
+            if (property && property->type_name && !runtime_type_matches(value, *property->type_name))
+                throw std::runtime_error("Property \"" + name + "\" expects type \"" +
+                                         *property->type_name + "\"");
 
             instance->fields[name] = value;
+            stack.push_back(std::move(value));
             break;
         }
 
         case OpCode::CLASS:
         {
-            uint8_t name_index = *ip++;
-            Value name_val = chunk->constants[name_index];
+            uint16_t name_index = read_short();
+            Value name_val = chunk->constants.at(name_index);
 
             if (!std::holds_alternative<std::string>(name_val))
                 throw std::runtime_error("Class name must be a string");
@@ -1703,6 +2340,7 @@ void VM::run()
             auto klass = std::make_shared<Class>(
                 name,
                 std::unordered_map<std::string, std::shared_ptr<Function>>{});
+            klass->is_user_defined = true;
 
             push(klass);
             break;
@@ -1710,8 +2348,8 @@ void VM::run()
 
         case OpCode::INHERIT:
         {
-            auto super_class_val = pop();
             auto sub_class_val = pop();
+            auto super_class_val = pop();
 
             if (!std::holds_alternative<std::shared_ptr<Class>>(super_class_val) ||
                 !std::holds_alternative<std::shared_ptr<Class>>(sub_class_val))
@@ -1719,21 +2357,39 @@ void VM::run()
 
             auto super_class = std::get<std::shared_ptr<Class>>(super_class_val);
             auto sub_class = std::get<std::shared_ptr<Class>>(sub_class_val);
-
-            for (auto &[name, method] : super_class->methods)
-            {
-                if (sub_class->methods.find(name) == sub_class->methods.end())
-                    sub_class->methods[name] = method;
-            }
+            if (super_class == sub_class)
+                throw std::runtime_error("A class cannot inherit from itself");
+            for (auto parent = super_class; parent; parent = parent->super_class)
+                if (parent == sub_class)
+                    throw std::runtime_error("Circular class inheritance");
+            sub_class->super_class = super_class;
+            for (auto &[method_name, method] : sub_class->methods)
+                method->super_class = super_class;
 
             stack.push_back(sub_class);
             break;
         }
 
+        case OpCode::GET_SUPER:
+        {
+            Value method_name_value = read_constant();
+            if (!std::holds_alternative<std::string>(method_name_value))
+                throw std::runtime_error("Superclass method name must be a string");
+            const auto &method_name = std::get<std::string>(method_name_value);
+            if (frames.empty() || !frames.back().function || !frames.back().function->super_class)
+                throw std::runtime_error("No superclass for this method");
+            auto instance = current_instance();
+            auto method = frames.back().function->super_class->find_method(method_name);
+            if (!method)
+                throw std::runtime_error("Undefined superclass method \"" + method_name + "\"");
+            push(std::make_shared<UserBoundMethod>(instance, method));
+            break;
+        }
+
         case OpCode::METHOD:
         {
-            uint8_t name_index = *ip++;
-            Value name_val = chunk->constants[name_index];
+            uint16_t name_index = read_short();
+            Value name_val = chunk->constants.at(name_index);
 
             if (!std::holds_alternative<std::string>(name_val))
                 throw std::runtime_error("Method name must be a string");
@@ -1743,13 +2399,13 @@ void VM::run()
             auto function = pop_function();
             auto klass = pop_class();
 
-            if (name == "init" && klass->methods.find("init") != klass->methods.end())
-            {
+            if (klass->methods.contains(name))
                 throw std::runtime_error(
-                    "Class \"" + klass->name + "\" already defines an init method");
-            }
+                    "Class \"" + klass->name + "\" already defines method \"" + name + "\"");
 
             klass->methods[name] = function;
+            if (name == "init")
+                klass->properties = function->declared_properties;
             push(klass);
             break;
         }
@@ -1778,9 +2434,34 @@ Value VM::pop()
     {
         throw std::runtime_error("pop() called on empty stack");
     }
-    Value v = stack.back();
+    Value v = std::move(stack.back());
     stack.pop_back();
     return v;
+}
+
+Value VM::add_one(const Value &value)
+{
+    if (const double *number = std::get_if<double>(&value))
+        return *number + 1.0;
+
+    if (std::holds_alternative<std::string>(value))
+        return stringify(value) + "1";
+
+    if (const auto *array = std::get_if<std::shared_ptr<Array>>(&value))
+    {
+        auto result = std::make_shared<Array>();
+        result->elements.reserve((*array)->elements.size());
+        for (const Value &element : (*array)->elements)
+        {
+            const double *number = std::get_if<double>(&element);
+            if (!number)
+                throw std::runtime_error("Array must contain only numbers");
+            result->elements.push_back(*number + 1.0);
+        }
+        return result;
+    }
+
+    throw std::runtime_error("Operands must be numbers: " + stringify(value) + " 1");
 }
 
 Value VM::pop_constant()
@@ -1823,7 +2504,8 @@ void VM::push(Value value)
 
 uint16_t VM::read_short()
 {
-    if (ip + 1 >= chunk->code.data() + chunk->code.size())
+    const uint8_t *end = chunk->code.data() + chunk->code.size();
+    if (ip >= end || end - ip < 2)
         throw std::runtime_error("read_short() past end of bytecode");
 
     uint16_t high = *ip++;
@@ -1831,13 +2513,17 @@ uint16_t VM::read_short()
     return (high << 8) | low;
 }
 
-Value VM::read_constant()
+uint8_t VM::read_byte()
 {
     if (ip >= chunk->code.data() + chunk->code.size())
-        runtime_error(RuntimeError(Token{END_OF_FILE, "", nullptr, 0}, "Reached end of bytecode while reading constant"));
+        throw std::runtime_error("read_byte() past end of bytecode");
 
-    uint8_t index = *ip++;
-    return chunk->constants.at(index);
+    return *ip++;
+}
+
+Value VM::read_constant()
+{
+    return chunk->constants.at(read_short());
 }
 
 std::shared_ptr<Instance> VM::current_instance()

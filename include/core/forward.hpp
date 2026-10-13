@@ -5,6 +5,7 @@ struct Unary;
 struct Assign;
 struct Variable;
 struct Logical;
+struct Ternary;
 struct Call;
 struct DictExpr;
 struct ArrayExpr;
@@ -32,6 +33,7 @@ struct VarStmt;
 struct ReturnStmt;
 struct FunctionStmt;
 struct ClassStmt;
+struct PropertyStmt;
 
 class Token;
 class RuntimeError;

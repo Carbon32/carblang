@@ -279,22 +279,27 @@
         break;                                                       \
     }
 
-#define NATIVE_PRIMITIVE_STR_SLICE                                       \
-    case NativeMethod::STR_SLICE:                                        \
-    {                                                                    \
-        if (args.size() < 2 || args.size() > 2)                          \
-            throw std::runtime_error("slice() expects 2 arguments");     \
-                                                                         \
-        auto s = std::get<std::string>(method->receiver);                \
-        int start = static_cast<int>(std::get<double>(args[0]));         \
-        int len = static_cast<int>(std::get<double>(args[1]));           \
-                                                                         \
-        if (start < 0 || len < 0 || start >= static_cast<int>(s.size())) \
-            throw std::runtime_error("slice() invalid range");           \
-                                                                         \
-        std::string result = s.substr(start, len);                       \
-        push(result);                                                    \
-        break;                                                           \
+#define NATIVE_PRIMITIVE_STR_SLICE                                           \
+    case NativeMethod::STR_SLICE:                                            \
+    {                                                                        \
+        if (args.size() < 2 || args.size() > 2)                              \
+            throw std::runtime_error("slice() expects 2 arguments");         \
+                                                                             \
+        auto s = std::get<std::string>(method->receiver);                    \
+        const double start_value = std::get<double>(args[0]);                \
+        const double len_value = std::get<double>(args[1]);                  \
+        if (!std::isfinite(start_value) || !std::isfinite(len_value) ||      \
+            std::trunc(start_value) < 0 || std::trunc(len_value) < 0 ||      \
+            std::trunc(start_value) >= static_cast<double>(s.size()))        \
+            throw std::runtime_error("slice() invalid range");               \
+        const size_t start = static_cast<size_t>(std::trunc(start_value));   \
+        const size_t remaining = s.size() - start;                           \
+        const size_t len = len_value >= static_cast<double>(remaining)       \
+                               ? remaining                                   \
+                               : static_cast<size_t>(std::trunc(len_value)); \
+        std::string result = s.substr(start, len);                           \
+        push(result);                                                        \
+        break;                                                               \
     }
 
 #define NATIVE_PRIMITIVE_STR_COUNT                                                  \

@@ -5,6 +5,7 @@ struct ExpressionVisitor
     virtual Value visit_literal_expression(std::shared_ptr<Literal> expr) = 0;
     virtual Value visit_unary_expression(std::shared_ptr<Unary> expr) = 0;
     virtual Value visit_logical_expression(std::shared_ptr<Logical> expr) = 0;
+    virtual Value visit_ternary_expression(std::shared_ptr<Ternary> expr) = 0;
     virtual Value visit_assign_expression(std::shared_ptr<Assign> expr) = 0;
     virtual Value visit_variable_expression(std::shared_ptr<Variable> expr) = 0;
     virtual Value visit_call_expression(std::shared_ptr<Call> expr) = 0;
@@ -218,9 +219,32 @@ struct Logical : Expression, public std::enable_shared_from_this<Logical>
     const std::shared_ptr<Expression> right;
 };
 
+// I got tired of regular if/else conditions so I made this, maybe switch/match will be added too in the future
+struct Ternary : Expression, public std::enable_shared_from_this<Ternary>
+{
+    Ternary(std::shared_ptr<Expression> condition,
+            std::shared_ptr<Expression> true_expression,
+            std::shared_ptr<Expression> false_expression)
+        : condition{std::move(condition)},
+          true_expression{std::move(true_expression)},
+          false_expression{std::move(false_expression)}
+    {
+    }
+
+    Value accept(ExpressionVisitor &visitor) override
+    {
+        return visitor.visit_ternary_expression(shared_from_this());
+    }
+
+    const std::shared_ptr<Expression> condition;
+    const std::shared_ptr<Expression> true_expression;
+    const std::shared_ptr<Expression> false_expression;
+};
+
 struct Unary : Expression, public std::enable_shared_from_this<Unary>
 {
-    Unary(Token operator_token, std::shared_ptr<Expression> right) : operator_token{std::move(operator_token)}, right{std::move(right)}
+    Unary(Token operator_token, std::shared_ptr<Expression> right, bool postfix = false)
+        : operator_token{std::move(operator_token)}, right{std::move(right)}, postfix{postfix}
     {
     }
 
@@ -231,6 +255,7 @@ struct Unary : Expression, public std::enable_shared_from_this<Unary>
 
     const Token operator_token;
     const std::shared_ptr<Expression> right;
+    const bool postfix;
 };
 
 struct Assign : Expression, public std::enable_shared_from_this<Assign>

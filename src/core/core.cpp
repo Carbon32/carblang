@@ -18,18 +18,19 @@ void Carblang::start(int argc, char **argv)
             this->handle_file(argv[1]);
         }
     }
-    catch (const std::runtime_error &exception)
+    catch (const std::exception &exception)
     {
         std::cout << exception.what() << std::endl;
         exit(6);
     }
 }
 
-void Carblang::run(std::string code)
+void Carblang::run(std::string code, std::filesystem::path source_path)
 {
+    gui.set_resource_root(source_path);
     Scanner scanner = Scanner(code);
     std::vector<Token> tokens = scanner.scan_tokens();
-    Parser parser = Parser(tokens);
+    Parser parser = Parser(tokens, source_path);
     std::vector<std::shared_ptr<Stmt>> statements = parser.parse();
     ;
 
@@ -37,7 +38,7 @@ void Carblang::run(std::string code)
         return;
 
     Compiler compiler;
-    Chunk chunk = compiler.compile(statements);
+    Chunk chunk = compiler.compile(statements, std::move(source_path), parser.class_types());
 
     VM vm;
     vm.init_globals();
@@ -46,7 +47,7 @@ void Carblang::run(std::string code)
 
 void Carblang::handle_file(const char *file)
 {
-    this->run(this->read_file(file));
+    this->run(this->read_file(file), std::filesystem::path(file));
     if (error_trigger)
     {
         std::exit(65);
@@ -67,11 +68,15 @@ std::string Carblang::read_file(char const *file)
         std::exit(74);
     }
 
-    std::streamsize size = c_file.tellg();
-    std::string content(size, '\0');
+    const std::streampos end = c_file.tellg();
+    if (end < 0)
+        throw std::runtime_error("Failed to determine file size for " + std::string(file));
+
+    std::string content(static_cast<size_t>(end), '\0');
 
     c_file.seekg(0, std::ios::beg);
-    c_file.read(content.data(), content.size());
+    if (!c_file.read(content.data(), static_cast<std::streamsize>(content.size())))
+        throw std::runtime_error("Failed to read file " + std::string(file));
 
     return content;
 }

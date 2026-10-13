@@ -9,12 +9,31 @@ struct StmtVisitor
     virtual Value visit_return_stmt(std::shared_ptr<ReturnStmt> stmt) = 0;
     virtual Value visit_include_stmt(std::shared_ptr<IncludeStmt> stmt) = 0;
     virtual Value visit_class_stmt(std::shared_ptr<ClassStmt> stmt) = 0;
+    virtual Value visit_property_stmt(std::shared_ptr<PropertyStmt> stmt) = 0;
     virtual ~StmtVisitor() = default;
 };
 
 struct Stmt
 {
     virtual Value accept(StmtVisitor &visitor) = 0;
+};
+
+struct PropertyStmt : Stmt, public std::enable_shared_from_this<PropertyStmt>
+{
+    Token name;
+    std::optional<std::string> type_name;
+    std::shared_ptr<Expression> initializer;
+    bool is_public = true;
+
+    PropertyStmt(Token name, std::optional<std::string> type_name,
+                 std::shared_ptr<Expression> initializer, bool is_public)
+        : name(std::move(name)), type_name(std::move(type_name)),
+          initializer(std::move(initializer)), is_public(is_public) {}
+
+    Value accept(StmtVisitor &visitor) override
+    {
+        return visitor.visit_property_stmt(shared_from_this());
+    }
 };
 
 struct ClassStmt : Stmt, public std::enable_shared_from_this<ClassStmt>
@@ -148,6 +167,7 @@ struct FunctionStmt : Stmt, public std::enable_shared_from_this<FunctionStmt>
     std::vector<std::shared_ptr<Stmt>> body;
     std::optional<std::string> return_type;
     bool is_method = false;
+    bool is_public = true;
 
     FunctionStmt(
         Token name,

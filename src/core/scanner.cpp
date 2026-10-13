@@ -23,6 +23,8 @@ const std::map<std::string, TokenType> Scanner::keywords =
         {"def", TokenType::VAR},
         {"while", TokenType::WHILE},
         {"include", TokenType::INCLUDE},
+        {"public", TokenType::PUBLIC},
+        {"private", TokenType::PRIVATE},
         {"const", TokenType::CONST}};
 
 std::vector<Token> Scanner::scan_tokens()
@@ -67,10 +69,16 @@ void Scanner::scan_single_token()
         this->add_token(DOT);
         break;
     case '-':
-        this->add_token(match('=') ? MINUS_EQUAL : MINUS);
+        if (match('-'))
+            add_token(MINUS_MINUS);
+        else
+            add_token(match('=') ? MINUS_EQUAL : MINUS);
         break;
     case '+':
-        this->add_token(match('=') ? PLUS_EQUAL : PLUS);
+        if (match('+'))
+            add_token(PLUS_PLUS);
+        else
+            add_token(match('=') ? PLUS_EQUAL : PLUS);
         break;
     case ';':
         this->add_token(SEMICOLON);
@@ -160,6 +168,9 @@ void Scanner::scan_single_token()
         break;
     case ':':
         add_token(COLON);
+        break;
+    case '?':
+        add_token(QUESTION);
         break;
 
     default:

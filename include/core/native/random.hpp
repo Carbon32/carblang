@@ -21,8 +21,16 @@
             !std::holds_alternative<double>(args[1]))                                      \
             throw std::runtime_error("random_integer() arguments must be numbers");        \
                                                                                            \
-        int a = static_cast<int>(std::get<double>(args[0]));                               \
-        int b = static_cast<int>(std::get<double>(args[1]));                               \
+        const double a_value = std::get<double>(args[0]);                                  \
+        const double b_value = std::get<double>(args[1]);                                  \
+        if (!std::isfinite(a_value) || !std::isfinite(b_value) ||                          \
+            a_value < static_cast<double>(std::numeric_limits<int>::min()) ||              \
+            b_value < static_cast<double>(std::numeric_limits<int>::min()) ||              \
+            a_value >= -static_cast<double>(std::numeric_limits<int>::min()) ||            \
+            b_value >= -static_cast<double>(std::numeric_limits<int>::min()))              \
+            throw std::runtime_error("random_integer() arguments are out of range");       \
+        int a = static_cast<int>(a_value);                                                 \
+        int b = static_cast<int>(b_value);                                                 \
                                                                                            \
         if (a > b)                                                                         \
             throw std::runtime_error("random_integer() first argument must be <= second"); \

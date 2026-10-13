@@ -2,23 +2,21 @@
 
 std::string Page::construct()
 {
+    auto html_tag = std::make_shared<Tags::html>();
+    auto head_tag = std::make_shared<Tags::head>();
+    auto body_tag = std::make_shared<Tags::body>();
 
-    this->body_tag->attr("style",
-                         "display: flex;"
-                         "flex-direction: column;"
-                         "min-height: 100vh;");
+    body_tag->attr("style",
+                   "display: flex;"
+                   "flex-direction: column;"
+                   "min-height: 100vh;");
 
-    for (auto &child : this->head_children)
-        this->head_tag->child(std::move(child));
+    for (const auto &child : head_children)
+        head_tag->child(child);
+    for (const auto &child : body_children)
+        body_tag->child(child);
 
-    for (auto &child : this->body_children)
-        this->body_tag->child(std::move(child));
-
-    this->html_children.push_back(std::move(this->head_tag));
-    this->html_children.push_back(std::move(this->body_tag));
-
-    for (auto &child : this->html_children)
-        this->html_tag->child(std::move(child));
-
-    return this->html_tag->str();
+    html_tag->child(std::move(head_tag));
+    html_tag->child(std::move(body_tag));
+    return html_tag->str();
 }

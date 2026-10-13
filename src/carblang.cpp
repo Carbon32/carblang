@@ -2,8 +2,7 @@
 
 int main(int argc, char **argv)
 {
-    Carblang *carblang = new Carblang();
-    carblang->start(argc, argv);
-    delete carblang;
+    Carblang carblang;
+    carblang.start(argc, argv);
     return 0;
 }

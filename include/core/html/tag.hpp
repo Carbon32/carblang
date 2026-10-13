@@ -14,6 +14,7 @@ public:
 
     Tag(const std::string &name, const std::string &text = "", bool self_closing = false);
     Tag(const std::string &name, std::vector<std::shared_ptr<Tag>> children);
+    virtual ~Tag() = default;
     Tag *attr(const std::string &key, const std::string &value);
     Tag &id(const std::string &id_name);
     Tag &child(std::shared_ptr<Tag> child);

@@ -3,6 +3,8 @@
     {                                           \
         auto array = std::make_shared<Array>(); \
                                                 \
+        array->elements.reserve(args.size());   \
+                                                \
         for (const auto &value : args)          \
             array->elements.push_back(value);   \
                                                 \
@@ -10,76 +12,69 @@
         break;                                  \
     }
 
-#define NATIVE_GLOBALS_INIT                                               \
-    case NativeMethod::INIT:                                              \
-    {                                                                     \
-        if (args.size() != 2)                                             \
-            throw std::runtime_error("init() takes exactly 2 arguments"); \
-                                                                          \
-        if (!std::holds_alternative<double>(args[0]))                     \
-            throw std::runtime_error("init() size must be a number");     \
-                                                                          \
-        int size = static_cast<int>(std::get<double>(args[0]));           \
-        if (size < 0)                                                     \
-            throw std::runtime_error("init() size must be >= 0");         \
-                                                                          \
-        const auto &value = args[1];                                      \
-                                                                          \
-        auto array = std::make_shared<Array>();                           \
-        array->elements.reserve(size);                                    \
-        for (int i = 0; i < size; ++i)                                    \
-            array->elements.push_back(value);                             \
-                                                                          \
-        push(array);                                                      \
-        break;                                                            \
+#define NATIVE_GLOBALS_INIT                                                                    \
+    case NativeMethod::INIT:                                                                   \
+    {                                                                                          \
+        if (args.size() != 2)                                                                  \
+            throw std::runtime_error("init() takes exactly 2 arguments");                      \
+                                                                                               \
+        if (!std::holds_alternative<double>(args[0]))                                          \
+            throw std::runtime_error("init() size must be a number");                          \
+                                                                                               \
+        size_t size = checked_size_count(args[0], Array{}.elements.max_size(), "init() size"); \
+                                                                                               \
+        const auto &value = args[1];                                                           \
+                                                                                               \
+        auto array = std::make_shared<Array>();                                                \
+        array->elements.reserve(size);                                                         \
+        for (size_t i = 0; i < size; ++i)                                                      \
+            array->elements.push_back(value);                                                  \
+                                                                                               \
+        push(array);                                                                           \
+        break;                                                                                 \
     }
 
-#define NATIVE_GLOBALS_ARRAY_INPUT                                               \
-    case NativeMethod::ARRAY_INPUT:                                              \
+#define NATIVE_GLOBALS_ARRAY_INPUT                                                                      \
+    case NativeMethod::ARRAY_INPUT:                                                                     \
+    {                                                                                                   \
+        if (args.size() != 2)                                                                           \
+            throw std::runtime_error("array_input() takes exactly 2 arguments");                        \
+                                                                                                        \
+        if (!std::holds_alternative<double>(args[0]))                                                   \
+            throw std::runtime_error("array_input() count must be a number");                           \
+                                                                                                        \
+        if (!std::holds_alternative<std::string>(args[1]))                                              \
+            throw std::runtime_error("array_input() prompt must be a string");                          \
+                                                                                                        \
+        size_t count = checked_size_count(args[0], Array{}.elements.max_size(), "array_input() count"); \
+                                                                                                        \
+        const std::string &prompt = std::get<std::string>(args[1]);                                     \
+                                                                                                        \
+        auto array = std::make_shared<Array>();                                                         \
+        array->elements.reserve(count);                                                                 \
+                                                                                                        \
+        for (size_t i = 0; i < count; ++i)                                                              \
+        {                                                                                               \
+            std::cout << prompt;                                                                        \
+            std::string line;                                                                           \
+            std::getline(std::cin, line);                                                               \
+            array->elements.push_back(line);                                                            \
+        }                                                                                               \
+                                                                                                        \
+        push(array);                                                                                    \
+        break;                                                                                          \
+    }
+
+#define NATIVE_ARRAY_PUSH                                                        \
+    case NativeMethod::PUSH:                                                     \
     {                                                                            \
-        if (args.size() != 2)                                                    \
-            throw std::runtime_error("array_input() takes exactly 2 arguments"); \
+        if (args.empty())                                                        \
+            throw std::runtime_error("push() needs at least one argument");      \
                                                                                  \
-        if (!std::holds_alternative<double>(args[0]))                            \
-            throw std::runtime_error("array_input() count must be a number");    \
-                                                                                 \
-        if (!std::holds_alternative<std::string>(args[1]))                       \
-            throw std::runtime_error("array_input() prompt must be a string");   \
-                                                                                 \
-        int count = static_cast<int>(std::get<double>(args[0]));                 \
-        if (count < 0)                                                           \
-            throw std::runtime_error("array_input() count must be >= 0");        \
-                                                                                 \
-        const std::string &prompt = std::get<std::string>(args[1]);              \
-                                                                                 \
-        auto array = std::make_shared<Array>();                                  \
-        array->elements.reserve(count);                                          \
-                                                                                 \
-        for (int i = 0; i < count; ++i)                                          \
-        {                                                                        \
-            std::cout << prompt;                                                 \
-            std::string line;                                                    \
-            std::getline(std::cin, line);                                        \
-            array->elements.push_back(line);                                     \
-        }                                                                        \
-                                                                                 \
-        push(array);                                                             \
+        auto &array = std::get<std::shared_ptr<Array>>(method->receiver);        \
+        array->elements.insert(array->elements.end(), args.begin(), args.end()); \
+        push(true);                                                              \
         break;                                                                   \
-    }
-
-#define NATIVE_ARRAY_PUSH                                                   \
-    case NativeMethod::PUSH:                                                \
-    {                                                                       \
-        if (args.empty())                                                   \
-            throw std::runtime_error("push() needs at least one argument"); \
-                                                                            \
-        auto &array = std::get<std::shared_ptr<Array>>(method->receiver);   \
-        for (auto &v : args)                                                \
-        {                                                                   \
-            array->elements.push_back(v);                                   \
-        }                                                                   \
-        push(true);                                                         \
-        break;                                                              \
     }
 
 #define NATIVE_ARRAY_POP                                                  \
@@ -200,45 +195,47 @@
         break;                                                            \
     }
 
-#define NATIVE_ARRAY_INSERT                                               \
-    case NativeMethod::INSERT:                                            \
-    {                                                                     \
-        auto &array = std::get<std::shared_ptr<Array>>(method->receiver); \
-        if (args.size() != 2)                                             \
-            throw std::runtime_error("insert() expects 2 arguments");     \
-                                                                          \
-        int idx = (int)std::get<double>(args[0]);                         \
-        if (idx < 0 || idx > array->elements.size())                      \
-            throw std::runtime_error("Index out of bounds");              \
-                                                                          \
-        array->elements.insert(                                           \
-            array->elements.begin() + idx,                                \
-            args[1]);                                                     \
-                                                                          \
-        push(true);                                                       \
-        break;                                                            \
+#define NATIVE_ARRAY_INSERT                                                                \
+    case NativeMethod::INSERT:                                                             \
+    {                                                                                      \
+        auto &array = std::get<std::shared_ptr<Array>>(method->receiver);                  \
+        if (args.size() != 2)                                                              \
+            throw std::runtime_error("insert() expects 2 arguments");                      \
+                                                                                           \
+        size_t idx = checked_sequence_index(args[0], array->elements.size() + 1, "Array"); \
+                                                                                           \
+        array->elements.insert(                                                            \
+            array->elements.begin() + idx,                                                 \
+            args[1]);                                                                      \
+                                                                                           \
+        push(true);                                                                        \
+        break;                                                                             \
     }
 
-#define NATIVE_ARRAY_REMOVE_AT                                            \
-    case NativeMethod::REMOVE_AT:                                         \
-    {                                                                     \
-        auto &array = std::get<std::shared_ptr<Array>>(method->receiver); \
-        if (args.size() != 1)                                             \
-            throw std::runtime_error("remove() expects 1 argument");      \
-                                                                          \
-        int idx = (int)std::get<double>(args[0]);                         \
-        if (idx < 0 || idx >= array->elements.size())                     \
-        {                                                                 \
-            push(nullptr);                                                \
-            break;                                                        \
-        }                                                                 \
-                                                                          \
-        Value v = array->elements[idx];                                   \
-        array->elements.erase(                                            \
-            array->elements.begin() + idx);                               \
-                                                                          \
-        push(v);                                                          \
-        break;                                                            \
+#define NATIVE_ARRAY_REMOVE_AT                                                         \
+    case NativeMethod::REMOVE_AT:                                                      \
+    {                                                                                  \
+        auto &array = std::get<std::shared_ptr<Array>>(method->receiver);              \
+        if (args.size() != 1)                                                          \
+            throw std::runtime_error("remove() expects 1 argument");                   \
+                                                                                       \
+        const auto *number = std::get_if<double>(&args[0]);                            \
+        if (!number || !std::isfinite(*number))                                        \
+            throw std::runtime_error("Array index must be a finite number");           \
+        double truncated = std::trunc(*number);                                        \
+        if (truncated < 0 || truncated >= static_cast<double>(array->elements.size())) \
+        {                                                                              \
+            push(nullptr);                                                             \
+            break;                                                                     \
+        }                                                                              \
+        size_t idx = static_cast<size_t>(truncated);                                   \
+                                                                                       \
+        Value v = array->elements[idx];                                                \
+        array->elements.erase(                                                         \
+            array->elements.begin() + idx);                                            \
+                                                                                       \
+        push(v);                                                                       \
+        break;                                                                         \
     }
 
 #define NATIVE_ARRAY_REVERSE                                              \
@@ -281,31 +278,26 @@
         break;                                                            \
     }
 
-#define NATIVE_ARRAY_SLICE                                                                         \
-    case NativeMethod::SLICE:                                                                      \
-    {                                                                                              \
-        auto &array = std::get<std::shared_ptr<Array>>(method->receiver);                          \
-        if (args.size() < 1 || args.size() > 2)                                                    \
-            throw std::runtime_error("slice() expects 1 or 2 arguments");                          \
-                                                                                                   \
-        int start = (int)std::get<double>(args[0]);                                                \
-        int end = args.size() == 2 ? (int)std::get<double>(args[1]) : (int)array->elements.size(); \
-                                                                                                   \
-        if (start < 0)                                                                             \
-            start = 0;                                                                             \
-        if (end > (int)array->elements.size())                                                     \
-            end = (int)array->elements.size();                                                     \
-        if (end < start)                                                                           \
-            end = start;                                                                           \
-                                                                                                   \
-        auto new_array = std::make_shared<Array>();                                                \
-        new_array->elements.insert(                                                                \
-            new_array->elements.begin(),                                                           \
-            array->elements.begin() + start,                                                       \
-            array->elements.begin() + end);                                                        \
-                                                                                                   \
-        push(new_array);                                                                           \
-        break;                                                                                     \
+#define NATIVE_ARRAY_SLICE                                                                                                             \
+    case NativeMethod::SLICE:                                                                                                          \
+    {                                                                                                                                  \
+        auto &array = std::get<std::shared_ptr<Array>>(method->receiver);                                                              \
+        if (args.size() < 1 || args.size() > 2)                                                                                        \
+            throw std::runtime_error("slice() expects 1 or 2 arguments");                                                              \
+                                                                                                                                       \
+        size_t start = clamped_sequence_index(args[0], array->elements.size(), "Slice start");                                         \
+        size_t end = args.size() == 2 ? clamped_sequence_index(args[1], array->elements.size(), "Slice end") : array->elements.size(); \
+        if (end < start)                                                                                                               \
+            end = start;                                                                                                               \
+                                                                                                                                       \
+        auto new_array = std::make_shared<Array>();                                                                                    \
+        new_array->elements.insert(                                                                                                    \
+            new_array->elements.begin(),                                                                                               \
+            array->elements.begin() + start,                                                                                           \
+            array->elements.begin() + end);                                                                                            \
+                                                                                                                                       \
+        push(new_array);                                                                                                               \
+        break;                                                                                                                         \
     }
 
 #define NATIVE_ARRAY_COPY                                                 \
@@ -321,45 +313,42 @@
         break;                                                            \
     }
 
-#define NATIVE_ARRAY_CONCAT                                                                                    \
-    case NativeMethod::CONCAT:                                                                                 \
-    {                                                                                                          \
-        auto &array = std::get<std::shared_ptr<Array>>(method->receiver);                                      \
-        if (args.size() != 1)                                                                                  \
-            throw std::runtime_error("concat() expects 1 argument");                                           \
-                                                                                                               \
-        if (!std::holds_alternative<std::shared_ptr<Array>>(args[0]))                                          \
-            throw std::runtime_error("concat() argument must be an array");                                    \
-                                                                                                               \
-        auto other = std::get<std::shared_ptr<Array>>(args[0]);                                                \
-        auto new_array = std::make_shared<Array>();                                                            \
-        new_array->elements = array->elements;                                                                 \
-        new_array->elements.insert(new_array->elements.end(), other->elements.begin(), other->elements.end()); \
-                                                                                                               \
-        push(new_array);                                                                                       \
-        break;                                                                                                 \
+#define NATIVE_ARRAY_CONCAT                                                                                          \
+    case NativeMethod::CONCAT:                                                                                       \
+    {                                                                                                                \
+        auto &array = std::get<std::shared_ptr<Array>>(method->receiver);                                            \
+        if (args.size() != 1)                                                                                        \
+            throw std::runtime_error("concat() expects 1 argument");                                                 \
+                                                                                                                     \
+        if (!std::holds_alternative<std::shared_ptr<Array>>(args[0]))                                                \
+            throw std::runtime_error("concat() argument must be an array");                                          \
+                                                                                                                     \
+        auto other = std::get<std::shared_ptr<Array>>(args[0]);                                                      \
+        auto new_array = std::make_shared<Array>();                                                                  \
+        new_array->elements.reserve(checked_combined_size(                                                           \
+            array->elements.size(), other->elements.size(), new_array->elements.max_size(), "Array concatenation")); \
+        new_array->elements = array->elements;                                                                       \
+        new_array->elements.insert(new_array->elements.end(), other->elements.begin(), other->elements.end());       \
+                                                                                                                     \
+        push(new_array);                                                                                             \
+        break;                                                                                                       \
     }
 
-#define NATIVE_ARRAY_SWAP                                                 \
-    case NativeMethod::SWAP:                                              \
-    {                                                                     \
-        auto &array = std::get<std::shared_ptr<Array>>(method->receiver); \
-        if (args.size() != 2)                                             \
-            throw std::runtime_error("swap() expects 2 arguments");       \
-                                                                          \
-        int i = (int)std::get<double>(args[0]);                           \
-        int j = (int)std::get<double>(args[1]);                           \
-                                                                          \
-        if (i < 0 || j < 0 ||                                             \
-            i >= array->elements.size() ||                                \
-            j >= array->elements.size())                                  \
-            throw std::runtime_error("Index out of bounds");              \
-                                                                          \
-        std::swap(array->elements[i],                                     \
-                  array->elements[j]);                                    \
-                                                                          \
-        push(true);                                                       \
-        break;                                                            \
+#define NATIVE_ARRAY_SWAP                                                            \
+    case NativeMethod::SWAP:                                                         \
+    {                                                                                \
+        auto &array = std::get<std::shared_ptr<Array>>(method->receiver);            \
+        if (args.size() != 2)                                                        \
+            throw std::runtime_error("swap() expects 2 arguments");                  \
+                                                                                     \
+        size_t i = checked_sequence_index(args[0], array->elements.size(), "Array"); \
+        size_t j = checked_sequence_index(args[1], array->elements.size(), "Array"); \
+                                                                                     \
+        std::swap(array->elements[i],                                                \
+                  array->elements[j]);                                               \
+                                                                                     \
+        push(true);                                                                  \
+        break;                                                                       \
     }
 
 #define NATIVE_ARRAY_COUNT                                                \
@@ -518,20 +507,17 @@
         break;                                                                      \
     }
 
-#define NATIVE_ARRAY_TRIM                                          \
-    case NativeMethod::TRIM:                                       \
-    {                                                              \
-        auto &array = std::get<std::shared_ptr<Array>>(            \
-            method->receiver);                                     \
-        if (args.size() != 1)                                      \
-            throw std::runtime_error("trim() expects 1 argument"); \
-                                                                   \
-        int n = (int)std::get<double>(args[0]);                    \
-        if (n < 0)                                                 \
-            n = 0;                                                 \
-        if ((size_t)n < array->elements.size())                    \
-            array->elements.resize(n);                             \
-                                                                   \
-        push(true);                                                \
-        break;                                                     \
+#define NATIVE_ARRAY_TRIM                                                                      \
+    case NativeMethod::TRIM:                                                                   \
+    {                                                                                          \
+        auto &array = std::get<std::shared_ptr<Array>>(                                        \
+            method->receiver);                                                                 \
+        if (args.size() != 1)                                                                  \
+            throw std::runtime_error("trim() expects 1 argument");                             \
+                                                                                               \
+        size_t n = clamped_sequence_index(args[0], array->elements.size(), "Array trim size"); \
+        array->elements.resize(n);                                                             \
+                                                                                               \
+        push(true);                                                                            \
+        break;                                                                                 \
     }

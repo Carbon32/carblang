@@ -8,6 +8,7 @@
 inline bool error_trigger = false;
 inline bool runtime_error_trigger = false;
 
+// I will improve both of these one day, but not now
 // #define IGNORE_INCLUDE
 // #define WEB_MODE
 
@@ -37,7 +38,7 @@ class Carblang
 public:
     Carblang();
     void start(int argc, char **argv);
-    void run(std::string code);
+    void run(std::string code, std::filesystem::path source_path = {});
 
     std::string read_file(const char *file);
 

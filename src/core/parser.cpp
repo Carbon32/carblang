@@ -1,9 +1,72 @@
 #include "core/core.hpp"
 
-Parser::Parser(const std::vector<Token> &tokens) : tokens{tokens} {}
+namespace
+{
+void collect_class_types(const std::vector<Token> &tokens,
+                         const std::filesystem::path &source_path,
+                         std::unordered_set<std::string> &class_types,
+                         std::unordered_set<std::string> &visited)
+{
+    for (size_t i = 0; i + 1 < tokens.size(); ++i)
+    {
+        if (tokens[i].type == CLASS && tokens[i + 1].type == IDENTIFIER)
+            class_types.insert(tokens[i + 1].lexeme);
+
+        if (tokens[i].type != INCLUDE || tokens[i + 1].type != STRING)
+            continue;
+
+        std::filesystem::path include_path(tokens[i + 1].lexeme);
+        if (include_path.is_relative())
+            include_path = source_path.parent_path() / include_path;
+
+        std::error_code error;
+        include_path = std::filesystem::weakly_canonical(include_path, error);
+        if (error)
+        {
+            error.clear();
+            include_path = std::filesystem::absolute(include_path, error).lexically_normal();
+        }
+        const std::string key = include_path.generic_string();
+        if (!visited.insert(key).second)
+            continue;
+
+        std::ifstream file(include_path, std::ios::in | std::ios::binary);
+        if (!file)
+            continue;
+
+        std::stringstream source;
+        source << file.rdbuf();
+        Scanner scanner(source.str());
+        auto included_tokens = scanner.scan_tokens();
+        collect_class_types(included_tokens, include_path, class_types, visited);
+    }
+}
+}
+
+Parser::Parser(const std::vector<Token> &tokens, std::filesystem::path source_path,
+               std::unordered_set<std::string> known_class_types)
+    : tokens{tokens}, source_path{std::move(source_path)},
+      declared_class_types{std::move(known_class_types)} {}
 
 std::vector<std::shared_ptr<Stmt>> Parser::parse()
 {
+    std::unordered_set<std::string> visited;
+    if (!source_path.empty())
+    {
+        std::error_code error;
+        source_path = std::filesystem::weakly_canonical(source_path, error);
+        if (error)
+        {
+            error.clear();
+            source_path = std::filesystem::absolute(source_path, error).lexically_normal();
+        }
+        visited.insert(source_path.generic_string());
+    }
+    collect_class_types(tokens,
+                        source_path.empty() ? std::filesystem::current_path() : source_path,
+                        declared_class_types,
+                        visited);
+
     std::vector<std::shared_ptr<Stmt>> statements;
     while (!this->at_end())
     {
@@ -23,14 +86,38 @@ bool Parser::is_valid_type(const std::string &type)
         "dict",
         "function",
         "class",
-        "instance",
         "bound_method",
         "native_method",
         "tag",
         "texture2d",
         "text_element"};
 
-    return valid_types.contains(type);
+    return type == "any" || valid_types.contains(type) || declared_class_types.contains(type);
+}
+
+std::string Parser::type_annotation()
+{
+    Token type = consume(IDENTIFIER, "Expected a type name");
+    const std::string name = type.lexeme;
+
+    if (match(LEFT_BRACKET))
+    {
+        if (name != "array" && name != "dict")
+            throw error(type, "Only array and dict types can have type arguments");
+
+        std::string first_type = type_annotation();
+        if (name == "array")
+        {
+            consume(RIGHT_BRACKET, "Expected \"]\" after array element type");
+            return "array[" + first_type + "]";
+        }
+
+        consume(COMMA, "Expected \"",\" between dictionary key and value types");
+        std::string second_type = type_annotation();
+        consume(RIGHT_BRACKET, "Expected \"]\" after dictionary types");
+        return "dict[" + first_type + "," + second_type + "]";
+    }
+    return name;
 }
 
 std::shared_ptr<Expression> Parser::expression()
@@ -42,6 +129,25 @@ std::shared_ptr<Stmt> Parser::declaration()
 {
     try
     {
+        if ((check(PUBLIC) || check(PRIVATE)) && peek_next().type == THIS)
+        {
+            const bool is_public = advance().type == PUBLIC;
+            if (!in_init_method)
+                throw error(previous(), "Properties can only be declared in init()");
+            return property_declaration(is_public);
+        }
+
+        if (check(THIS) && peek_next().type == DOT &&
+            current + 3 < static_cast<int>(tokens.size()) && tokens[current + 3].type == COLON)
+        {
+            if (!in_init_method)
+                throw error(peek(), "Properties can only be declared in init()");
+            return property_declaration(true);
+        }
+
+        if (check(PUBLIC) || check(PRIVATE))
+            throw error(peek(), "Access modifiers are only allowed on class methods and properties");
+
         if (this->match(FUNCTION))
             return function_declaration();
         if (this->match(VAR))
@@ -92,15 +198,45 @@ std::shared_ptr<Stmt> Parser::class_declaration()
     std::vector<std::shared_ptr<FunctionStmt>> methods;
     while (!check(RIGHT_BRACE) && !at_end())
     {
+        bool is_public = true;
+        if (match(PUBLIC))
+            is_public = true;
+        else if (match(PRIVATE))
+            is_public = false;
+
         consume(FUNCTION, "Expected \"function\" before method");
+        const bool previous_in_class_method = in_class_method;
+        const bool previous_in_init_method = in_init_method;
+        in_class_method = true;
+        in_init_method = check(IDENTIFIER) && peek().lexeme == "init";
         auto method = std::dynamic_pointer_cast<FunctionStmt>(function_declaration());
+        in_class_method = previous_in_class_method;
+        in_init_method = previous_in_init_method;
         method->is_method = true;
+        method->is_public = is_public;
         methods.push_back(method);
     }
 
     consume(RIGHT_BRACE, "Expected \"}\" after class body");
 
     return ANG<ClassStmt>(name, super_class, methods);
+}
+
+std::shared_ptr<Stmt> Parser::property_declaration(bool is_public)
+{
+    consume(THIS, "Expected 'this' before property name");
+    consume(DOT, "Expected '.' after 'this'");
+    Token name = consume(IDENTIFIER, "Expected a property name");
+
+    std::optional<std::string> type_name;
+    if (match(COLON))
+        type_name = type_annotation();
+
+    consume(EQUAL, "Expected '=' before property initializer");
+    auto initializer = expression();
+    consume(SEMICOLON, "Expected ';' after property declaration");
+    return ANG<PropertyStmt>(std::move(name), std::move(type_name),
+                             std::move(initializer), is_public);
 }
 
 std::shared_ptr<Stmt> Parser::include_statement()
@@ -190,11 +326,19 @@ std::shared_ptr<Stmt> Parser::if_statement()
 std::shared_ptr<Stmt> Parser::while_statement()
 {
     this->consume(LEFT_PAREN, "Expected \"(\" after \"while\"");
+    std::shared_ptr<Stmt> initializer = nullptr;
+    if (this->match(VAR))
+        initializer = var_declaration();
+
     std::shared_ptr<Expression> condition = this->expression();
     this->consume(RIGHT_PAREN, "Expected \")\" after condition");
     std::shared_ptr<Stmt> body = statement();
 
-    return ANG<WhileStmt>(condition, body);
+    body = ANG<WhileStmt>(condition, body);
+    if (initializer)
+        body = ANG<BlockStmt>(std::vector<std::shared_ptr<Stmt>>{initializer, body});
+
+    return body;
 }
 
 std::shared_ptr<Stmt> Parser::var_declaration()
@@ -205,12 +349,7 @@ std::shared_ptr<Stmt> Parser::var_declaration()
 
     if (match(COLON))
     {
-        Token type = consume(IDENTIFIER, "Expected type name after \":\"");
-        if (!is_valid_type(type.lexeme))
-        {
-            throw error(type, "Unknown type \"" + type.lexeme + "\"");
-        }
-        type_name = type.lexeme;
+        type_name = type_annotation();
     }
 
     std::shared_ptr<Expression> initializer = nullptr;
@@ -235,12 +374,7 @@ std::shared_ptr<Stmt> Parser::const_declaration()
 
     if (match(COLON))
     {
-        Token type = consume(IDENTIFIER, "Expected type name after \":\"");
-        if (!is_valid_type(type.lexeme))
-        {
-            throw error(type, "Unknown type \"" + type.lexeme + "\"");
-        }
-        type_name = type.lexeme;
+        type_name = type_annotation();
     }
 
     consume(EQUAL, "Constant variables must be initialized");
@@ -275,17 +409,7 @@ std::shared_ptr<Stmt> Parser::function_declaration()
 
             if (match(COLON))
             {
-                Token type =
-                    consume(IDENTIFIER, "Expected parameter type");
-
-                if (!is_valid_type(type.lexeme) &&
-                    type.lexeme != "any")
-                {
-                    throw error(type,
-                                "Unknown type \"" + type.lexeme + "\"");
-                }
-
-                type_name = type.lexeme;
+                type_name = type_annotation();
             }
 
             parameters.push_back({param_name,
@@ -298,18 +422,13 @@ std::shared_ptr<Stmt> Parser::function_declaration()
 
     if (match(COLON))
     {
-        Token type =
-            consume(IDENTIFIER, "Expected return type");
-
-        if (!is_valid_type(type.lexeme) &&
-            type.lexeme != "any" && type.lexeme != "nothing")
+        if (check(IDENTIFIER) && peek().lexeme == "nothing")
         {
-            throw error(type,
-                        "Unknown return type \"" +
-                            type.lexeme + "\"");
+            advance();
+            return_type = "nothing";
         }
-
-        return_type = type.lexeme;
+        else
+            return_type = type_annotation();
     }
     consume(LEFT_BRACE, "Expected \"{\" before function body");
 
@@ -340,7 +459,7 @@ std::vector<std::shared_ptr<Stmt>> Parser::block()
 
 std::shared_ptr<Expression> Parser::assignment()
 {
-    std::shared_ptr<Expression> expr = or_expression();
+    std::shared_ptr<Expression> expr = conditional_expression();
 
     if (match(EQUAL,
               PLUS_EQUAL,
@@ -416,6 +535,18 @@ std::shared_ptr<Expression> Parser::assignment()
     }
 
     return expr;
+}
+
+std::shared_ptr<Expression> Parser::conditional_expression()
+{
+    auto condition = or_expression();
+    if (!match(QUESTION))
+        return condition;
+
+    auto true_expression = assignment();
+    consume(COLON, "Expected ':' after true branch of conditional expression");
+    auto false_expression = assignment();
+    return ANG<Ternary>(condition, true_expression, false_expression);
 }
 
 std::shared_ptr<Expression> Parser::or_expression()
@@ -507,7 +638,7 @@ std::shared_ptr<Expression> Parser::factor()
 
 std::shared_ptr<Expression> Parser::unary()
 {
-    if (this->match(BANG, MINUS))
+    if (this->match(BANG, MINUS, PLUS_PLUS, MINUS_MINUS))
     {
         Token op = previous();
         std::shared_ptr<Expression> right = unary();
@@ -533,6 +664,15 @@ std::shared_ptr<Expression> Parser::call()
         {
             Token name = consume(IDENTIFIER, "Expected property name after \".\"");
             expr = ANG<Get>(expr, name);
+        }
+        else if (match(PLUS_PLUS, MINUS_MINUS))
+        {
+            Token op = previous();
+            if (!std::dynamic_pointer_cast<Variable>(expr) &&
+                !std::dynamic_pointer_cast<Get>(expr) &&
+                !std::dynamic_pointer_cast<IndexExpr>(expr))
+                throw error(op, "Increment and decrement require an assignable target");
+            expr = ANG<Unary>(std::move(op), expr, true);
         }
         else
             break;
@@ -593,6 +733,13 @@ std::shared_ptr<Expression> Parser::primary()
 
     if (match(TokenType::THIS))
         return ANG<This>(previous());
+
+    if (match(SUPER))
+    {
+        consume(DOT, "Expected '.' after 'super'");
+        Token method = consume(IDENTIFIER, "Expected superclass method name");
+        return ANG<Super>(method);
+    }
 
     if (match(LEFT_BRACE))
     {
@@ -664,6 +811,12 @@ bool Parser::at_end()
 Token Parser::peek()
 {
     return tokens.at(current);
+}
+
+Token Parser::peek_next()
+{
+    const size_t next = std::min(static_cast<size_t>(current + 1), tokens.size() - 1);
+    return tokens.at(next);
 }
 
 Token Parser::previous()

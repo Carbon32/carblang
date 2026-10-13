@@ -14,6 +14,7 @@ enum TokenType
     SLASH,
     STAR,
     COLON,
+    QUESTION,
 
     BANG,
     BANG_EQUAL,
@@ -34,6 +35,8 @@ enum TokenType
 
     STAR_STAR,
     STAR_STAR_EQUAL,
+    PLUS_PLUS,
+    MINUS_MINUS,
 
     IDENTIFIER,
     STRING,
@@ -57,6 +60,8 @@ enum TokenType
     CONST,
 
     INCLUDE,
+    PUBLIC,
+    PRIVATE,
 
     END_OF_FILE
 };

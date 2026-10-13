@@ -6,15 +6,22 @@ class Parser
     };
 
     const std::vector<Token> &tokens;
+    std::filesystem::path source_path;
     int current = 0;
+    std::unordered_set<std::string> declared_class_types;
+    bool in_class_method = false;
+    bool in_init_method = false;
 
 public:
-    Parser(const std::vector<Token> &tokens);
+    Parser(const std::vector<Token> &tokens, std::filesystem::path source_path = {},
+           std::unordered_set<std::string> known_class_types = {});
 
     std::vector<std::shared_ptr<Stmt>> parse();
+    const std::unordered_set<std::string> &class_types() const { return declared_class_types; }
 
 private:
     bool is_valid_type(const std::string &type);
+    std::string type_annotation();
     std::shared_ptr<Expression> expression();
     std::shared_ptr<Stmt> declaration();
     std::shared_ptr<Stmt> statement();
@@ -31,9 +38,11 @@ private:
     std::shared_ptr<Stmt> return_statement();
     std::shared_ptr<Stmt> include_statement();
     std::shared_ptr<Stmt> class_declaration();
+    std::shared_ptr<Stmt> property_declaration(bool is_public);
 
     std::vector<std::shared_ptr<Stmt>> block();
     std::shared_ptr<Expression> assignment();
+    std::shared_ptr<Expression> conditional_expression();
     std::shared_ptr<Expression> and_expression();
     std::shared_ptr<Expression> or_expression();
     std::shared_ptr<Expression> equality();
@@ -54,6 +63,7 @@ private:
     Token advance();
     bool at_end();
     Token peek();
+    Token peek_next();
     Token previous();
     ParseError error(const Token &token, std::string message);
     void synchronize();

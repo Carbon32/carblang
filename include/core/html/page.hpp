@@ -184,11 +184,6 @@ public:
     std::string construct();
 
 private:
-    std::unique_ptr<Tags::html> html_tag = std::make_unique<Tags::html>();
-    std::unique_ptr<Tags::head> head_tag = std::make_unique<Tags::head>();
-    std::unique_ptr<Tags::body> body_tag = std::make_unique<Tags::body>();
-
-    std::vector<std::shared_ptr<Tag>> html_children;
     std::vector<std::shared_ptr<Tag>> head_children;
     std::vector<std::shared_ptr<Tag>> body_children;
 };

@@ -12,14 +12,29 @@ class Compiler : public ExpressionVisitor, public StmtVisitor
     std::vector<Local> locals;
     std::unordered_map<std::string, std::string> global_types;
     std::unordered_map<std::string, std::shared_ptr<Function>> function_signatures;
+    std::unordered_map<std::string, std::unordered_map<std::string, std::shared_ptr<Function>>> class_signatures;
+    std::unordered_map<std::string, std::string> class_superclasses;
+    std::unordered_map<std::string, std::unordered_map<std::string, PropertyInfo>> class_properties;
+    std::unordered_set<std::string> known_class_types;
 
     std::optional<std::string> current_return_type;
+    std::optional<std::string> current_method_name;
+    std::filesystem::path current_source_path;
+    std::optional<std::string> current_super_class_name;
+    std::optional<std::string> current_class_name;
     std::set<std::string> included_files;
     int scope_depth = 0;
     bool in_function = false;
+    bool in_method = false;
+    bool current_method_is_public = true;
+    bool in_subclass_method = false;
+    bool discard_assignment_result = false;
+    bool assignment_result_was_discarded = false;
 
 public:
-    Chunk compile(const std::vector<std::shared_ptr<Stmt>> &statements);
+    Chunk compile(const std::vector<std::shared_ptr<Stmt>> &statements,
+                  std::filesystem::path source_path = {},
+                  std::unordered_set<std::string> known_class_types = {});
     void begin_scope();
     void end_scope();
     int resolve_local(const std::string &name);
@@ -29,6 +44,7 @@ public:
     Value visit_unary_expression(std::shared_ptr<Unary> expr) override;
     Value visit_binary_expression(std::shared_ptr<Binary> expr) override;
     Value visit_logical_expression(std::shared_ptr<Logical> expr) override;
+    Value visit_ternary_expression(std::shared_ptr<Ternary> expr) override;
     Value visit_assign_expression(std::shared_ptr<Assign> expr) override;
     Value visit_variable_expression(std::shared_ptr<Variable> expr) override;
     Value visit_call_expression(std::shared_ptr<Call> expr) override;
@@ -50,14 +66,17 @@ public:
     Value visit_return_stmt(std::shared_ptr<ReturnStmt> stmt) override;
     Value visit_include_stmt(std::shared_ptr<IncludeStmt> stmt) override;
     Value visit_class_stmt(std::shared_ptr<ClassStmt> stmt) override;
+    Value visit_property_stmt(std::shared_ptr<PropertyStmt> stmt) override;
 
     std::optional<std::string> infer_expression_type(std::shared_ptr<Expression> expr);
+    std::optional<Value> try_fold_constant(std::shared_ptr<Expression> expr);
 
 private:
     void emit(OpCode op);
-    void emit_byte(uint8_t byte);
+    void emit_byte(size_t byte);
+    void emit_index(uint16_t index);
     void emit_constant(Value value);
-    std::shared_ptr<Function> compile_function(FunctionStmt &stmt, bool is_constructor, bool is_method);
+    std::shared_ptr<Function> compile_function(FunctionStmt &stmt, bool is_constructor, bool is_method, bool has_super_class = false, std::optional<std::string> super_class_name = std::nullopt, std::optional<std::string> class_name = std::nullopt);
     int emit_jump(OpCode op);
     void patch_jump(int offset);
     void emit_loop(int loop_start);

@@ -12,8 +12,8 @@
             throw std::runtime_error("Use the correct arguments, width/height must be numbers");                      \
                                                                                                                       \
         const std::string &title = std::get<std::string>(args[0]);                                                    \
-        int width = static_cast<int>(std::get<double>(args[1]));                                                      \
-        int height = static_cast<int>(std::get<double>(args[2]));                                                     \
+        int width = gui.checked_int(std::get<double>(args[1]), "GUI width");                                          \
+        int height = gui.checked_int(std::get<double>(args[2]), "GUI height");                                        \
                                                                                                                       \
         gui.set_window_config(title.c_str(), width, height);                                                          \
         push(nullptr);                                                                                                \
@@ -81,9 +81,9 @@
             throw std::runtime_error("Use the correct arguments, x, y and size must be numbers");   \
                                                                                                     \
         std::string text = std::get<std::string>(args[0]);                                          \
-        int x = (int)std::get<double>(args[1]);                                                     \
-        int y = (int)std::get<double>(args[2]);                                                     \
-        int size = (int)std::get<double>(args[3]);                                                  \
+        int x = gui.checked_int(std::get<double>(args[1]), "GUI argument");                         \
+        int y = gui.checked_int(std::get<double>(args[2]), "GUI argument");                         \
+        int size = gui.checked_int(std::get<double>(args[3]), "GUI argument");                      \
                                                                                                     \
         gui.add_draw_task([text, x, y, size]() { DrawText(text.c_str(), x, y, size, BLACK); });     \
                                                                                                     \
@@ -111,15 +111,15 @@
         }                                                                                                      \
                                                                                                                \
         std::string text = std::get<std::string>(args[0]);                                                     \
-        int x = (int)std::get<double>(args[1]);                                                                \
-        int y = (int)std::get<double>(args[2]);                                                                \
-        int size = (int)std::get<double>(args[3]);                                                             \
+        int x = gui.checked_int(std::get<double>(args[1]), "GUI argument");                                    \
+        int y = gui.checked_int(std::get<double>(args[2]), "GUI argument");                                    \
+        int size = gui.checked_int(std::get<double>(args[3]), "GUI argument");                                 \
                                                                                                                \
-        int r = (int)std::get<double>(args[4]);                                                                \
-        int g = (int)std::get<double>(args[5]);                                                                \
-        int b = (int)std::get<double>(args[6]);                                                                \
+        int r = gui.checked_int(std::get<double>(args[4]), "GUI argument");                                    \
+        int g = gui.checked_int(std::get<double>(args[5]), "GUI argument");                                    \
+        int b = gui.checked_int(std::get<double>(args[6]), "GUI argument");                                    \
                                                                                                                \
-        if (r > 255 || g > 255 || b > 255)                                                                     \
+        if (r < 0 || g < 0 || b < 0 || r > 255 || g > 255 || b > 255)                                          \
         {                                                                                                      \
             throw std::runtime_error("Use the correct arguments, the RGB colors must not go beyond 255");      \
         }                                                                                                      \
@@ -136,12 +136,15 @@
     {                                                                                                     \
         if (args.size() != 3)                                                                             \
             throw std::runtime_error("Use the correct arguments, set_background(r, g, b)");               \
+        if (!std::holds_alternative<double>(args[0]) || !std::holds_alternative<double>(args[1]) ||       \
+            !std::holds_alternative<double>(args[2]))                                                     \
+            throw std::runtime_error("set_background() color channels must be numbers");                  \
                                                                                                           \
-        int r = (int)std::get<double>(args[0]);                                                           \
-        int g = (int)std::get<double>(args[1]);                                                           \
-        int b = (int)std::get<double>(args[2]);                                                           \
+        int r = gui.checked_int(std::get<double>(args[0]), "GUI argument");                               \
+        int g = gui.checked_int(std::get<double>(args[1]), "GUI argument");                               \
+        int b = gui.checked_int(std::get<double>(args[2]), "GUI argument");                               \
                                                                                                           \
-        if (r > 255 || g > 255 || b > 255)                                                                \
+        if (r < 0 || g < 0 || b < 0 || r > 255 || g > 255 || b > 255)                                     \
         {                                                                                                 \
             throw std::runtime_error("Use the correct arguments, the RGB colors must not go beyond 255"); \
         }                                                                                                 \
@@ -167,7 +170,7 @@
             throw std::runtime_error("Use the correct arguments, second argument must be number");               \
                                                                                                                  \
         const std::string &text = std::get<std::string>(args[0]);                                                \
-        int size = (int)std::get<double>(args[1]);                                                               \
+        int size = gui.checked_int(std::get<double>(args[1]), "GUI argument");                                   \
                                                                                                                  \
         int width = MeasureText(text.c_str(), size);                                                             \
                                                                                                                  \
@@ -186,13 +189,9 @@
                                                                                                      \
         auto tex = std::get<std::shared_ptr<Texture2D>>(args[0]);                                    \
                                                                                                      \
-        if (tex && tex->id != 0)                                                                     \
-        {                                                                                            \
-            UnloadTexture(*tex);                                                                     \
-            tex->id = 0;                                                                             \
-            tex->width = 0;                                                                          \
-            tex->height = 0;                                                                         \
-        }                                                                                            \
+        if (!tex)                                                                                    \
+            throw std::runtime_error("unload_texture() received a null texture");                    \
+        gui.unload_texture(tex);                                                                     \
                                                                                                      \
         push(nullptr);                                                                               \
         break;                                                                                       \
@@ -212,10 +211,10 @@
             throw std::runtime_error("Use the correct arguments, x, y, w and h must be numbers"); \
         }                                                                                         \
                                                                                                   \
-        int x = (int)std::get<double>(args[0]);                                                   \
-        int y = (int)std::get<double>(args[1]);                                                   \
-        int w = (int)std::get<double>(args[2]);                                                   \
-        int h = (int)std::get<double>(args[3]);                                                   \
+        int x = gui.checked_int(std::get<double>(args[0]), "GUI argument");                       \
+        int y = gui.checked_int(std::get<double>(args[1]), "GUI argument");                       \
+        int w = gui.checked_int(std::get<double>(args[2]), "GUI argument");                       \
+        int h = gui.checked_int(std::get<double>(args[3]), "GUI argument");                       \
                                                                                                   \
         gui.add_draw_task(DrawRectangle, x, y, w, h, BLUE);                                       \
         push(nullptr);                                                                            \
@@ -236,15 +235,15 @@
             throw std::runtime_error("Use the correct arguments, x, y, w, h, r, g and b must be numbers");                                                                                                                            \
         }                                                                                                                                                                                                                             \
                                                                                                                                                                                                                                       \
-        int x = (int)std::get<double>(args[0]);                                                                                                                                                                                       \
-        int y = (int)std::get<double>(args[1]);                                                                                                                                                                                       \
-        int w = (int)std::get<double>(args[2]);                                                                                                                                                                                       \
-        int h = (int)std::get<double>(args[3]);                                                                                                                                                                                       \
+        int x = gui.checked_int(std::get<double>(args[0]), "GUI argument");                                                                                                                                                           \
+        int y = gui.checked_int(std::get<double>(args[1]), "GUI argument");                                                                                                                                                           \
+        int w = gui.checked_int(std::get<double>(args[2]), "GUI argument");                                                                                                                                                           \
+        int h = gui.checked_int(std::get<double>(args[3]), "GUI argument");                                                                                                                                                           \
                                                                                                                                                                                                                                       \
-        int r = (int)std::get<double>(args[4]);                                                                                                                                                                                       \
-        int g = (int)std::get<double>(args[5]);                                                                                                                                                                                       \
-        int b = (int)std::get<double>(args[6]);                                                                                                                                                                                       \
-        if (r > 255 || g > 255 || b > 255)                                                                                                                                                                                            \
+        int r = gui.checked_int(std::get<double>(args[4]), "GUI argument");                                                                                                                                                           \
+        int g = gui.checked_int(std::get<double>(args[5]), "GUI argument");                                                                                                                                                           \
+        int b = gui.checked_int(std::get<double>(args[6]), "GUI argument");                                                                                                                                                           \
+        if (r < 0 || g < 0 || b < 0 || r > 255 || g > 255 || b > 255)                                                                                                                                                                 \
         {                                                                                                                                                                                                                             \
             throw std::runtime_error("Use the correct arguments, the RGB colors must not go beyond 255");                                                                                                                             \
         }                                                                                                                                                                                                                             \
@@ -273,8 +272,8 @@
         {                                                                                                                                     \
             throw std::runtime_error("Use the correct arguments, x, y and r must be numbers");                                                \
         }                                                                                                                                     \
-        int x = (int)std::get<double>(args[0]);                                                                                               \
-        int y = (int)std::get<double>(args[1]);                                                                                               \
+        int x = gui.checked_int(std::get<double>(args[0]), "GUI argument");                                                                   \
+        int y = gui.checked_int(std::get<double>(args[1]), "GUI argument");                                                                   \
         float r = (float)std::get<double>(args[2]);                                                                                           \
                                                                                                                                               \
         gui.add_draw_task(DrawCircle, x, y, r, RED);                                                                                          \
@@ -296,13 +295,16 @@
             throw std::runtime_error("The graphical user interface system is not running"); \
         }                                                                                   \
         const std::string &path = std::get<std::string>(args[0]);                           \
+        const std::filesystem::path resolved_path = gui.resolve_resource_path(path);        \
+        const std::string resolved_path_string = resolved_path.string();                    \
                                                                                             \
-        Texture2D tex = LoadTexture(path.c_str());                                          \
+        Texture2D tex = LoadTexture(resolved_path_string.c_str());                          \
                                                                                             \
         if (tex.id == 0)                                                                    \
-            throw std::runtime_error("Failed to load texture");                             \
+            throw std::runtime_error("Failed to load texture: " + resolved_path_string);    \
                                                                                             \
         auto texture_ptr = std::make_shared<Texture2D>(tex);                                \
+        gui.track_texture(texture_ptr);                                                     \
                                                                                             \
         push(texture_ptr);                                                                  \
         break;                                                                              \
@@ -324,10 +326,12 @@
             throw std::runtime_error("Use the correct arguments, x and y must be numbers");              \
         }                                                                                                \
         auto tex = std::get<std::shared_ptr<Texture2D>>(args[0]);                                        \
-        int x = (int)std::get<double>(args[1]);                                                          \
-        int y = (int)std::get<double>(args[2]);                                                          \
+        int x = gui.checked_int(std::get<double>(args[1]), "GUI argument");                              \
+        int y = gui.checked_int(std::get<double>(args[2]), "GUI argument");                              \
                                                                                                          \
-        gui.add_draw_task([tex, x, y]() { DrawTexture(*tex, x, y, WHITE); });                            \
+        if (!tex || tex->id == 0)                                                                        \
+            throw std::runtime_error("draw_texture() received an unloaded texture");                     \
+        gui.add_draw_task([tex, x, y]() { if (tex->id != 0) DrawTexture(*tex, x, y, WHITE); });                                                            \
                                                                                                          \
         push(nullptr);                                                                                   \
         break;                                                                                           \
@@ -350,12 +354,14 @@
         }                                                                                                                                                                                 \
                                                                                                                                                                                           \
         auto tex = std::get<std::shared_ptr<Texture2D>>(args[0]);                                                                                                                         \
-        int x = (int)std::get<double>(args[1]);                                                                                                                                           \
-        int y = (int)std::get<double>(args[2]);                                                                                                                                           \
+        int x = gui.checked_int(std::get<double>(args[1]), "GUI argument");                                                                                                               \
+        int y = gui.checked_int(std::get<double>(args[2]), "GUI argument");                                                                                                               \
         float w = (float)std::get<double>(args[3]);                                                                                                                                       \
         float h = (float)std::get<double>(args[4]);                                                                                                                                       \
                                                                                                                                                                                           \
-        gui.add_draw_task([tex, x, y, w, h]() {                                                       \
+        if (!tex || tex->id == 0)                                                                                                                                                         \
+            throw std::runtime_error("draw_sized_texture() received an unloaded texture");                                                                                                \
+        gui.add_draw_task([tex, x, y, w, h]() { if (tex->id == 0) return;                              \
             Rectangle src = { 0, 0, (float)tex->width, (float)tex->height };                          \
             Rectangle dst = { (float)x, (float)y, w, h };                                             \
             Vector2 origin = { 0, 0 };                                                                \
@@ -388,14 +394,16 @@
         }                                                                                                                                                                                 \
                                                                                                                                                                                           \
         auto tex = std::get<std::shared_ptr<Texture2D>>(args[0]);                                                                                                                         \
-        int x = (int)std::get<double>(args[1]);                                                                                                                                           \
-        int y = (int)std::get<double>(args[2]);                                                                                                                                           \
+        int x = gui.checked_int(std::get<double>(args[1]), "GUI argument");                                                                                                               \
+        int y = gui.checked_int(std::get<double>(args[2]), "GUI argument");                                                                                                               \
         float w = (float)std::get<double>(args[3]);                                                                                                                                       \
         float h = (float)std::get<double>(args[4]);                                                                                                                                       \
         bool flip_x = std::get<bool>(args[5]);                                                                                                                                            \
         bool flip_y = std::get<bool>(args[6]);                                                                                                                                            \
                                                                                                                                                                                           \
-        gui.add_draw_task([tex, x, y, w, h, flip_x, flip_y]() {                   \
+        if (!tex || tex->id == 0)                                                                                                                                                         \
+            throw std::runtime_error("draw_flipped_texture() received an unloaded texture");                                                                                              \
+        gui.add_draw_task([tex, x, y, w, h, flip_x, flip_y]() { if (tex->id == 0) return;                \
             Rectangle src = {                                                   \
                 0,                                                              \
                 0,                                                              \
@@ -429,24 +437,22 @@
             !std::holds_alternative<double>(args[6]))                                                              \
             throw std::runtime_error("Use the correct arguments, x, y, size, r, g and b must be numbers");         \
                                                                                                                    \
-        int r = (int)std::get<double>(args[4]);                                                                    \
-        int g = (int)std::get<double>(args[5]);                                                                    \
-        int b = (int)std::get<double>(args[6]);                                                                    \
+        int r = gui.checked_int(std::get<double>(args[4]), "GUI argument");                                        \
+        int g = gui.checked_int(std::get<double>(args[5]), "GUI argument");                                        \
+        int b = gui.checked_int(std::get<double>(args[6]), "GUI argument");                                        \
                                                                                                                    \
-        if (r > 255 || g > 255 || b > 255)                                                                         \
+        if (r < 0 || g < 0 || b < 0 || r > 255 || g > 255 || b > 255)                                              \
         {                                                                                                          \
             throw std::runtime_error("Use the correct arguments, the RGB colors must not go beyond 255");          \
         }                                                                                                          \
                                                                                                                    \
         auto elem = std::make_shared<TextElement>();                                                               \
         elem->text = std::get<std::string>(args[0]);                                                               \
-        elem->x = (int)std::get<double>(args[1]);                                                                  \
-        elem->y = (int)std::get<double>(args[2]);                                                                  \
-        elem->size = (int)std::get<double>(args[3]);                                                               \
+        elem->x = gui.checked_int(std::get<double>(args[1]), "GUI argument");                                      \
+        elem->y = gui.checked_int(std::get<double>(args[2]), "GUI argument");                                      \
+        elem->size = gui.checked_int(std::get<double>(args[3]), "GUI argument");                                   \
         Color color = {(unsigned char)r, (unsigned char)g, (unsigned char)b, 255};                                 \
         elem->color = color;                                                                                       \
-                                                                                                                   \
-        gui.text_elements.push_back(elem);                                                                         \
                                                                                                                    \
         push(elem);                                                                                                \
         break;                                                                                                     \
@@ -462,6 +468,8 @@
             throw std::runtime_error("Use the correct arguments, the first argument must be a text element");     \
                                                                                                                   \
         auto elem = std::get<std::shared_ptr<TextElement>>(args[0]);                                              \
+        if (!elem)                                                                                                \
+            throw std::runtime_error("draw_text_element() received a null element");                              \
                                                                                                                   \
         gui.add_draw_task([elem]() { DrawText(elem->text.c_str(), elem->x, elem->y, elem->size, elem->color); }); \
                                                                                                                   \
@@ -472,13 +480,15 @@
 #define NATIVE_GUI_SET_TEXT                                                                                   \
     case NativeMethod::GUI_SET_TEXT:                                                                          \
     {                                                                                                         \
-        if (args.size() != 1)                                                                                 \
-            throw std::runtime_error("Use the correct arguments, set_text_element(element)");                 \
+        if (args.size() != 2)                                                                                 \
+            throw std::runtime_error("Use the correct arguments, set_text_element(element, text)");           \
                                                                                                               \
         if (!std::holds_alternative<std::shared_ptr<TextElement>>(args[0]))                                   \
             throw std::runtime_error("Use the correct arguments, the first argument must be a text element"); \
                                                                                                               \
         auto elem = std::get<std::shared_ptr<TextElement>>(args[0]);                                          \
+        if (!elem || !std::holds_alternative<std::string>(args[1]))                                           \
+            throw std::runtime_error("set_text_element() expects a valid element and a string");              \
         elem->text = std::get<std::string>(args[1]);                                                          \
         push(nullptr);                                                                                        \
         break;                                                                                                \
@@ -493,7 +503,7 @@
         if (!std::holds_alternative<double>(args[0]))                                     \
             throw std::runtime_error("Use the correct arguments, button must be number"); \
                                                                                           \
-        int button = (int)std::get<double>(args[0]);                                      \
+        int button = gui.checked_int(std::get<double>(args[0]), "GUI argument");          \
                                                                                           \
         push(IsMouseButtonPressed(button));                                               \
         break;                                                                            \
@@ -508,7 +518,7 @@
         if (!std::holds_alternative<double>(args[0]))                                      \
             throw std::runtime_error("Use the correct arguments, button must be number");  \
                                                                                            \
-        int button = (int)std::get<double>(args[0]);                                       \
+        int button = gui.checked_int(std::get<double>(args[0]), "GUI argument");           \
                                                                                            \
         push(IsMouseButtonReleased(button));                                               \
         break;                                                                             \
@@ -523,7 +533,7 @@
         if (!std::holds_alternative<double>(args[0]))                                  \
             throw std::runtime_error("Use the correct arguments, key must be number"); \
                                                                                        \
-        int key = (int)std::get<double>(args[0]);                                      \
+        int key = gui.checked_int(std::get<double>(args[0]), "GUI argument");          \
                                                                                        \
         bool pressed = IsKeyPressed(key);                                              \
                                                                                        \
@@ -563,7 +573,7 @@
         if (!std::holds_alternative<double>(args[0]))                                  \
             throw std::runtime_error("Use the correct arguments, key must be number"); \
                                                                                        \
-        int key = (int)std::get<double>(args[0]);                                      \
+        int key = gui.checked_int(std::get<double>(args[0]), "GUI argument");          \
                                                                                        \
         push(IsKeyDown(key));                                                          \
         break;                                                                         \
@@ -578,7 +588,7 @@
         if (!std::holds_alternative<double>(args[0]))                                  \
             throw std::runtime_error("Use the correct arguments, key must be number"); \
                                                                                        \
-        int key = (int)std::get<double>(args[0]);                                      \
+        int key = gui.checked_int(std::get<double>(args[0]), "GUI argument");          \
                                                                                        \
         bool released = IsKeyReleased(key);                                            \
                                                                                        \

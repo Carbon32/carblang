@@ -34,7 +34,9 @@ DECL_EXPR(Assign)
 DECL_EXPR(IndexAssign)
 DECL_EXPR(Set)
 DECL_EXPR(Logical)
+DECL_EXPR(Ternary)
 DECL_EXPR(This)
+DECL_EXPR(Super)
 DECL_EXPR(IndexExpr)
 DECL_EXPR(Get)
 
@@ -49,6 +51,7 @@ DECL_STMT(ReturnStmt)
 DECL_STMT(FunctionStmt)
 DECL_STMT(ClassStmt)
 DECL_STMT(IncludeStmt)
+DECL_STMT(PropertyStmt)
 
 template <typename NodeType, typename... Args>
 auto ANG(Args &&...args)

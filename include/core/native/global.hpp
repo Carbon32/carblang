@@ -64,7 +64,12 @@
         if (args.size() != 1 || !std::holds_alternative<double>(args[0]))    \
             throw std::runtime_error("exit() requires a numeric exit code"); \
                                                                              \
-        int code = static_cast<int>(std::get<double>(args[0]));              \
+        const double value = std::get<double>(args[0]);                      \
+        if (!std::isfinite(value) ||                                         \
+            value < static_cast<double>(std::numeric_limits<int>::min()) ||  \
+            value >= -static_cast<double>(std::numeric_limits<int>::min()))  \
+            throw std::runtime_error("exit() code is out of range");         \
+        int code = static_cast<int>(value);                                  \
         std::exit(code);                                                     \
         break;                                                               \
     }

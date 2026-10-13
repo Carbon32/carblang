@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <cstdlib>
 #include <cstdint>
+#include <limits>
 #include <stdexcept>
 #include <cmath>
 #include <memory>
