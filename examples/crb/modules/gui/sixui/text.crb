@@ -1,0 +1,19 @@
+#include "color.crb";
+
+class Text
+{
+	function init(text: string, x: number, y: number, size: number, color: array[number]): Text
+	{
+		this.text: string = text;
+		this.x: number = x;
+		this.y: number = y; 
+		this.size: number = size;
+
+        this.color: Color = Color(color[0], color[1], color[2]);
+	}
+
+	function handle(): nothing
+	{
+		gui.draw_text_advanced(this.text, this.x, this.y, this.size, this.color.r, this.color.g, this.color.b);
+	}
+}

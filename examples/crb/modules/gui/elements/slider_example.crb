@@ -1,0 +1,23 @@
+#include "../sixui/slider.crb"
+
+gui.init("Slider", 800, 600);
+gui.start();
+
+def slider: Slider = Slider(100, 100, 300, 20, 0, 100, 50);
+
+const enter_key: number = 257;
+
+// Disable this if you don't want the application to close after 2 seconds
+def elapsed: number = 0;
+
+while(gui.tick() and elapsed < 2)
+{
+    slider.handle();
+    if(gui.key_pressed(enter_key))
+    {
+        println(slider.get_value());
+    }
+    elapsed += gui.delta();
+}
+
+println("valid execution");

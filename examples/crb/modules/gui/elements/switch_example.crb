@@ -1,0 +1,24 @@
+#include "../sixui/switch.crb"
+
+gui.init("Switch", 800, 600);
+gui.start();
+
+def toggle: ToggleSwitch = ToggleSwitch(100, 100, 60, 25, false);
+
+const enter_key: number = 257;
+
+// Disable this if you don't want the application to close after 2 seconds
+def elapsed: number = 0;
+
+while(gui.tick() and elapsed < 2)
+{
+    toggle.handle();
+
+    if(gui.key_pressed(enter_key))
+    {
+        println(toggle.get_state());
+    }
+    elapsed += gui.delta();
+}
+
+println("valid execution");

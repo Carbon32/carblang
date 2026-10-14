@@ -1,0 +1,26 @@
+#include "../sixui/list.crb"
+
+gui.init("List", 800, 600);
+gui.start();
+
+def items: array[string] = ["Apple", "Banana", "Cherry", "Date", "Elderberry", "Fig", "Grape", "Honeydew"];
+def my_list: List = List(300, 100, 200, 240, items, 5); 
+
+def selected: string = my_list.get_selected();
+
+// Disable this if you don't want the application to close after 2 seconds
+def elapsed: number = 0;
+
+while(gui.tick() and elapsed < 2)
+{
+    my_list.handle();
+
+    selected = my_list.get_selected();
+    if(!(selected == ""))
+    {
+        println("Selected: " + selected);
+    }
+    elapsed += gui.delta();
+}
+
+println("valid execution");

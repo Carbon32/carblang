@@ -1,0 +1,168 @@
+#include "color.crb";
+
+class Menu
+{
+    function init(x: number, y: number, width: number, height: number, options: array[string], default_index: number): Menu
+    {
+        this.x: number = x;
+        this.y: number = y;
+        this.width: number = width;
+        this.height: number = height;
+
+        this.options: array[string] = options;
+        this.selected: number = default_index;
+
+        this.open: bool = false;
+        this.clicked: bool = false;
+
+        this.rect: array[number] = [x, y, width, height];
+
+        this.bg_color: Color = Color(50, 50, 50);
+        this.hover_color: Color = Color(70, 70, 70);
+        this.text_color: Color = Color(220, 220, 220);
+        this.selected_color: Color = Color(90, 160, 220);
+
+        this.font_size: number = height * 0.5;
+
+        this.option_y: number = 0;
+        this.option_rect: array[number] = [];
+
+        this.field_limit: number = 8;
+    }
+
+    function draw(): nothing
+    {
+        gui.draw_rect_advanced(
+            this.x,
+            this.y,
+            this.width,
+            this.height,
+            this.bg_color.r,
+            this.bg_color.g,
+            this.bg_color.b,
+            0.1
+        );
+
+        def shown_text: string = this.options[this.selected];
+        if(shown_text.length() > this.field_limit)
+        {
+            shown_text = shown_text.slice(0, this.field_limit) + "...";
+        }
+
+        gui.draw_text_advanced(
+            shown_text,
+            this.x + 10,
+            this.y + (this.height - this.font_size) / 2,
+            this.font_size,
+            this.text_color.r,
+            this.text_color.g,
+            this.text_color.b
+        );
+
+        gui.draw_text_advanced(
+            "v",
+            this.x + this.width - 20,
+            this.y + (this.height - this.font_size) / 2,
+            this.font_size,
+            this.text_color.r,
+            this.text_color.g,
+            this.text_color.b
+        );
+
+        if(this.open)
+        {
+            for(def i: number = 0; i < this.options.length(); i++)
+            {
+                this.option_y = this.y + this.height * (i + 1);
+                this.option_rect = [this.x, this.option_y, this.width, this.height];
+                def hover: bool = gui.rectangle_mouse_collide(this.option_rect);
+
+                def bg: Color;
+                if(hover)
+                {
+                    bg = this.hover_color;
+                }
+
+                else
+                {
+                    bg = this.bg_color;
+                }
+
+                if(i == this.selected)
+                {
+                    bg = this.selected_color;
+                }
+
+                gui.draw_rect_advanced(
+                    this.x,
+                    this.option_y,
+                    this.width,
+                    this.height,
+                    bg.r,
+                    bg.g,
+                    bg.b,
+                    0.1
+                );
+
+                shown_text = this.options[i];
+                if(shown_text.length() > this.field_limit)
+                {
+                    shown_text = shown_text.slice(0, this.field_limit) + "...";
+                }
+
+                gui.draw_text_advanced(
+                    shown_text,
+                    this.x + 10,
+                    this.option_y + (this.height - this.font_size) / 2,
+                    this.font_size,
+                    this.text_color.r,
+                    this.text_color.g,
+                    this.text_color.b
+                );
+            }
+        }
+    }
+
+    function handle(): nothing
+    {
+        def main_hover: bool = gui.rectangle_mouse_collide(this.rect);
+
+        if(main_hover and gui.mouse_pressed(0) and !this.clicked)
+        {
+            this.clicked = true;
+            this.open = !this.open;
+        }
+
+        if(gui.mouse_released(0))
+        {
+            this.clicked = false;
+        }
+
+        if(this.open)
+        {
+            for(def i: number = 0; i < this.options.length(); i++)
+            {
+                this.option_y = this.y + this.height * (i + 1);
+                this.option_rect = [this.x, this.option_y, this.width, this.height];
+
+                if(gui.rectangle_mouse_collide(this.option_rect) and gui.mouse_pressed(0))
+                {
+                    this.selected = i;
+                    this.open = false;
+                }
+            }
+        }
+
+        this.draw();
+    }
+
+    function get_selected(): string
+    {
+        return this.options[this.selected];
+    }
+
+    function get_index(): number
+    {
+        return this.selected;
+    }
+}

@@ -1,0 +1,24 @@
+#include "../sixui/progress_bar.crb"
+
+gui.init("Progress Bar", 800, 600);
+gui.start();
+
+def bar: ProgressBar = ProgressBar(190, 250, 400, 40, 0, 100);
+bar.set_value(0);
+
+// Disable this if you don't want the application to close after 2 seconds
+def elapsed: number = 0;
+
+while(gui.tick() and elapsed < 2)
+{
+    bar.set_value(bar.value + 0.2);
+    if(bar.value > 100 or bar.value == 100)
+    {
+        bar.set_value(0);
+    }
+
+    bar.handle();
+    elapsed += gui.delta();
+}
+
+println("valid execution");

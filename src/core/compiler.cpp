@@ -519,7 +519,7 @@ std::optional<std::string> Compiler::infer_expression_type(std::shared_ptr<Expre
                 {"gui.key_down", "bool"}, {"gui.measure_text", "number"},
                 {"gui.delta", "number"}, {"gui.get_character", "any"},
                 {"gui.mouse_pressed", "bool"}, {"gui.mouse_released", "bool"},
-                {"gui.mouse_position", "array"}, {"gui.create_rectangle", "array"},
+                {"gui.mouse_position", "array[number]"}, {"gui.create_rectangle", "array"},
                 {"gui.rectangle_collide", "bool"}, {"gui.rectangle_mouse_collide", "bool"},
                 {"gui.set_background", "null"}, {"gui.create_text_element", "text_element"},
                 {"gui.set_text_element", "null"}, {"gui.draw_text_element", "null"},
@@ -539,8 +539,8 @@ std::optional<std::string> Compiler::infer_expression_type(std::shared_ptr<Expre
                 {"array.first_index", "number"}, {"array.join", "string"},
                 {"array.insert", "bool"}, {"array.remove", "any"},
                 {"array.reverse", "bool"},
-                {"array.first", "any"}, {"array.last", "any"}, {"array.slice", "array"},
-                {"array.copy", "array"}, {"array.concat", "array"}, {"array.swap", "bool"},
+                {"array.first", "any"}, {"array.last", "any"}, {"array.slice", "array[any]"},
+                {"array.copy", "array[any]"}, {"array.concat", "array[any]"}, {"array.swap", "bool"},
                 {"array.count", "number"}, {"array.equals", "bool"},
                 {"array.last_index", "number"}, {"array.sum", "number"},
                 {"array.min", "number"}, {"array.max", "number"},
@@ -1712,7 +1712,7 @@ Value Compiler::visit_include_stmt(std::shared_ptr<IncludeStmt> stmt)
 
     if (included_files.find(include_key) != included_files.end())
     {
-        throw std::runtime_error("File already included: " + stmt->file_name);
+        return {}; // Eh, it's better to just skip it
     }
 
     std::ifstream file(include_path, std::ios::in | std::ios::binary);

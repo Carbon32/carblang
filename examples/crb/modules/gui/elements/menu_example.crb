@@ -1,0 +1,24 @@
+#include "../sixui/menu.crb";
+
+gui.init("Menu", 800, 600);
+gui.start();
+
+def options: array[string] = ["Vehicle", "Airplane", "Boat", "Whatever"];
+def menu: Menu = Menu(100, 100, 200, 40, options, 0);
+
+const enter_key: number = 257;
+
+// Disable this if you don't want the application to close after 2 seconds
+def elapsed: number = 0;
+
+while(gui.tick() and elapsed < 2)
+{
+    menu.handle();
+    if(gui.key_pressed(enter_key))
+    {
+        println(menu.get_selected());
+    }
+    elapsed += gui.delta();
+}
+
+println("valid execution");

@@ -31,9 +31,9 @@ println("Sum of the array numbers: " + numbers.sum());
 println("Min: " + numbers.min() + ", Max: " + numbers.max());
 println("Average: " + numbers.average() + "\n");
 
-def copy_numbers: array = numbers.copy();
+def copy_numbers: array[any] = numbers.copy();
 println("Copy of numbers: " + copy_numbers);
-def all_numbers: array = numbers.concat([70, 80]);
+def all_numbers: array[any] = numbers.concat([70, 80]);
 println("After concat [70, 80]: " + all_numbers);
 numbers.clear();
 println("After clear: " + numbers);

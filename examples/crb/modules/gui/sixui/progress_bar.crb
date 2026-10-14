@@ -1,0 +1,105 @@
+#include "color.crb";
+
+class ProgressBar
+{
+    function init(x: number, y: number, width: number, height: number, min_value: number, max_value: number): ProgressBar
+    {
+        this.x: number = x;
+        this.y: number = y;
+        this.width: number = width;
+        this.height: number = height;
+
+        this.min_value: number = min_value;
+        this.max_value: number = max_value;
+        this.value: number = min_value;
+
+        this.rect: array[number] = [x, y, width, height];
+
+        this.bg_color: Color = Color(40, 40, 40);
+        this.fill_color: Color = Color(80, 160, 240);
+        this.border_color: Color = Color(120, 120, 120);
+        this.text_color: Color = Color(220, 220, 220);
+
+        this.font_size: number = height * 0.6;
+        this.show_text: bool = true;
+    }
+
+    function set_value(value: number): nothing
+    {
+        this.value = value;
+
+        if(this.value < this.min_value)
+        {
+            this.value = this.min_value;
+        }
+
+        if(this.value > this.max_value)
+        {
+            this.value = this.max_value;
+        }
+    }
+
+    function get_percent(): number
+    {
+        return (this.value - this.min_value) / (this.max_value - this.min_value);
+    }
+
+    function draw(): nothing
+    {
+        def percent: number = this.get_percent();
+        def fill_width: number = this.width * percent;
+
+        gui.draw_rect_advanced(
+            this.x,
+            this.y,
+            this.width,
+            this.height,
+            this.bg_color.r,
+            this.bg_color.g,
+            this.bg_color.b,
+            0.25
+        );
+
+        gui.draw_rect_advanced(
+            this.x,
+            this.y,
+            fill_width,
+            this.height,
+            this.fill_color.r,
+            this.fill_color.g,
+            this.fill_color.b,
+            0.25
+        );
+
+        if(this.show_text)
+        {
+            def percent_text: string = format("% ", (percent * 100).to_int()) + "%";
+
+            gui.draw_text_advanced(
+                percent_text,
+                this.x + this.width / 2 - (percent_text.length() * this.font_size * 0.25),
+                this.y + this.height / 2 - this.font_size / 2,
+                this.font_size,
+                this.text_color.r,
+                this.text_color.g,
+                this.text_color.b
+            );
+        }
+    }
+    
+    function handle(): nothing
+    {
+        this.draw();
+    }
+
+    function set_colors(bg_r: number, bg_g: number, bg_b: number, fill_r: number, fill_g: number, fill_b: number): nothing
+    {
+        this.bg_color = Color(bg_r, bg_g, bg_b);
+        this.fill_color = Color(fill_r, fill_g, fill_b);
+    }
+
+    function set_show_text(value: bool): nothing
+    {
+        this.show_text = value;
+    }
+}

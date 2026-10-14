@@ -1,0 +1,39 @@
+#include "sixui/input.crb";
+#include "sixui/text.crb";
+#include "sixui/button.crb";
+
+gui.init("Interface", 800, 600);
+gui.start();
+
+def name_text: Text = Text("Username", 200, 200, 20, [244, 244, 244]);
+def name_input: InputField = InputField(200, 230, 400, 35, "", false);
+def send: Button = Button(325, 300, 150, 50, "Send", 24);
+
+send.set_button_color(0, 200, 200);
+send.set_button_hover_color(0, 230, 230);
+send.set_button_clicked_color(0, 150, 150);
+
+send.set_text_color(233, 233, 233);
+send.set_text_hover_color(255, 255, 255);
+send.set_text_clicked_color(255, 255, 255);
+
+gui.set_background(48, 48, 48);
+
+// Disable this if you don't want the application to close after 2 seconds
+def elapsed: number = 0;
+
+while(gui.tick() and elapsed < 2)
+{
+	name_text.handle();
+	name_input.handle();
+	send.handle();
+
+    if(send.clicked_once())
+    {
+        println(name_input.get_text());
+    }
+
+    elapsed += gui.delta();
+}
+
+println("valid execution");
